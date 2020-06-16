@@ -51,6 +51,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
+#include "fatfs.h"
 #include "usb_device.h"
 #include "usb_host.h"
 
@@ -167,6 +168,7 @@ int main(void)
   MX_USART2_UART_Init();
   MX_SPI6_Init();
   MX_TIM2_Init();
+  MX_FATFS_Init();
   /* USER CODE BEGIN 2 */
   HAL_SAI_DeInit(&hsai_BlockA1);
   HAL_SAI_DeInit(&hsai_BlockB1);

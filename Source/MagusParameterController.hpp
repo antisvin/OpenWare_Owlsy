@@ -14,12 +14,13 @@
 #include "Codec.h"
 #include "message.h"
 #include "calibration.hpp"
+#include "usbh_devices.h"
+
 
 void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height);
 
 #define NOF_ENCODERS 6
 #define ENC_MULTIPLIER 6 // shift left by this many steps
-#define NOF_CONTROL_MODES 5
 #define SHOW_CALIBRATION_INFO  // This flag renders current values in calibration menu
 #define CALIBRATION_INFO_FLOAT // Display float values instead of raw integers
 
@@ -69,7 +70,7 @@ public:
   DisplayMode displayMode;
   
   enum ControlMode {
-    PLAY, STATUS, PRESET, VOLUME, CALIBRATE, EXIT
+    PLAY, STATUS, PRESET, VOLUME, USB, CALIBRATE, EXIT, NOF_CONTROL_MODES
   };
   ControlMode controlMode = PLAY;
   bool saveSettings;
@@ -88,7 +89,9 @@ public:
     "< Status >",
     "< Preset >",
     "< Volume >",
-    "< V/Oct   " };
+    "< USB    >",
+    "< V/Oct   ",
+  };
 
   ParameterController(){
     reset();
@@ -351,6 +354,25 @@ public:
     screen.invert(0, 24, 40, 10);
   }
 
+  void drawUsb(uint8_t selected, ScreenBuffer& screen){
+    screen.setTextSize(1);
+    screen.print(1, 24 + 10, "Host device:\n");
+    switch ((UsbHostClass)settings.usb_host_device){
+    case USBH_NONE:
+      screen.print("not connected");
+      break;
+    case USBH_MIDI:
+      screen.print("MIDI");
+      break;
+    case USBH_MSC:
+      screen.print("Mass storage");
+      break;
+    default:
+      screen.print("Unknown");
+      break;
+    }
+  }
+
   void drawCalibration(uint8_t selected, ScreenBuffer& screen){
     screen.setTextSize(1);
     if (isCalibrationRunning) {
@@ -477,6 +499,10 @@ public:
       drawTitle(controlModeNames[controlMode], screen);    
       drawVolume(selectedPid[1], screen);
       break;
+    case USB:
+      drawTitle(controlModeNames[controlMode], screen);
+      drawUsb(selectedPid[1], screen);
+      break;
     case CALIBRATE:
       drawTitle(controlModeNames[controlMode], screen);
       drawCalibration(selectedPid[1], screen);
@@ -560,6 +586,7 @@ public:
     switch(controlMode){
     case PLAY:
     case STATUS:
+    case USB:
       break;
     case PRESET:
       selectedPid[1] = settings.program_index;
@@ -588,12 +615,12 @@ public:
         setErrorStatus(NO_ERROR);
         break;
       case PRESET:
-	// load preset
-	settings.program_index = selectedPid[1];
-	program.loadProgram(settings.program_index);
-	program.resetProgram(false);
-	controlMode = EXIT;
-	break;
+	      // load preset
+	      settings.program_index = selectedPid[1];
+	      program.loadProgram(settings.program_index);
+	      program.resetProgram(false);
+	      controlMode = EXIT;
+    	  break;
       case VOLUME:
         controlMode = EXIT;
         break;
@@ -606,26 +633,29 @@ public:
       default:
         break;
       }
-    }else{
+    }
+    else{
       if(controlMode == EXIT){
-	displayMode = STANDARD;
-	sensitivitySelected = false;
-	if(saveSettings)
-	  settings.saveToFlash();
-      }else{
-	int16_t delta = value - encoders[1];
-	if(delta > 0 && controlMode+1 < NOF_CONTROL_MODES){
-	  setControlMode(controlMode+1);
-	}else if(delta < 0 && controlMode > 0){
-	  setControlMode(controlMode-1);
-	}
-	if (controlMode == CALIBRATE) {
-	  if (continueCalibration)
-	    updateCalibration();
-	  else
-	    calibrationConfirm = false;
-	}
-	encoders[1] = value;
+	      displayMode = STANDARD;
+	      sensitivitySelected = false;
+	      if(saveSettings)
+	        settings.saveToFlash();
+      }
+      else{
+	      int16_t delta = value - encoders[1];
+	      if(delta > 0 && controlMode+1 < NOF_CONTROL_MODES){
+	        setControlMode(controlMode+1);
+	      }
+        else if(delta < 0 && controlMode > 0){
+	        setControlMode(controlMode-1);
+	      }
+	      if (controlMode == CALIBRATE) {
+	        if (continueCalibration)
+	          updateCalibration();
+	        else
+	          calibrationConfirm = false;
+	      }
+        encoders[1] = value;
       }
     }
   }

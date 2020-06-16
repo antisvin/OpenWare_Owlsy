@@ -23,11 +23,14 @@
 
 #include "usb_host.h"
 #include "usbh_core.h"
+#include "usbh_msc.h"
+//#include "usbh_hid.h"
 
 /* USER CODE BEGIN Includes */
 #include "usbh_midi.h"
 #include "device.h"
 #include "errorhandlers.h"
+#include "usbh_devices.h"
 /* USER CODE END Includes */
 
 /* USER CODE BEGIN PV */
@@ -89,6 +92,16 @@ void MX_USB_HOST_Init(void)
   {
     Error_Handler();
   }
+  if (USBH_RegisterClass(&hUsbHostHS, USBH_MSC_CLASS) != USBH_OK)
+  {
+    Error_Handler();
+  }
+  /*
+  if (USBH_RegisterClass(&hUsbHostHS, USBH_HID_CLASS) != USBH_OK)
+  {
+    Error_Handler();
+  }
+  */
   if (USBH_Start(&hUsbHostHS) != USBH_OK)
   {
     Error_Handler();
@@ -104,30 +117,67 @@ void MX_USB_HOST_Init(void)
 static void USBH_UserProcess  (USBH_HandleTypeDef *phost, uint8_t id)
 {
   /* USER CODE BEGIN CALL_BACK_1 */
-  switch(id){ 
-  case HOST_USER_CONNECTION:
-    Appli_state = APPLICATION_START;
-    break;
-  case HOST_USER_CLASS_SELECTED:
-    break;
-  case HOST_USER_CLASS_ACTIVE:
-    if(Appli_state == APPLICATION_START){
-      USBH_MIDI_Receive(phost, USB_HOST_RX_BUFFER, USB_HOST_RX_BUFF_SIZE);
-      Appli_state = APPLICATION_READY;
+  switch (phost->ClassNumber) {
+  case 1: // MIDI
+    switch(id){ 
+    case HOST_USER_CONNECTION:
+      Appli_state = APPLICATION_START;
+      break;
+    case HOST_USER_CLASS_SELECTED:
+      break;
+    case HOST_USER_CLASS_ACTIVE:
+      if(Appli_state == APPLICATION_START){
+        USBH_MIDI_Receive(phost, USB_HOST_RX_BUFFER, USB_HOST_RX_BUFF_SIZE);
+        Appli_state = APPLICATION_READY;
+      }
+      usbh_connect(USBH_MIDI);
+      break;
+    case HOST_USER_DISCONNECTION:
+      Appli_state = APPLICATION_DISCONNECT;
+      midi_host_reset();
+      usbh_disconnect();
+      break;
+    case HOST_USER_UNRECOVERED_ERROR:
+      midi_host_reset(); // reset and hope for the best
+      error(USB_ERROR, "USB Host unrecovered error");
+      usbh_disconnect();
+      break;
+    case HOST_USER_SELECT_CONFIGURATION:
+      break;
+    default:
+      break; 
     }
-    break;
-  case HOST_USER_DISCONNECTION:
-    Appli_state = APPLICATION_DISCONNECT;
-    midi_host_reset();
-    break;
-  case HOST_USER_UNRECOVERED_ERROR:
-    midi_host_reset(); // reset and hope for the best
-    error(USB_ERROR, "USB Host unrecovered error");
-    break;
-  case HOST_USER_SELECT_CONFIGURATION:
-    break;
+  case 2:
+    switch(id){ 
+    case HOST_USER_CONNECTION:
+      Appli_state = APPLICATION_START;
+      break;
+    case HOST_USER_CLASS_SELECTED:
+      break;
+    case HOST_USER_CLASS_ACTIVE:
+      if(Appli_state == APPLICATION_START){
+        //USBH_MIDI_Receive(phost, USB_HOST_RX_BUFFER, USB_HOST_RX_BUFF_SIZE);
+        Appli_state = APPLICATION_READY;
+      }
+      usbh_connect(USBH_MSC);
+      break;
+    case HOST_USER_DISCONNECTION:
+      Appli_state = APPLICATION_DISCONNECT;
+      //midi_host_reset();
+      usbh_disconnect();
+      break;
+    case HOST_USER_UNRECOVERED_ERROR:
+      //midi_host_reset(); // reset and hope for the best
+      error(USB_ERROR, "USB Host unrecovered error");
+      usbh_disconnect();
+      break;
+    case HOST_USER_SELECT_CONFIGURATION:
+      break;
+    default:
+      break; 
+    }  
   default:
-    break; 
+    break;
   }
   /* USER CODE END CALL_BACK_1 */
 }

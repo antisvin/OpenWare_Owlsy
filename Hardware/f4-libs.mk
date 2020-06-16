@@ -65,6 +65,11 @@ OBJS_USBH += $(USB_HOST_FILE)/Core/Src/usbh_pipes.o
 OBJS_USBH += $(USB_HOST_FILE)/Core/Src/usbh_ioreq.o
 OBJS_USBH += $(USB_HOST_FILE)/Core/Src/usbh_ctlreq.o
 
+### USB Host MSC Support ###
+OBJS_USBH_MSC = $(USB_HOST_FILE)/Class/MSC/Src/usbh_msc.o
+OBJS_USBH_MSC += $(USB_HOST_FILE)/Class/MSC/Src/usbh_msc_scsi.o
+OBJS_USBH_MSC += $(USB_HOST_FILE)/Class/MSC/Src/usbh_msc_bot.o
+
 ### CMSIS DSP Library ####
 OBJS_DSP = $(DSPLIB)/FastMathFunctions/arm_sin_f32.o
 OBJS_DSP += $(DSPLIB)/FastMathFunctions/arm_cos_f32.o
@@ -106,3 +111,8 @@ OBJS_OS += $(FREERTOS_DIR)/queue.o
 OBJS_OS += $(FREERTOS_DIR)/list.o
 OBJS_OS += $(FREERTOS_DIR)/croutine.o
 OBJS_OS += $(FREERTOS_DIR)/portable/MemMang/heap_4.o
+
+### FatFS Library ###
+OBJS_FATFS = $(FATFS_DIR)/ff.o
+OBJS_FATFS += $(FATFS_DIR)/diskio.o
+OBJS_FATFS += $(FATFS_DIR)/ff_gen_drv.o

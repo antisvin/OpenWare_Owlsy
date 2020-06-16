@@ -27,6 +27,7 @@ public:
   uint32_t output_scalar;
   uint8_t midi_input_channel;
   uint8_t midi_output_channel;
+  uint8_t usb_host_device;
 public:
   void init();
   void reset();

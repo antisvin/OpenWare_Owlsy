@@ -10,6 +10,7 @@ CPP_SRC = $(notdir $(wildcard Src/*.cpp))
 C_SRC += sdram.c
 C_SRC += cs4272.c
 C_SRC += usbh_midi.c
+#C_SRC += usbh_msc.c
 C_SRC += ssd1309.c
 C_SRC += HAL_MAX11300.c
 C_SRC += HAL_TLC5946.c
@@ -18,6 +19,7 @@ C_SRC += HAL_Encoders.c
 C_SRC += usbd_midi.c
 C_SRC += usbd_midi_if.c
 CPP_SRC += ScreenBuffer.cpp ScreenBufferMono.cpp Graphics.cpp
+CPP_SRC += usbh_devices.cpp
 
 include $(OPENWARE)/Hardware/sources.mk
 
@@ -30,8 +32,10 @@ OBJS += $(OBJS_DAC)
 OBJS += $(OBJS_SDRAM)
 OBJS += $(OBJS_USBD)
 OBJS += $(OBJS_USBH)
+OBJS += $(OBJS_USBH_MSC)
 OBJS += $(OBJS_DSP)
 OBJS += $(OBJS_OS)
 OBJS += $(OBJS_UART)
+OBJS += $(OBJS_FATFS)
 
 include $(OPENWARE)/Hardware/f4.mk
