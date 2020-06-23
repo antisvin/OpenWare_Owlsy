@@ -1,7 +1,8 @@
 # Debug / Release
 CONFIG ?= Release
+# Debug without -O1 runs out of flash space at least on Magus
 ifeq ($(CONFIG),Debug)
-  CPPFLAGS = -g3 -Wall -Wcpp -Wunused-function -DDEBUG # -DUSE_FULL_ASSERT
+  CPPFLAGS = -O1 -g3 -Wall -Wcpp -Wunused-function -DDEBUG # -DUSE_FULL_ASSERT
   ASFLAGS  = -g3
   CFLAGS   = -g3
 endif
