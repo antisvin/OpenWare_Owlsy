@@ -17,9 +17,15 @@
 
 void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height);
 
+#ifdef USE_DIGITALBUS
+#include "bus.h"
+
+extern uint32_t bus_tx_packets;
+extern uint32_t bus_rx_packets;
+#endif
+
 #define NOF_ENCODERS 6
 #define ENC_MULTIPLIER 6 // shift left by this many steps
-#define NOF_CONTROL_MODES 5
 #define SHOW_CALIBRATION_INFO  // This flag renders current values in calibration menu
 #define CALIBRATION_INFO_FLOAT // Display float values instead of raw integers
 
@@ -69,7 +75,16 @@ public:
   DisplayMode displayMode;
   
   enum ControlMode {
-    PLAY, STATUS, PRESET, VOLUME, CALIBRATE, EXIT
+    PLAY,
+    STATUS,
+    PRESET,
+    VOLUME,
+#ifdef USE_DIGITALBUS
+    DIGITAL_BUS,
+#endif
+    CALIBRATE,
+    EXIT,
+    NOF_CONTROL_MODES,
   };
   ControlMode controlMode = PLAY;
   bool saveSettings;
@@ -88,6 +103,9 @@ public:
     "< Status >",
     "< Preset >",
     "< Volume >",
+#ifdef USE_DIGITALBUS
+    "< OwlBus >",
+#endif
     "< V/Oct   " };
 
   ParameterController(){
@@ -351,6 +369,48 @@ public:
     screen.invert(0, 24, 40, 10);
   }
 
+#ifdef USE_DIGITALBUS
+  void drawDigitalBus(uint8_t selected, ScreenBuffer& screen){
+    screen.setTextSize(1);
+    if (settings.bus_enabled) {
+      // State
+      screen.print(1, 24, "State ");
+      screen.print(1, 24 + 10, bus_status_string());
+      screen.print(1, 24 + 20, bus_peer_count());
+      // Stats
+      screen.print(40, 24, "Tx/Rx");
+      screen.print(40, 24 + 10, bus_tx_packets % 10000);
+      screen.print(40, 24 + 20, bus_rx_packets % 10000);
+      // Settings
+      screen.print(76, 24, "Settings");
+      screen.print(76, 24 + 10, "Bus  On");
+      if (settings.bus_forward_midi)
+        screen.print(76, 24 + 20, "MIDI On");
+      else
+        screen.print(76, 24 + 20, "MIDI Off");      
+      screen.drawRectangle(102, 24 + 10, 26, 10, WHITE);
+      // Discover button
+      screen.print(40, 24 + 30, "Discover");
+      screen.invert(36, 24 + 20, 56, 10);
+    }
+    else {
+      // State
+      screen.print(1, 24, "State ");
+      screen.print(1, 24 + 10, "-");
+      screen.print(1, 24 + 20, "-");
+      // Stats
+      screen.print(40, 24, "Tx/Rx");
+      screen.print(40, 24 + 10, bus_tx_packets % 10000);
+      screen.print(40, 24 + 20, bus_rx_packets % 10000);
+      // Settings
+      screen.print(76, 24, "Settings");
+      screen.print(76, 24 + 10, "Bus  Off");
+      screen.print(76, 24 + 20, "MIDI Off");
+      screen.drawRectangle(102, 24, 26, 10, WHITE);
+    }
+  }
+#endif
+
   void drawCalibration(uint8_t selected, ScreenBuffer& screen){
     screen.setTextSize(1);
     if (isCalibrationRunning) {
@@ -477,6 +537,12 @@ public:
       drawTitle(controlModeNames[controlMode], screen);    
       drawVolume(selectedPid[1], screen);
       break;
+#ifdef USE_DIGITALBUS
+    case DIGITAL_BUS:
+      drawTitle(controlModeNames[controlMode], screen);    
+      drawDigitalBus(selectedPid[1], screen);
+      break;
+#endif
     case CALIBRATE:
       drawTitle(controlModeNames[controlMode], screen);
       drawCalibration(selectedPid[1], screen);
@@ -567,6 +633,21 @@ public:
     case VOLUME:
       selectedPid[1] = settings.audio_output_gain; // todo: get current
       break;
+#ifdef USE_DIGITALBUS
+    case DIGITAL_BUS:
+      if (settings.bus_enabled) {
+        if (settings.bus_forward_midi) {
+          selectedPid[1] = 2;
+        }
+        else {
+          selectedPid[1] = 1;
+        }
+      }
+      else {
+        selectedPid[1] = 0;
+      }
+      break;
+#endif
     case CALIBRATE:
       selectedPid[1] = 2;
       resetCalibration();
@@ -588,15 +669,20 @@ public:
         setErrorStatus(NO_ERROR);
         break;
       case PRESET:
-	// load preset
-	settings.program_index = selectedPid[1];
-	program.loadProgram(settings.program_index);
-	program.resetProgram(false);
-	controlMode = EXIT;
-	break;
+        // load preset
+        settings.program_index = selectedPid[1];
+        program.loadProgram(settings.program_index);
+        program.resetProgram(false);
+        controlMode = EXIT;
+        break;
       case VOLUME:
         controlMode = EXIT;
         break;
+#ifdef USE_DIGITALBUS
+      case DIGITAL_BUS:
+        bus_discover();
+        break;
+#endif
       case CALIBRATE:
         if (!calibrationConfirm) {
           calibrationConfirm = true;
@@ -606,26 +692,29 @@ public:
       default:
         break;
       }
-    }else{
+    }
+    else{
       if(controlMode == EXIT){
-	displayMode = STANDARD;
-	sensitivitySelected = false;
-	if(saveSettings)
-	  settings.saveToFlash();
-      }else{
-	int16_t delta = value - encoders[1];
-	if(delta > 0 && controlMode+1 < NOF_CONTROL_MODES){
-	  setControlMode(controlMode+1);
-	}else if(delta < 0 && controlMode > 0){
-	  setControlMode(controlMode-1);
-	}
-	if (controlMode == CALIBRATE) {
-	  if (continueCalibration)
-	    updateCalibration();
-	  else
-	    calibrationConfirm = false;
-	}
-	encoders[1] = value;
+        displayMode = STANDARD;
+        sensitivitySelected = false;
+        if(saveSettings)
+          settings.saveToFlash();
+      }
+      else{
+        int16_t delta = value - encoders[1];
+        if(delta > 0 && controlMode+1 < NOF_CONTROL_MODES){
+          setControlMode(controlMode+1);
+        }
+        else if(delta < 0 && controlMode > 0){
+          setControlMode(controlMode-1);
+        }
+        if (controlMode == CALIBRATE) {
+          if (continueCalibration)
+            updateCalibration();
+          else
+            calibrationConfirm = false;
+        }
+        encoders[1] = value;
       }
     }
   }
@@ -718,6 +807,14 @@ public:
     case PRESET:
       selectedPid[1] = max(1, min(registry.getNumberOfPatches()-1, value));
       break;
+#ifdef USE_DIGITALBUS
+    case DIGITAL_BUS:
+      selectedPid[1] = max(0, min(2, value));
+      settings.bus_enabled = selectedPid[1] > 0;
+      settings.bus_forward_midi = selectedPid[1] > 1;
+      saveSettings = true;
+      break;
+#endif
     case CALIBRATE:
       if (isCalibrationRunning && !isCalibrationModeSelected) {
         selectedPid[1] = max(0, min(value, 2));

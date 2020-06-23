@@ -7,6 +7,12 @@ include $(OPENWARE)/Hardware/owl2.mk
 C_SRC = $(filter-out test.c,$(notdir $(wildcard Src/*.c)))
 # C_SRC = $(notdir $(wildcard Src/*.c))
 CPP_SRC = $(notdir $(wildcard Src/*.cpp))
+
+ifeq ($(PLATFORM),MagusBus)
+	CPPFLAGS += -DUSE_DIGITALBUS
+	CPP_SRC += bus.cpp DigitalBusHandler.cpp DigitalBusReader.cpp DigitalBusStreamReader.cpp
+endif
+
 C_SRC += sdram.c
 C_SRC += cs4272.c
 C_SRC += usbh_midi.c
