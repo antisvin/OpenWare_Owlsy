@@ -87,6 +87,7 @@ public:
 
   // text
   void print(int x, int y, const char* text);
+  void print(int x, int y, int num);
   void drawChar(uint16_t x, uint16_t y, unsigned char c, Colour fg, Colour bg, uint8_t size);
   void drawRotatedChar(uint16_t x, uint16_t y, unsigned char c, Colour fg, Colour bg, uint8_t size);
   void setCursor(uint16_t x, uint16_t y);

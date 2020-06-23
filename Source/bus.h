@@ -16,8 +16,11 @@
 #define BUS_CMD_CONFIGURE_IO   0x10
   
    void bus_setup();
-   int bus_status();
+   uint8_t bus_status();
+   const char* bus_status_string();
+   uint8_t bus_peer_count();
    uint8_t* bus_deviceid();
+   void bus_discover();
    /* outgoing: send message over digital bus */
    void bus_tx_parameter(uint8_t pid, int16_t value);
    /* incoming: callback when message received on digital bus */

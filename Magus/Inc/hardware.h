@@ -5,6 +5,12 @@
 #define HARDWARE_ID                  MAGUS_HARDWARE
 #define HARDWARE_VERSION             "Magus"
 
+#ifdef USE_DIGITALBUS
+#define DIGITAL_BUS_ENABLED          1
+#define DIGITAL_BUS_FORWARD_MIDI     0
+#define BUS_HUART huart2
+#endif
+
 #define USE_SCREEN
 #define SSD1309
 /* #define OLED_DMA */

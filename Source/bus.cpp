@@ -40,7 +40,7 @@ static void initiateBusWrite(){
     extern UART_HandleTypeDef BUS_HUART;
     UART_HandleTypeDef *huart = &BUS_HUART;
     if(huart->gState == HAL_UART_STATE_READY) 
-#ifdef OWL_PEDAL // no DMA available for UART4 tx!
+#if defined(OWL_PEDAL) || defined(OWL_MODULAR) // no DMA available for UART4 tx!
       HAL_UART_Transmit_IT(huart, bus_tx_buf.getReadHead(), bus_tx_buf.getContiguousReadCapacity());
 #else
       HAL_UART_Transmit_DMA(huart, bus_tx_buf.getReadHead(), bus_tx_buf.getContiguousReadCapacity());
@@ -82,6 +82,10 @@ uint8_t* bus_deviceid(){
   return ((uint8_t *)0x1FFF7A10); /* STM32F4, STM32F0 */ 
 }
 
+void bus_discover(){
+  bus.startDiscover();
+}
+
 void bus_setup(){
   debug << "bus_setup\r\n";
   // serial_setup(USART_BAUDRATE);
@@ -104,9 +108,9 @@ void bus_setup(){
 
 #define BUS_IDLE_INTERVAL 2197
 
-int bus_status(){
+uint8_t bus_status(){
   // incoming data
-  while(bus_rx_buf.available() >= 4){
+  while(bus_rx_buf.getReadCapacity() >= 4){
     uint8_t frame[4];
     bus_rx_buf.pull(frame, 4);
     if(frame[0] == OWL_COMMAND_RESET){
@@ -128,6 +132,14 @@ int bus_status(){
     }
   }
   return bus.getStatus();
+}
+
+const char* bus_status_string() {
+  return bus.getStatusString();
+}
+
+uint8_t bus_peer_count(){
+  return bus.getPeers();
 }
 
 void bus_tx_frame(uint8_t* data){
