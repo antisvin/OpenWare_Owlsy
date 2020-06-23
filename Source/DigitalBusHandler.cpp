@@ -42,6 +42,19 @@ bool DigitalBusHandler::connected(){
   return status == CONNECTED;
 }
 
+const char* DigitalBusHandler::getStatusString(){
+  switch (status) {
+    case BUS_STATUS_IDLE:
+      return "IDLE";
+    case BUS_STATUS_CONNECTED:
+      return "CONNECT";
+    case BUS_STATUS_DISCOVER:
+      return "DISCO";
+    case BUS_STATUS_ERROR:
+      return "ERROR";
+  }
+}
+
 bool DigitalBusHandler::rxError(const char* reason){
   status = ERROR;
   bus_rx_error(reason);

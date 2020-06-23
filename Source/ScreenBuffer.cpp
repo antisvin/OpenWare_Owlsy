@@ -39,6 +39,11 @@ void ScreenBuffer::print(int x, int y, const char* text){
   print(text);
 }
 
+void ScreenBuffer::print(int x, int y, int num){
+  setCursor(x, y);
+  print(num);
+}
+
 void ScreenBuffer::drawVerticalLine(int x, int y,
 				    int length, Colour c){
   // drawLine(x, y, x, y+length-1, c);
