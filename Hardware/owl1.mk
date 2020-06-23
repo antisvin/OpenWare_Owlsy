@@ -13,7 +13,9 @@ endif
 
 # compile with semihosting if Debug is selected
 ifeq ($(CONFIG),Debug)
-  LDLIBS += -lrdimon
+#  LDLIBS += -lrdimon
+  CPPFLAGS += -nostdlib -nostartfiles -fno-builtin -ffreestanding
+  C_SRC += libnosys_gnu.c
 else
   CPPFLAGS += -nostdlib -nostartfiles -fno-builtin -ffreestanding
   C_SRC += libnosys_gnu.c
@@ -22,6 +24,10 @@ endif
 # Compilation Flags
 LDFLAGS += -Wl,--gc-sections
 LDSCRIPT ?= $(OPENWARE)/Hardware/owl1.ld
+LDLIBS += -lrdimon
+LDFLAGS += -specs=rdimon.specs
+CPPFLAGS += -specs=rdimon.specs
+LDFLAGS += --specs=nano.specs
 CPPFLAGS += --specs=nano.specs
 CPPFLAGS += -DEXTERNAL_SRAM -DARM_CORTEX
 # CPPFLAGS += -fpic -fpie
