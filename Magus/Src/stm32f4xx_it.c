@@ -162,6 +162,23 @@ void USART2_IRQHandler(void)
   HAL_UART_IRQHandler(&huart2);
   /* USER CODE BEGIN USART2_IRQn 1 */
 
+  /* if(LL_USART_IsActiveFlag_IDLE(UART1)) { */
+  /*   LL_USART_ClearFlag_IDLE(UART1); */
+  /*   LL_DMA_DisableStream(DMA2, LL_DMA_STREAM_2); */
+  /* }     */
+  /* Check for IDLE flag */
+  UART_HandleTypeDef *huart = &huart2;
+  /* if(USART1->SR & UART_FLAG_IDLE){ */
+  if(huart->Instance->SR & UART_FLAG_IDLE){
+    /* This part is important */
+    /* Clear IDLE flag by reading status and data registers */
+    volatile uint32_t tmp;                  /* Must be volatile to prevent optimizations */
+    tmp = huart->Instance->SR;              /* Read status register */
+    tmp = huart->Instance->DR;              /* Read data register */
+    (void)tmp;                              /* Prevent compiler warnings */
+    DMA1_Stream6->CR &= ~DMA_SxCR_EN;       /* Disabling DMA will force transfer complete interrupt if enabled */
+  }
+
   /* USER CODE END USART2_IRQn 1 */
 }
 
