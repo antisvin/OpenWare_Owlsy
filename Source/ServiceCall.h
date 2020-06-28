@@ -12,6 +12,12 @@
 #define SYSTEM_TABLE_POW                   "SPW"
 #define SYSTEM_FUNCTION_DRAW               "DRW"
 #define SYSTEM_FUNCTION_MIDI               "MDI"
+#define SYSTEM_FUNCTION_BUS_DISCOVER       "DBD"
+#define SYSTEM_FUNCTION_BUS_COMMAND        "DBC"
+#define SYSTEM_FUNCTION_BUS_DATA           "DBA"
+#define SYSTEM_FUNCTION_BUS_MESSAGE        "DBM"
+#define SYSTEM_FUNCTION_BUS_PARAMETER      "DBP"
+#define SYSTEM_FUNCTION_BUS_BUTTON         "DBB"
 
 #define OWL_SERVICE_VERSION                OWL_SERVICE_VERSION_V1
 

@@ -218,9 +218,9 @@ void MidiHandler::handleConfigurationCommand(uint8_t* data, uint16_t size){
   }else if(strncmp(SYSEX_CONFIGURATION_MIDI_OUTPUT_CHANNEL, p, 2) == 0){
     midiSetOutputChannel(max(-1, min(15, value)));
 #ifdef USE_DIGITALBUS
-  }else if(strncmp(SYSEX_CONFIGURATION_BUS_ENABLE, p, 2) == 0){
+  }else if(strncmp(SYSEX_CONFIGURATION_DIGITAL_BUS_ENABLE, p, 2) == 0){
     settings.bus_enabled = value;
-  }else if(strncmp(SYSEX_CONFIGURATION_BUS_FORWARD_MIDI, p, 2) == 0){
+  }else if(strncmp(SYSEX_CONFIGURATION_DIGITAL_BUS_FORWARD_MIDI, p, 2) == 0){
     settings.bus_forward_midi = value;
 #endif
   }
