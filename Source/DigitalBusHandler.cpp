@@ -47,7 +47,7 @@ const char* DigitalBusHandler::getStatusString(){
     case BUS_STATUS_IDLE:
       return "IDLE";
     case BUS_STATUS_CONNECTED:
-      return "CONNECT";
+      return "CONN";
     case BUS_STATUS_DISCOVER:
       return "DISCO";
     case BUS_STATUS_ERROR:
@@ -100,6 +100,14 @@ void DigitalBusHandler::sendParameterChange(uint8_t pid, int16_t value){
 
 void DigitalBusHandler::handleParameterChange(uint8_t pid, int16_t value){
   bus_rx_parameter(pid, value);
+}
+
+void DigitalBusHandler::sendButtonChange(uint8_t bid, int16_t value){
+  sendFrame(OWL_COMMAND_BUTTON|peers, bid, value>>8, value);
+}
+
+void DigitalBusHandler::handleButtonChange(uint8_t bid, int16_t value){
+  bus_rx_button(bid, value);
 }
 
 void DigitalBusHandler::sendCommand(uint8_t cmd, int16_t data){

@@ -21,6 +21,10 @@
 #ifdef USE_MIDI_CALLBACK
 #include "MidiReader.h"
 #endif /* USE_MIDI_CALLBACK */
+#ifdef USE_DIGITALBUS
+#include "bus.h"
+#include "DigitalBusReader.h"
+#endif
 
 #ifdef USE_FFT_TABLES
 int SERVICE_ARM_CFFT_INIT_F32(arm_cfft_instance_f32* instance, int len){
@@ -106,6 +110,12 @@ static int handleGetParameters(void** params, int len){
       *value = settings.output_offset;
     }else if(strncmp(SYSEX_CONFIGURATION_OUTPUT_SCALAR, p, 2) == 0){
       *value = settings.output_scalar;
+#ifdef USE_DIGITALBUS
+    }else if(strncmp(SYSEX_CONFIGURATION_DIGITAL_BUS_PEERS, p, 2) == 0){
+      *value = bus_peer_count();
+    }else if(strncmp(SYSEX_CONFIGURATION_DIGITAL_BUS_STATUS, p, 2) == 0){
+      *value = bus_status();
+#endif /* USE_DIGITALBUS */
     }else{
       ret = OWL_SERVICE_INVALID_ARGS;
     }
@@ -151,9 +161,32 @@ static int handleRequestCallback(void** params, int len){
 #ifdef USE_MIDI_CALLBACK
     if(strncmp(SYSTEM_FUNCTION_MIDI, name, 3) == 0){
       *callback = (void*)midi_send;
-      ret = OWL_SERVICE_OK;
+      return OWL_SERVICE_OK;
     }
 #endif /* USE_MIDI_CALLBACK */
+
+#ifdef USE_DIGITALBUS
+    if(strncmp(SYSTEM_FUNCTION_BUS_PARAMETER, name, 3) == 0){
+      *callback = (void*)bus_tx_parameter;
+      return OWL_SERVICE_OK;
+    }
+    else if(strncmp(SYSTEM_FUNCTION_BUS_BUTTON, name, 3) == 0){
+      *callback = (void*)bus_tx_button;
+      return OWL_SERVICE_OK;
+    }
+    else if(strncmp(SYSTEM_FUNCTION_BUS_COMMAND, name, 3) == 0){
+      *callback = (void*)bus_tx_command;
+      return OWL_SERVICE_OK;
+    }
+    else if(strncmp(SYSTEM_FUNCTION_BUS_MESSAGE, name, 3) == 0){
+      *callback = (void*)bus_tx_message;
+      return OWL_SERVICE_OK;
+    }
+    else if(strncmp(SYSTEM_FUNCTION_BUS_DATA, name, 3) == 0){
+      *callback = (void*)bus_tx_data;
+      return OWL_SERVICE_OK;
+    }
+#endif /* USE_DIGITALBUS */
   }
   return ret;
 }
@@ -164,13 +197,15 @@ static int handleRegisterCallback(void** params, int len){
   if(len >= index+2){
     char* name = (char*)params[index++];
     void* callback = (void*)params[index++];
+
 #ifdef USE_SCREEN
     if(strncmp(SYSTEM_FUNCTION_DRAW, name, 3) == 0){
       // void (*drawCallback)(uint8_t*, uint16_t, uint16_t);
       graphics.setCallback(callback);
-      ret = OWL_SERVICE_OK;
+      return OWL_SERVICE_OK;
     }
 #endif /* USE_SCREEN */
+
 #ifdef USE_MIDI_CALLBACK
     if(strncmp(SYSTEM_FUNCTION_MIDI, name, 3) == 0){
       // void (*midiCallback)(uint8_t port, uint8_t status, uint8_t, uint8_t);
@@ -180,9 +215,25 @@ static int handleRegisterCallback(void** params, int len){
       extern MidiReader midihost;
       midihost.setCallback(callback);
 #endif /* USE_USB_HOST */
-      ret = OWL_SERVICE_OK;
+      return OWL_SERVICE_OK;
     }
 #endif /* USE_MIDI_CALLBACK */
+
+#ifdef USE_DIGITALBUS
+    extern DigitalBusReader bus;
+    if(strncmp(SYSTEM_FUNCTION_BUS_COMMAND, name, 3) == 0){
+      bus.setCommandCallback(callback);
+      ret = OWL_SERVICE_OK;
+    }
+    else if(strncmp(SYSTEM_FUNCTION_BUS_DATA, name, 3) == 0){
+      bus.setDataCallback(callback);
+      ret = OWL_SERVICE_OK;
+    }
+    else if(strncmp(SYSTEM_FUNCTION_BUS_MESSAGE, name, 3) == 0){
+      bus.setMessageCallback(callback);
+      ret = OWL_SERVICE_OK;
+    }
+#endif /* USE_DIGITALBUS */
   }
   return ret;
 }

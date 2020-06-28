@@ -23,6 +23,7 @@
 #endif
 #ifdef USE_DIGITALBUS
 #include "bus.h"
+#include "DigitalBusReader.h"
 #endif
 #ifdef USE_USB_HOST
 #include "usbh_midi.h"
@@ -280,6 +281,11 @@ void onSetPatchParameter(uint8_t pid, int16_t value){
 void onSetButton(uint8_t bid, uint16_t state, uint16_t samples){
   // setButtonValue(bid, state); // Patch should update program vector. This may cause feedback loop?
   setGateValue(bid, state);
+#ifdef USE_DIGITALBUS
+  if(settings.bus_enabled){
+    bus_tx_button(bid, state);
+  }
+#endif
 }
 
 // called from program
@@ -522,6 +528,12 @@ void runManagerTask(void* p){
 	midihost.setCallback(NULL);
 #endif /* USE_USB_HOST */
 #endif /* USE_MIDI_CALLBACK */
+#ifdef USE_DIGITALBUS
+  extern DigitalBusReader bus;
+  bus.setCommandCallback(NULL);
+  bus.setDataCallback(NULL);
+  bus.setMessageCallback(NULL);
+#endif /* USE_DIGITALBUS */
 #ifdef USE_CODEC
 	codec.set(0);
 #endif

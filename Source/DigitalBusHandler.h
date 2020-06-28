@@ -37,6 +37,8 @@ public:
   void handleDiscover(uint8_t seq, uint32_t other);
   void sendParameterChange(uint8_t pid, int16_t value);
   void handleParameterChange(uint8_t pid, int16_t value);
+  void sendButtonChange(uint8_t bid, int16_t value);
+  void handleButtonChange(uint8_t bid, int16_t value);
   void sendCommand(uint8_t cmd, int16_t data);
   void handleCommand(uint8_t cmd, int16_t data);
   void sendMessage(const char* msg);
@@ -50,6 +52,18 @@ public:
   void sendFrame(uint8_t d1, uint8_t d2, uint8_t d3, uint8_t d4);
   void sendFrame(uint8_t* frame);
   static bool isMidiFrame(uint8_t* frame);
+  void (*commandCallback)(uint8_t cmd, int16_t data);
+  void (*messageCallback)(const char* msg);
+  void (*dataCallback)(const uint8_t* data, uint16_t size);
+  void setCommandCallback(void *callback) {
+    commandCallback = (void (*)(uint8_t, int16_t))callback;
+  }
+  void setMessageCallback(void *callback) {
+    messageCallback = (void (*)(const char *))callback;
+  }
+  void setDataCallback(void *callback) {
+    dataCallback = (void (*)(const uint8_t*, uint16_t))callback;
+  }
 };
 
 #endif /* _DigitalBusHandler_h_ */

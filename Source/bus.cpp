@@ -1,6 +1,7 @@
 #include "bus.h"
 #include "midi.h"
 #include "device.h"
+#include "ProgramVector.h"
 #include "message.h"
 #include "SerialBuffer.hpp"
 #include "DigitalBusReader.h"
@@ -27,7 +28,7 @@ static void initiateBusRead(){
   UART_HandleTypeDef *huart = &BUS_HUART;
   /* Check that a Rx process is not already ongoing */
   if(huart->RxState == HAL_UART_STATE_READY){
-    uint16_t size = min(bus_rx_buf.getCapacity()/2, bus_rx_buf.getContiguousWriteCapacity());
+    uint16_t size = min(4, bus_rx_buf.getContiguousWriteCapacity());
     // keep at least half the buffer back, it will fill up while this half is processing
     HAL_UART_Receive_DMA(huart, bus_rx_buf.getWriteHead(), size);
   }
@@ -151,9 +152,19 @@ void bus_tx_parameter(uint8_t pid, int16_t value){
   bus.sendParameterChange(pid, value);
 }
 
+void bus_tx_button(uint8_t bid, int16_t value){
+  debug << "tx but[" << bid << "][" << value << "]" ;
+  bus.sendButtonChange(bid, value);
+}
+
 void bus_tx_command(uint8_t cmd, int16_t data){
   debug << "tx cmd[" << cmd << "][" << data << "]" ;
   bus.sendCommand(cmd, data);
+}
+
+void bus_tx_data(const uint8_t* data, uint16_t size){
+  debug << "tx data[" << size << "][" << data << "]" ;
+  bus.sendData(data, size);
 }
 
 void bus_tx_message(const char* msg){
@@ -170,14 +181,24 @@ void bus_rx_parameter(uint8_t pid, int16_t value){
   setParameterValue(pid, value);
   debug << "rx par[" << pid << "]";
 }
+void bus_rx_button(uint8_t bid, int16_t value){
+  setButtonValue(bid, value);
+  debug << "rx but[" << bid << "]";
+}
 void bus_rx_command(uint8_t cmd, int16_t data){
   debug << "rx cmd[" << cmd << "]";
+  if(bus.commandCallback != NULL)
+    bus.commandCallback(cmd, data);
 }
 void bus_rx_message(const char* msg){
   debug << "rx msg[" << msg << "]";
+  if(bus.messageCallback != NULL)
+    bus.messageCallback(msg);
 }
 void bus_rx_data(const uint8_t* data, uint16_t size){
   debug << "rx data[" << size << "]";
+  if(bus.dataCallback != NULL)
+    bus.dataCallback(data, size);
 }
 
 void bus_rx_error(const char* reason){
