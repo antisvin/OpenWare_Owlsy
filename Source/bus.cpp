@@ -28,7 +28,7 @@ static void initiateBusRead(){
   UART_HandleTypeDef *huart = &BUS_HUART;
   /* Check that a Rx process is not already ongoing */
   if(huart->RxState == HAL_UART_STATE_READY){
-    uint16_t size = min(4, bus_rx_buf.getContiguousWriteCapacity());
+    uint16_t size = min(bus_rx_buf.getCapacity()/2, bus_rx_buf.getContiguousWriteCapacity());
     // keep at least half the buffer back, it will fill up while this half is processing
     HAL_UART_Receive_DMA(huart, bus_rx_buf.getWriteHead(), size);
   }
