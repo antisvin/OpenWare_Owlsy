@@ -86,6 +86,9 @@ void DigitalBusHandler::handleDiscover(uint8_t seq, uint32_t other){
     // that's our token.
     peers = seq;
     status = CONNECTED;
+    if (discoverCallback != NULL){
+      discoverCallback();
+    }
   }else{
     if(settings.bus_enabled && seq < 0x0f)      
       sendDiscover(seq+1, other); // increment seq and pass it on

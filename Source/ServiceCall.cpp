@@ -167,11 +167,11 @@ static int handleRequestCallback(void** params, int len){
 
 #ifdef USE_DIGITALBUS
     if(strncmp(SYSTEM_FUNCTION_BUS_PARAMETER, name, 3) == 0){
-      *callback = (void*)bus_tx_parameter;
+      *callback = (void*)bus_send_parameters;
       return OWL_SERVICE_OK;
     }
     else if(strncmp(SYSTEM_FUNCTION_BUS_BUTTON, name, 3) == 0){
-      *callback = (void*)bus_tx_button;
+      *callback = (void*)bus_send_buttons;
       return OWL_SERVICE_OK;
     }
     else if(strncmp(SYSTEM_FUNCTION_BUS_COMMAND, name, 3) == 0){
@@ -221,7 +221,11 @@ static int handleRegisterCallback(void** params, int len){
 
 #ifdef USE_DIGITALBUS
     extern DigitalBusReader bus;
-    if(strncmp(SYSTEM_FUNCTION_BUS_COMMAND, name, 3) == 0){
+    if(strncmp(SYSTEM_FUNCTION_BUS_DISCOVER, name, 3) == 0){
+      bus.setDiscoverCallback(callback);
+      ret = OWL_SERVICE_OK;
+    }
+    else if(strncmp(SYSTEM_FUNCTION_BUS_COMMAND, name, 3) == 0){
       bus.setCommandCallback(callback);
       ret = OWL_SERVICE_OK;
     }

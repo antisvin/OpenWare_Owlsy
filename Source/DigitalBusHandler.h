@@ -3,6 +3,7 @@
 
 #include "bus.h"
 #include "MidiReader.h"
+#include "OpenWareMidiControl.h"
 
 class DigitalBusHandler : public MidiReader {
 public:
@@ -52,9 +53,13 @@ public:
   void sendFrame(uint8_t d1, uint8_t d2, uint8_t d3, uint8_t d4);
   void sendFrame(uint8_t* frame);
   static bool isMidiFrame(uint8_t* frame);
+  void (*discoverCallback)(void);
   void (*commandCallback)(uint8_t cmd, int16_t data);
   void (*messageCallback)(const char* msg);
   void (*dataCallback)(const uint8_t* data, uint16_t size);
+  void setDiscoverCallback(void *callback) {
+    discoverCallback = (void (*)(void))callback;
+  }
   void setCommandCallback(void *callback) {
     commandCallback = (void (*)(uint8_t, int16_t))callback;
   }
