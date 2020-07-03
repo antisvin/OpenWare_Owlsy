@@ -35,9 +35,6 @@
    void bus_rx_message(const char* msg); 
    void bus_rx_data(const uint8_t* data, uint16_t size); 
    void bus_rx_error(const char* reason);
-   /* group operations to reduce amount of service calls */
-   void bus_send_parameters(uint8_t size, uint8_t* pids);
-   void bus_send_buttons(uint8_t size, uint8_t* bids);
    /* low level IO */
    void bus_tx_frame(uint8_t* data);
    void serial_write(uint8_t* data, uint16_t len);

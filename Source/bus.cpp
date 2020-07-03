@@ -1,7 +1,6 @@
 #include "bus.h"
 #include "midi.h"
 #include "device.h"
-#include "ProgramVector.h"
 #include "message.h"
 #include "SerialBuffer.hpp"
 #include "DigitalBusReader.h"
@@ -210,24 +209,6 @@ void bus_rx_error(const char* reason){
 
 void bus_set_input_channel(uint8_t ch){
   bus.setInputChannel(ch);
-}
-
-void bus_send_parameters(uint8_t size, uint8_t* pids){
-  ProgramVector* pv = getProgramVector();
-  for (uint8_t i = 0; i < size; i++) {
-    uint8_t pid = pids[i];
-    int16_t value = pv->parameters[pid];
-    bus_tx_parameter(pid, value);
-  }
-}
-
-void bus_send_buttons(uint8_t size, uint8_t* bids){
-  ProgramVector* pv = getProgramVector();
-  for (uint8_t i = 0; i < size; i++) {
-    uint8_t bid = (uint8_t)bids[i];
-    int16_t value = pv->parameters[bid];
-    bus_tx_button(bid, value);
-  }
 }
 
 #endif /* USE_UART */
