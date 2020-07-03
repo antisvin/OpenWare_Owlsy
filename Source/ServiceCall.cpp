@@ -167,11 +167,11 @@ static int handleRequestCallback(void** params, int len){
 
 #ifdef USE_DIGITALBUS
     if(strncmp(SYSTEM_FUNCTION_BUS_PARAMETER, name, 3) == 0){
-      *callback = (void*)bus_send_parameters;
+      *callback = (void*)bus_tx_parameter;
       return OWL_SERVICE_OK;
     }
     else if(strncmp(SYSTEM_FUNCTION_BUS_BUTTON, name, 3) == 0){
-      *callback = (void*)bus_send_buttons;
+      *callback = (void*)bus_rx_parameter;
       return OWL_SERVICE_OK;
     }
     else if(strncmp(SYSTEM_FUNCTION_BUS_COMMAND, name, 3) == 0){
