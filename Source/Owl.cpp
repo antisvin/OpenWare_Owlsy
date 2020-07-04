@@ -893,10 +893,10 @@ extern "C"{
   void midi_device_rx(uint8_t *buffer, uint32_t length){
     for(uint16_t i=0; i<length; i+=4){
       if(!mididevice.readMidiFrame(buffer+i))
-	mididevice.reset();
+        mididevice.reset();
 #ifdef USE_DIGITALBUS
-      else
-	bus_tx_frame(buffer+i);
+      else if(settings.bus_forward_midi)
+        bus_tx_frame(buffer+i);
 #endif /* USE_DIGITALBUS */
     }
   }
