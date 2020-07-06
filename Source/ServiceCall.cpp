@@ -115,6 +115,10 @@ static int handleGetParameters(void** params, int len){
       *value = bus_peer_count();
     }else if(strncmp(SYSEX_CONFIGURATION_DIGITAL_BUS_STATUS, p, 2) == 0){
       *value = bus_status();
+    }else if(strncmp(SYSEX_CONFIGURATION_DIGITAL_BUS_ENABLE, p, 2) == 0){
+      *value = settings.bus_enabled;
+    }else if(strncmp(SYSEX_CONFIGURATION_DIGITAL_BUS_FORWARD_MIDI, p, 2) == 0){
+      *value = settings.bus_forward_midi;
 #endif /* USE_DIGITALBUS */
     }else{
       ret = OWL_SERVICE_INVALID_ARGS;
@@ -171,7 +175,7 @@ static int handleRequestCallback(void** params, int len){
       return OWL_SERVICE_OK;
     }
     else if(strncmp(SYSTEM_FUNCTION_BUS_BUTTON, name, 3) == 0){
-      *callback = (void*)bus_rx_parameter;
+      *callback = (void*)bus_tx_button;
       return OWL_SERVICE_OK;
     }
     else if(strncmp(SYSTEM_FUNCTION_BUS_COMMAND, name, 3) == 0){
@@ -223,6 +227,10 @@ static int handleRegisterCallback(void** params, int len){
     extern DigitalBusReader bus;
     if(strncmp(SYSTEM_FUNCTION_BUS_DISCOVER, name, 3) == 0){
       bus.setDiscoverCallback(callback);
+      ret = OWL_SERVICE_OK;
+    }
+    else if(strncmp(SYSTEM_FUNCTION_BUS_RESET, name, 3) == 0){
+      bus.setResetCallback(callback);
       ret = OWL_SERVICE_OK;
     }
     else if(strncmp(SYSTEM_FUNCTION_BUS_COMMAND, name, 3) == 0){

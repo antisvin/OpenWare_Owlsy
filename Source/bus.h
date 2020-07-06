@@ -20,6 +20,7 @@
    uint8_t bus_peer_count();
    uint8_t* bus_deviceid();
    void bus_discover();
+   void bus_reset();
    void bus_set_input_channel(uint8_t ch);
    /* outgoing: send message over digital bus */
    void bus_tx_parameter(uint8_t pid, int16_t value);

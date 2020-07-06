@@ -66,7 +66,7 @@ extern "C" {
     initiateBusRead();
   }
   void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart){
-    error(RUNTIME_ERROR, "uart error");    
+    error(RUNTIME_ERROR, "uart error");
     bus.reset();
     bus_tx_buf.reset();
     bus_rx_buf.reset();
@@ -84,6 +84,10 @@ uint8_t* bus_deviceid(){
 
 void bus_discover(){
   bus.startDiscover();
+}
+
+void bus_reset(){
+  bus.sendReset();
 }
 
 void bus_setup(){

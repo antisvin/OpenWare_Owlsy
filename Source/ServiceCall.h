@@ -13,6 +13,7 @@
 #define SYSTEM_FUNCTION_DRAW               "DRW"
 #define SYSTEM_FUNCTION_MIDI               "MDI"
 #define SYSTEM_FUNCTION_BUS_DISCOVER       "DBD"
+#define SYSTEM_FUNCTION_BUS_RESET          "DBR"
 #define SYSTEM_FUNCTION_BUS_COMMAND        "DBC"
 #define SYSTEM_FUNCTION_BUS_DATA           "DBA"
 #define SYSTEM_FUNCTION_BUS_MESSAGE        "DBM"
