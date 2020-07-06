@@ -270,22 +270,12 @@ void onSetPatchParameter(uint8_t pid, int16_t value){
 // #endif
   setParameterValue(pid, value);
   setAnalogValue(pid, value);
-#ifdef USE_DIGITALBUS
-  if(settings.bus_enabled){
-    bus_tx_parameter(pid, value);
-  }
-#endif
 }
 
 // called from program
 void onSetButton(uint8_t bid, uint16_t state, uint16_t samples){
   // setButtonValue(bid, state); // Patch should update program vector. This may cause feedback loop?
   setGateValue(bid, state);
-#ifdef USE_DIGITALBUS
-  if(settings.bus_enabled){
-    bus_tx_button(bid, state);
-  }
-#endif
 }
 
 // called from program

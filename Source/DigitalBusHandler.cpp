@@ -5,8 +5,7 @@
 
 DigitalBusHandler::DigitalBusHandler() 
   : // uid(0), nuid(NO_UID), 
-    token(NO_TOKEN), peers(0), 
-    parameterOffset(0), status(IDLE) {
+    token(NO_TOKEN), peers(0), status(IDLE) {
   UUID = (uint8_t*)bus_deviceid();
   token = generateToken();
 }

@@ -390,8 +390,16 @@ public:
         screen.print(76, 24 + 20, "MIDI Off");      
       screen.drawRectangle(102, 24 + 10, 26, 10, WHITE);
       // Discover button
-      screen.print(40, 24 + 30, "Discover");
-      screen.invert(36, 24 + 20, 56, 10);
+      switch (bus_status()){
+      case BUS_STATUS_IDLE:
+        screen.print(40, 24 + 30, "Discover");
+        screen.invert(36, 24 + 20, 56, 10);
+        break;
+      case BUS_STATUS_CONNECTED:
+        screen.print(40, 24 + 30, " Reset ");
+        screen.invert(36, 24 + 20, 56, 10);
+        break;
+      }
     }
     else {
       // State
@@ -680,7 +688,15 @@ public:
         break;
 #ifdef USE_DIGITALBUS
       case DIGITAL_BUS:
-        bus_discover();
+        if (settings.bus_enabled)
+          switch (bus_status()){
+          case BUS_STATUS_IDLE:
+            bus_discover();
+            break;
+          case BUS_STATUS_CONNECTED:
+            bus_reset();
+            break;
+          }
         break;
 #endif
       case CALIBRATE:

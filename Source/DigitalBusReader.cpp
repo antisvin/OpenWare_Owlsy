@@ -85,7 +85,7 @@ bool DigitalBusReader::readBusFrame(uint8_t *frame) {
           return rxError("Data buffer overflow");
         }
         if (pos >= datalen) {
-          handleData(buffer, datalen);
+          handleData((const uint8_t*)buffer, datalen);
           txuid = NO_UID;
           datalen = 0;
           pos = 0;
@@ -115,8 +115,9 @@ bool DigitalBusReader::readBusFrame(uint8_t *frame) {
 void DigitalBusReader::reset() {
   MidiReader::reset();
   peers = 0;
-  parameterOffset = 0;
   status = DigitalBusHandler::IDLE;
   txuid = NO_UID;
   datalen = 0;
+  if (resetCallback != NULL)
+    resetCallback();
 }
