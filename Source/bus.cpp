@@ -87,6 +87,8 @@ void bus_discover(){
 }
 
 void bus_reset(){
+  bus_tx_buf.reset();
+  bus_rx_buf.reset();
   bus.sendReset();
 }
 
