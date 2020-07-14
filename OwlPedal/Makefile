@@ -15,12 +15,18 @@ PLATFORM = Pedal
 endif
 
 ifeq ($(PLATFORM),Pedal)
-  CPPFLAGS += -DOWL_PEDAL
+	CPPFLAGS += -DOWL_PEDAL
 else ifeq ($(PLATFORM),Modular)
-  CPPFLAGS += -DOWL_MODULAR
+ 	CPPFLAGS += -DOWL_MODULAR
+else ifeq($(PLATFORM),PedalBus)
+ 	CPPFLAGS += -DOWL_PEDAL -DUSE_DIGITALBUS
+	CPP_SRC += DigitalBusHandler.cpp DigitalBusReader.cpp DigitalBusStreamReader.cpp bus.cpp
+else ifeq ($(PLATFORM),ModularBus)
+	CPPFLAGS += -DOWL_MODULAR -DUSE_DIGITALBUS
+	CPP_SRC += DigitalBusHandler.cpp DigitalBusReader.cpp DigitalBusStreamReader.cpp bus.cpp
 else ifeq ($(PLATFORM),Rack)
-  CPPFLAGS += -IOWL_PEDAL -DOWL_RACK
-  CPP_SRC += DigitalBusHandler.cpp DigitalBusReader.cpp DigitalBusStreamReader.cpp bus.cpp
+	CPPFLAGS += -IOWL_PEDAL -DOWL_RACK
+	CPP_SRC += DigitalBusHandler.cpp DigitalBusReader.cpp DigitalBusStreamReader.cpp bus.cpp
 endif
 
 include $(OPENWARE)/Hardware/sources.mk

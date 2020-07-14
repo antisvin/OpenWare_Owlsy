@@ -16,8 +16,14 @@
 #define HARDWARE_VERSION             "OWL Pedal"
 #define AUDIO_INPUT_GAIN             108
 #define AUDIO_OUTPUT_GAIN            115
+#else
+#error Invalid configuration
 #endif
 #define OWLBOOT_MAGIC                (0xF00B4400)
+
+#ifdef USE_DIGITALBUS
+#define BUS_HUART huart4
+#endif
 
 #define USE_CODEC
 #define USE_WM8731
@@ -38,16 +44,17 @@
 #define NOF_PARAMETERS               40
 #define NOF_BUTTONS                  6
 
+#define DIGITAL_BUS_ENABLED          1
+#define DIGITAL_BUS_FORWARD_MIDI     0
+
+
 #if 0
 #define MIDI_INPUT_CHANNEL           MIDI_OMNI_CHANNEL
 #define MIDI_OUTPUT_CHANNEL          0
 
-#define DIGITAL_BUS_ENABLED          0
-#define DIGITAL_BUS_FORWARD_MIDI     1
-
 /* +0db in and out */
-#define AUDIO_INPUT_GAIN             0x017
-#define AUDIO_OUTPUT_GAIN            0x079
+//#define AUDIO_INPUT_GAIN             0x017
+//#define AUDIO_OUTPUT_GAIN            0x079
 #define AUDIO_INPUT_OFFSET           0xffffefaa /* -0.06382 * 65535 */
 #define AUDIO_INPUT_SCALAR           0xfffbb5c7 /* -4.290 * 65535 */
 #define AUDIO_OUTPUT_OFFSET          0x00001eec /* 0.1208 * 65535 */
