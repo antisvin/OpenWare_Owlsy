@@ -105,8 +105,9 @@ bool DigitalBusReader::readBusFrame(uint8_t *frame) {
       break;
 
     default:
+      // We'll likely be ending up here if frames become misaligned. 
+      bus_reset();
       return rxError("Invalid bus message");
-      break;
     }
   }
   return true;
