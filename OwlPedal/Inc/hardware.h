@@ -35,6 +35,9 @@
 #define ADC_D 3
 #endif
 
+#define BUTTON_PROGRAM_CHANGE
+#define PROGRAM_CHANGE_PUSHBUTTON_MS 2000
+
 #define NOF_PARAMETERS               40
 #define NOF_BUTTONS                  6
 
