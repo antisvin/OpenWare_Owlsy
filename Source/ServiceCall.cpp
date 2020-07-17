@@ -19,7 +19,7 @@
 #include "Graphics.h"
 #endif
 #ifdef USE_MIDI_CALLBACK
-#include "MidiReader.h"
+#include "MidiReceiver.h"
 #endif /* USE_MIDI_CALLBACK */
 #ifdef USE_DIGITALBUS
 #include "bus.h"
@@ -213,12 +213,7 @@ static int handleRegisterCallback(void** params, int len){
 #ifdef USE_MIDI_CALLBACK
     if(strncmp(SYSTEM_FUNCTION_MIDI, name, 3) == 0){
       // void (*midiCallback)(uint8_t port, uint8_t status, uint8_t, uint8_t);
-      extern MidiReader mididevice;
-      mididevice.setCallback(callback);
-#ifdef USE_USB_HOST
-      extern MidiReader midihost;
-      midihost.setCallback(callback);
-#endif /* USE_USB_HOST */
+      midi_rx.setCallback(callback);
       return OWL_SERVICE_OK;
     }
 #endif /* USE_MIDI_CALLBACK */
