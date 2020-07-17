@@ -887,6 +887,28 @@ __weak void loop(void){
 #endif  
 }
 
+#if defined(BUTTON_PROGRAM_CHANGE) && (defined(OWL_MODULAR) || defined(OWL_PEDAL))
+inline int16_t getOwlProgramSelection(){
+  // This code is copied from original firmware. The only difference is that
+  // it won't be running in a separate OS task. So we won't be waiting for
+  // usable patch being selected. Instead of that, we return -1 for invalid
+  // selection - it should be ignored by caller.
+  // NOTE: getParameterValue is used instead of getAnalogValue to avoid
+  // dealing with the whole inverted ADC issue
+  int bank = getParameterValue(PARAMETER_A) * 5 / 4096;
+  int prog = getParameterValue(PARAMETER_B) * 8 / 4096 + 1;
+  float a = getParameterValue(PARAMETER_A) * 5 / 4096.0 - 0.5 / 5;
+  float b = getParameterValue(PARAMETER_B) * 8 / 4096.0 - 0.5 / 8;
+  //if(a - (int)a < 0.8) // deadband each segment: [0.8-1.0)
+  if(a > 0 && abs(a - (int)a - 0.1) > 0.2) // deadband each segment: [0.9-1.1]
+    bank = (int)a;
+  if(b > 0 && abs(b-(int)b - 0.1) > 0.2)
+    prog = (int)b+1;
+  int pc = bank * 8 + prog;
+  return (pc >= (int)registry.getNumberOfPatches()) ? -1 : pc;
+}
+#endif
+
 void owl_loop(){
 #ifdef USE_DIGITALBUS
   busstatus = bus_status();
@@ -904,6 +926,53 @@ void owl_loop(){
   midi_tx.transmit();
 #ifdef USE_IWDG
   IWDG->KR = 0xaaaa; // reset the watchdog timer (if enabled)
+#endif
+#if defined(BUTTON_PROGRAM_CHANGE) && (defined(OWL_MODULAR) || defined(OWL_PEDAL))
+  static TickType_t pushButtonPressed = 0;
+  static uint8_t owlSelectedProgramId;
+  static uint16_t buttonAnimation;
+  if (pushButtonPressed == 0){
+    if (getButtonValue(PUSHBUTTON)){
+      // Pushbutton rising edge detected
+      pushButtonPressed = osKernelSysTick();
+      owlSelectedProgramId = settings.program_index;
+      buttonAnimation = 0x96;
+      // If buffer size is 64 samples, we will flash for 2 seconds 
+    }
+  }
+  else {
+    if (getButtonValue(PUSHBUTTON)) {
+      // Pushbutton kept pressed
+      if (osKernelSysTick() > pushButtonPressed + PROGRAM_CHANGE_PUSHBUTTON_MS){
+        if (buttonAnimation){
+          if ((buttonAnimation-- & 0x7) == 0){
+            HAL_GPIO_TogglePin(LED_RED_GPIO_Port, LED_RED_Pin);
+            HAL_GPIO_TogglePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin);
+
+          }
+        }
+        // Ready to check for patch selection
+        int16_t newOwlProgramId = getOwlProgramSelection();
+        if (newOwlProgramId != owlSelectedProgramId && newOwlProgramId >= 0){
+          owlSelectedProgramId = newOwlProgramId;
+          // Toggle pushbutton LEDs if patch number was changed
+          HAL_GPIO_TogglePin(LED_RED_GPIO_Port, LED_RED_Pin);
+          HAL_GPIO_TogglePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin);
+        }
+      }
+    }
+    else {
+      // Pushbutton falling edge detected
+      pushButtonPressed = 0;
+      if (settings.program_index != owlSelectedProgramId){
+        // This will run unless button was depressed too early or the same
+        // patch as before was selected.
+        settings.program_index = owlSelectedProgramId;
+        program.loadProgram(owlSelectedProgramId);
+        program.resetProgram(false);
+      }
+    }
+  }
 #endif
 }
 
