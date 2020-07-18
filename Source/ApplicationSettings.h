@@ -35,6 +35,10 @@ public:
   void saveToFlash();
 };
 
+void settings_reset();
+void settings_store();
+void settings_load();
+
 extern ApplicationSettings settings;
 
 #endif // __ApplicationSettings_H__

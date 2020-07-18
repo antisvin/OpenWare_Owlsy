@@ -113,6 +113,28 @@ static int handleGetParameters(void** params, int len){
   return ret;
 }
 
+static int handleSetParameters(void** params, int len){
+  int ret = OWL_SERVICE_INVALID_ARGS;
+  int index = 0;
+  ret = OWL_SERVICE_OK;
+  while(len >= index+2){
+    char* p = (char*)params[index++];
+    int32_t* value = (int32_t*)params[index++];
+    if(strncmp(SYSEX_CONFIGURATION_INPUT_OFFSET, p, 2) == 0){
+      settings.input_offset = *value;
+    }else if(strncmp(SYSEX_CONFIGURATION_INPUT_SCALAR, p, 2) == 0){
+      settings.input_scalar = *value;
+    }else if(strncmp(SYSEX_CONFIGURATION_OUTPUT_OFFSET, p, 2) == 0){
+      settings.output_offset = *value;
+    }else if(strncmp(SYSEX_CONFIGURATION_OUTPUT_SCALAR, p, 2) == 0){
+      settings.output_scalar = *value;
+    }else{
+      ret = OWL_SERVICE_INVALID_ARGS;
+    }
+  }
+  return ret;
+}
+
 static int handleGetArray(void** params, int len){
   int ret = OWL_SERVICE_INVALID_ARGS;
   // get array and array size
@@ -153,7 +175,20 @@ static int handleRequestCallback(void** params, int len){
       *callback = (void*)midi_send;
       ret = OWL_SERVICE_OK;
     }
+    else
 #endif /* USE_MIDI_CALLBACK */
+    if(strncmp(SYSTEM_FUNCTION_SETTINGS_RESET, name, 3) == 0){
+      *callback = (void*)settings_reset;
+      ret = OWL_SERVICE_OK;
+    }
+    else if(strncmp(SYSTEM_FUNCTION_SETTINGS_STORE, name, 3) == 0){
+      *callback = (void*)settings_store;
+      ret = OWL_SERVICE_OK;
+    }
+    else if(strncmp(SYSTEM_FUNCTION_SETTINGS_LOAD, name, 3) == 0){
+      *callback = (void*)settings_load;
+      ret = OWL_SERVICE_OK;
+    }
   }
   return ret;
 }
@@ -199,6 +234,9 @@ int serviceCall(int service, void** params, int len){
   case OWL_SERVICE_GET_PARAMETERS:
     ret = handleGetParameters(params, len);
     break;
+  case OWL_SERVICE_SET_PARAMETERS:
+    ret = handleSetParameters(params, len);
+    break;    
   case OWL_SERVICE_GET_ARRAY:
     ret = handleGetArray(params, len);
     break;  

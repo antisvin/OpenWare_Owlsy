@@ -65,3 +65,15 @@ void ApplicationSettings::saveToFlash(){
   memcpy(buffer+sizeof(ResourceHeader), this, sizeof(*this));
   registry.store(APPLICATION_SETTINGS_RESOURCE_INDEX, buffer, totalsize);
 }
+
+void settings_reset(){
+  settings.reset();
+}
+
+void settings_store(){
+  settings.saveToFlash();
+}
+
+void settings_load(){
+  settings.loadFromFlash();
+}
