@@ -10,6 +10,9 @@
 #ifdef USE_USB_HOST
 #include "usbh_midi.h"
 #endif /* USE_USB_HOST */
+#ifdef USE_DIGITALBUS
+#include "bus.h"
+#endif /* USE_DIGITALBUS */
 
 #ifdef USE_USBD_MIDI
 static MidiReader mididevice;
@@ -65,7 +68,8 @@ extern "C" {
     for(size_t i=0; i<length; i+=4){
       if(mididevice.readMidiFrame(buffer+i)){
 #ifdef USE_DIGITALBUS
-	bus_tx_frame(buffer+i);
+        if(settings.bus_forward_midi)
+          bus_tx_frame(buffer+i);
 #endif /* USE_DIGITALBUS */
 	midi_rx_buffer.push(MidiMessage(buffer[i], buffer[i+1], buffer[i+2], buffer[i+3]));
       }else{

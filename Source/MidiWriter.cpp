@@ -178,7 +178,8 @@ void MidiWriter::send(MidiMessage msg){
   uart_midi.write(msg);
 #endif
 // #ifdef USE_DIGITALBUS
-//   bus_tx_frame(msg.data);
+//   if (settings.bus_forward_midi)
+//     bus_tx_frame(msg.data);
 // #endif /* USE_DIGITALBUS */
 }
 

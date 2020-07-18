@@ -977,34 +977,6 @@ void owl_loop(){
 }
 
 extern "C"{
-  // incoming data from USB device interface
-  void midi_device_rx(uint8_t *buffer, uint32_t length){
-    for(uint16_t i=0; i<length; i+=4){
-      if(!mididevice.readMidiFrame(buffer+i))
-        mididevice.reset();
-#ifdef USE_DIGITALBUS
-      else if(settings.bus_forward_midi)
-        bus_tx_frame(buffer+i);
-#endif /* USE_DIGITALBUS */
-    }
-  }
-  // void midi_tx_usb_buffer(uint8_t* buffer, uint32_t length);
-
-#ifdef USE_USB_HOST
-  void midi_host_reset(void){
-    midihost.reset();
-    ledstatus ^= 0x3ff003ff;
-  }
-  void midi_host_rx(uint8_t *buffer, uint32_t length){
-    for(uint16_t i=0; i<length; i+=4){
-      if(!midihost.readMidiFrame(buffer+i)){
-	midihost.reset();
-      }else{
-	ledstatus ^= 0x000ffc00;
-      }
-    }
-  }
-#endif /* USE_USB_HOST */
 
 #if 0 // ifdef USE_ENCODERS
   int16_t getEncoderValue(uint8_t encoder){
