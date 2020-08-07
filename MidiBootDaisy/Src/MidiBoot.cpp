@@ -38,7 +38,7 @@ const char *getFirmwareVersion() {
   return (const char *)(HARDWARE_VERSION " " FIRMWARE_VERSION);
 }
 
-#define FIRMWARE_SECTOR 0xff
+#define FIRMWARE_SECTOR 0xffffffff
 
 const char *message = NULL;
 extern "C" void setMessage(const char *msg) { message = msg; }
@@ -65,7 +65,7 @@ void eraseFromFlash(uint32_t sector) {
     error(RUNTIME_ERROR, "Flash write mode error");
   }
 
-  if (sector == 0xffffffff) {
+  if (sector == FIRMWARE_SECTOR) {
     led_on();
     if (qspi_erase(
             reinterpret_cast<uint32_t>((uint32_t *)&_FIRMWARE_STORAGE_BEGIN),
@@ -203,7 +203,7 @@ void MidiHandler::handleFlashEraseCommand(uint8_t *data, uint16_t size) {
     eraseFromFlash(sector);
     led_off();
   } else if (size == 0) {
-    eraseFromFlash(0xff);
+    eraseFromFlash(FIRMWARE_SECTOR);
     led_off();
   } else {
     error(PROGRAM_ERROR, "Invalid FLASH ERASE command");
