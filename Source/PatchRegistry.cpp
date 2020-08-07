@@ -76,7 +76,7 @@ void PatchRegistry::store(uint8_t index, uint8_t* data, size_t size){
   if(*magic == 0xDADAC0DE && index > 0 && index <= MAX_NUMBER_OF_PATCHES){
     // if it is a patch, set the program id
     *magic = (*magic&0xffffff00) | (index&0xff);
-    StorageBlock block = storage.append(data, size);
+    StorageBlock block = patch_storage.append(data, size);
     if(block.verify()){
       debugMessage("Patch stored to flash");
       index = index - 1;
@@ -91,7 +91,7 @@ void PatchRegistry::store(uint8_t index, uint8_t* data, size_t size){
 	   index <= MAX_NUMBER_OF_PATCHES+MAX_NUMBER_OF_RESOURCES){
     // if it is data, set the resource id
     *magic = (*magic&0xffffff00) | (index&0xff);
-    StorageBlock block = storage.append(data, size);
+    StorageBlock block = patch_storage.append(data, size);
     if(block.verify()){
       debugMessage("Resource stored to\nflash"); // Do we want to show this to users?
       index = index - 1 - MAX_NUMBER_OF_PATCHES;
