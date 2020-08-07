@@ -208,13 +208,13 @@ void MidiController::sendDeviceStats(){
 #ifdef DEBUG_STORAGE
   p = &buf[1];
   p = stpcpy(p, (const char*)"Storage used ");
-  p = stpcpy(p, msg_itoa(storage.getTotalUsedSize(), 10));
+  p = stpcpy(p, msg_itoa(patch_storage.getTotalUsedSize(), 10));
   p = stpcpy(p, (const char*)" deleted ");
-  p = stpcpy(p, msg_itoa(storage.getDeletedSize(), 10));
+  p = stpcpy(p, msg_itoa(patch_storage.getDeletedSize(), 10));
   p = stpcpy(p, (const char*)" free ");
-  p = stpcpy(p, msg_itoa(storage.getFreeSize(), 10));
+  p = stpcpy(p, msg_itoa(patch_storage.getFreeSize(), 10));
   p = stpcpy(p, (const char*)" total ");
-  p = stpcpy(p, msg_itoa(storage.getTotalAllocatedSize(), 10));
+  p = stpcpy(p, msg_itoa(patch_storage.getTotalAllocatedSize(), 10));
   sendSysEx((uint8_t*)buf, p-buf);
 #endif /* DEBUG_STORAGE */
 #ifdef DEBUG_BOOTLOADER
