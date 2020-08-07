@@ -21,6 +21,19 @@ void ProgramManager::exitProgram(bool isr) {}
 void setParameterValue(uint8_t ch, int16_t value) {}
 void MidiReader::reset() {}
 
+void led_off(){
+  HAL_GPIO_WritePin(USER_LED_GPIO_Port, USER_LED_Pin, GPIO_PIN_RESET);
+}
+
+void led_on(){
+  HAL_GPIO_WritePin(USER_LED_GPIO_Port, USER_LED_Pin, GPIO_PIN_SET);
+}
+
+void led_toggle(){
+  HAL_GPIO_TogglePin(USER_LED_GPIO_Port, USER_LED_Pin); 
+}
+
+
 const char *getFirmwareVersion() {
   return (const char *)(HARDWARE_VERSION " " FIRMWARE_VERSION);
 }
@@ -53,6 +66,7 @@ void eraseFromFlash(uint32_t sector) {
   }
 
   if (sector == 0xffffffff) {
+    led_on();
     if (qspi_erase(
             reinterpret_cast<uint32_t>((uint32_t *)&_FIRMWARE_STORAGE_BEGIN),
             reinterpret_cast<uint32_t>((uint32_t *)&_FIRMWARE_STORAGE_END)) !=
@@ -60,14 +74,14 @@ void eraseFromFlash(uint32_t sector) {
       error(RUNTIME_ERROR, "Flash erase error");
     } else {
       setMessage("Erased patch storage");
-      //      led_green();
+      led_off();
     }
   } else {
     if (qspi_erase_sector(sector) != MEMORY_OK) {
       error(RUNTIME_ERROR, "Flash erase error");
     } else {
       setMessage("Erased flash sector");
-      //      led_green();
+      led_off();
     }
   }
 
@@ -136,29 +150,27 @@ bool midi_error(const char *str) {
 }
 
 void setup() {
-  //    led_green();
+  //led_on();
   midi_tx.setOutputChannel(MIDI_OUTPUT_CHANNEL);
   midi_rx.setInputChannel(MIDI_INPUT_CHANNEL);
   setMessage("OWL Bootloader Ready");
 }
 
 void loop(void) {
-#ifdef USE_LED
   static int counter = 3 * 1200;
   if (counter) {
     switch (counter-- % 1200) {
     case 600:
-      led_red();
+      led_off();
       break;
     case 0:
-      led_green();
+      led_on();
       break;
     default:
       HAL_Delay(1);
       break;
     }
   }
-#endif
   midi_tx.transmit();
 }
 }
@@ -167,15 +179,16 @@ void MidiHandler::handleFirmwareUploadCommand(uint8_t *data, uint16_t size) {
   if (size > (64 + 3 * 128) * 1024)
     error(RUNTIME_ERROR, "Firmware too big");
 
+  led_on();
   int32_t ret = loader.handleFirmwareUpload(data, size);
   if (ret > 0) {
     setMessage("Firmware upload complete");
     // firmware upload complete: wait for run or store
     // setLed(NONE); todo!
-    //    led_green();
+    led_off();
   } else if (ret == 0) {
     setMessage("Firmware upload in progress");
-    //    led_toggle();
+    led_toggle();
     // toggleLed(); todo!
   } else {
     error(RUNTIME_ERROR, "Firmware upload error");
@@ -184,11 +197,14 @@ void MidiHandler::handleFirmwareUploadCommand(uint8_t *data, uint16_t size) {
 }
 
 void MidiHandler::handleFlashEraseCommand(uint8_t *data, uint16_t size) {
+  led_on();
   if (size == 5) {
     uint32_t sector = loader.decodeInt(data);
     eraseFromFlash(sector);
+    led_off();
   } else if (size == 0) {
     eraseFromFlash(0xff);
+    led_off();
   } else {
     error(PROGRAM_ERROR, "Invalid FLASH ERASE command");
   }
@@ -198,8 +214,10 @@ void MidiHandler::handleFirmwareFlashCommand(uint8_t *data, uint16_t size) {
   if (loader.isReady() && size == 5) {
     uint32_t checksum = loader.decodeInt(data);
     if (checksum == loader.getChecksum()) {
+      led_on();
       saveToFlash(_FIRMWARE_STORAGE_BEGIN, loader.getData(), loader.getSize());
       loader.clear();
+      led_off();
     } else {
       error(PROGRAM_ERROR, "Invalid FLASH checksum");
     }
