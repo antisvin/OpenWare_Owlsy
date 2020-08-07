@@ -7,7 +7,14 @@
 #include "ResourceHeader.h"
 
 class PatchRegistry;
+#ifndef DAISY
 extern PatchRegistry registry;
+#define settings_registry registry
+#define patch_registry registry
+#else
+extern PatchRegistry settings_registry;
+extern PatchRegistry patch_registry;
+#endif
 
 class PatchRegistry {
 public:

@@ -161,6 +161,23 @@ void MidiController::sendPatchParameterName(PatchParameterId pid, const char* na
   sendSysEx(buf, sizeof(buf));
 }
 
+void MidiController::sendPatchNames(){
+  for(uint8_t i=0; i<patch_registry.getNumberOfPatches(); ++i)
+    sendPatchName(i, patch_registry.getPatchName(i));
+  sendPc(program.getProgramIndex());
+}
+
+void MidiController::sendPatchName(uint8_t index, const char* name){
+  if(name != NULL){
+    uint8_t size = strnlen(name, 24);
+    uint8_t buf[size+2];
+    buf[0] = SYSEX_PRESET_NAME_COMMAND;
+    buf[1] = index;
+    memcpy(buf+2, name, size);
+    sendSysEx(buf, sizeof(buf));
+  }
+}
+
 void MidiController::sendDeviceInfo(){
   sendFirmwareVersion();
   sendBootloaderVersion();

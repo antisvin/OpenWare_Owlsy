@@ -6,7 +6,7 @@
 #endif
 
 #include "main.h"
-#include "stm32f4xx_hal.h"
+#include "stm32_arch_hal.h"
 
 //_____ External Definitions _______________________________________________________________________
 // Pin Mappings
