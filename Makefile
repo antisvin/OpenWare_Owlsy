@@ -12,7 +12,7 @@ endif
 
 export OPENWARE CONFIG
 
-all: alchemist wizard magus witch lich owlpedal midiboot noctua effectsbox biosignals # tesseract prism player quadfm  ## build most targets
+all: alchemist wizard magus witch lich owlpedal midiboot noctua effectsbox biosignals daisypatch # tesseract prism player quadfm  ## build most targets
 
 midiboot: ## build MidiBoot project
 	@$(MAKE) -C MidiBoot all
@@ -56,6 +56,9 @@ noctua: ## build Noctua project
 biosignals: ## build BioSignals project
 	@$(MAKE) -C BioSignals all
 
+daisypatch: ## build BioSignals project
+	@$(MAKE) -C DaisyPatch all
+
 clean: ## remove generated files
 	@$(MAKE) -C Tesseract clean
 	@$(MAKE) -C Witch clean
@@ -71,6 +74,7 @@ clean: ## remove generated files
 	@$(MAKE) -C EffectsBox clean
 	@$(MAKE) -C Noctua clean
 	@$(MAKE) -C BioSignals clean
+	@$(MAKE) -C DaisyPatch clean
 
 docs: ## generate HTML documentation
 	@doxygen Doxyfile

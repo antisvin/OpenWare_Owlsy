@@ -1,4 +1,4 @@
-#include "stm32f4xx_hal.h"
+#include "stm32_arch_hal.h"
 #include "HAL_Encoders.h"
 #include "main.h"
 

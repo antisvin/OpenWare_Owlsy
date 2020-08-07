@@ -2,7 +2,7 @@
 #include "device.h"
 #include "errorhandlers.h"
 #include "SerialBuffer.hpp"
-#include "stm32f4xx_hal.h"
+#include "stm32_arch_hal.h"
 
 #ifdef USE_UART_MIDI
 

@@ -28,8 +28,8 @@ void PatchRegistry::init() {
   //   else
   //     registerPatch(def);
   // }
-  for(int i=0; i<storage.getBlocksTotal(); ++i){
-    StorageBlock block = storage.getBlock(i);
+  for(int i=0; i<patch_storage.getBlocksTotal(); ++i){
+    StorageBlock block = patch_storage.getBlock(i);
     if(block.verify() && block.getDataSize() > 4){
       uint32_t magic = *(uint32_t*)block.getData();
       int id = magic&0x00ff;
@@ -63,7 +63,7 @@ ResourceHeader* PatchRegistry::getResource(const char* name){
 }
 
 void PatchRegistry::store(uint8_t index, uint8_t* data, size_t size){
-  if(size > storage.getFreeSize() + storage.getDeletedSize())
+  if(size > patch_storage.getFreeSize() + patch_storage.getDeletedSize())
     return error(FLASH_ERROR, "Insufficient flash available");
   if(size < 4)
     return error(FLASH_ERROR, "Invalid resource size");

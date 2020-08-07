@@ -1,4 +1,4 @@
-#include "stm32f4xx_hal.h"
+#include "stm32_arch_hal.h"
 #include "HAL_MAX11300.h"
 #include "main.h"
 
