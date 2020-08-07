@@ -21,18 +21,15 @@ void ProgramManager::exitProgram(bool isr) {}
 void setParameterValue(uint8_t ch, int16_t value) {}
 void MidiReader::reset() {}
 
-void led_off(){
+void led_off() {
   HAL_GPIO_WritePin(USER_LED_GPIO_Port, USER_LED_Pin, GPIO_PIN_RESET);
 }
 
-void led_on(){
+void led_on() {
   HAL_GPIO_WritePin(USER_LED_GPIO_Port, USER_LED_Pin, GPIO_PIN_SET);
 }
 
-void led_toggle(){
-  HAL_GPIO_TogglePin(USER_LED_GPIO_Port, USER_LED_Pin); 
-}
-
+void led_toggle() { HAL_GPIO_TogglePin(USER_LED_GPIO_Port, USER_LED_Pin); }
 
 const char *getFirmwareVersion() {
   return (const char *)(HARDWARE_VERSION " " FIRMWARE_VERSION);
@@ -67,10 +64,8 @@ void eraseFromFlash(uint32_t sector) {
 
   if (sector == FIRMWARE_SECTOR) {
     led_on();
-    if (qspi_erase(
-            reinterpret_cast<uint32_t>((uint32_t *)&_FIRMWARE_STORAGE_BEGIN),
-            reinterpret_cast<uint32_t>((uint32_t *)&_FIRMWARE_STORAGE_END)) !=
-        MEMORY_OK) {
+    if (qspi_erase((uint32_t)&_FIRMWARE_STORAGE_BEGIN,
+                   (uint32_t)&_FIRMWARE_STORAGE_END) != MEMORY_OK) {
       error(RUNTIME_ERROR, "Flash erase error");
     } else {
       setMessage("Erased patch storage");
@@ -95,28 +90,26 @@ void eraseFromFlash(uint32_t sector) {
 }
 
 void saveToFlash(uint32_t address, void *data, uint32_t length) {
-  if (qspi_deinit() != MEMORY_OK) {
-    error(RUNTIME_ERROR, "Flash mode error");
-  }
+  if (length > (64 + 3 * 128) * 1024)
+    error(RUNTIME_ERROR, "Firmware too big");
 
-  if (qspi_init(QSPI_MODE_INDIRECT_POLLING) == MEMORY_OK) {
+  if (qspi_init(QSPI_MODE_INDIRECT_POLLING) != MEMORY_OK) {
     error(RUNTIME_ERROR, "Flash write mode error");
   }
 
-  if (qspi_erase(
-      reinterpret_cast<uint32_t>((uint32_t*)&_FIRMWARE_STORAGE_BEGIN),
-      reinterpret_cast<uint32_t>((uint32_t*)&_FIRMWARE_STORAGE_BEGIN + length)) != MEMORY_OK) {
+  if (qspi_erase((uint32_t)&_FIRMWARE_STORAGE_BEGIN,
+      (uint32_t)(&_FIRMWARE_STORAGE_BEGIN + length)) != MEMORY_OK) {
     error(RUNTIME_ERROR, "Flash erase error");
   }
 
-  if (qspi_write_block(
-      reinterpret_cast<uint32_t>((uint32_t*)&_FIRMWARE_STORAGE_BEGIN), (uint8_t*)data, length) != MEMORY_OK) {
+  if (qspi_write_block((uint32_t)&_FIRMWARE_STORAGE_BEGIN, (uint8_t *)data,
+                       length) != MEMORY_OK) {
     error(RUNTIME_ERROR, "Flash firmware write error");
   }
-    
+
   if (qspi_deinit() == MEMORY_OK) {
     error(RUNTIME_ERROR, "Flash mode error");
-  }  
+  }
 
   if (qspi_init(QSPI_MODE_MEMORY_MAPPED) == MEMORY_OK) {
     error(RUNTIME_ERROR, "Flash read mode error");
@@ -150,7 +143,7 @@ bool midi_error(const char *str) {
 }
 
 void setup() {
-  //led_on();
+  // led_on();
   midi_tx.setOutputChannel(MIDI_OUTPUT_CHANNEL);
   midi_rx.setInputChannel(MIDI_INPUT_CHANNEL);
   setMessage("OWL Bootloader Ready");
@@ -176,9 +169,6 @@ void loop(void) {
 }
 
 void MidiHandler::handleFirmwareUploadCommand(uint8_t *data, uint16_t size) {
-  if (size > (64 + 3 * 128) * 1024)
-    error(RUNTIME_ERROR, "Firmware too big");
-
   led_on();
   int32_t ret = loader.handleFirmwareUpload(data, size);
   if (ret > 0) {
