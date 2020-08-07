@@ -17,7 +17,7 @@
 //		due to upgrading the RAM size for the new 4MB chip.
 // TODO: autopolling_mem_ready only works for 1-Line, not 4-Line
 
-extern QSPI_HandleTypeDef QSPI_HANDLE;
+extern QSPI_HandleTypeDef hqspi;
 
 static uint32_t reset_memory(QSPI_HandleTypeDef *hqspi);
 static uint32_t dummy_cycles_cfg(QSPI_HandleTypeDef *hqspi);
