@@ -67,8 +67,8 @@ void MidiController::sendPatchParameterName(PatchParameterId pid, const char* na
 }
 
 void MidiController::sendPatchNames(){
-  for(uint8_t i=0; i<registry.getNumberOfPatches(); ++i)
-    sendPatchName(i, registry.getPatchName(i));
+  for(uint8_t i=0; i<patch_registry.getNumberOfPatches(); ++i)
+    sendPatchName(i, patch_registry.getPatchName(i));
   sendPc(program.getProgramIndex());
 }
 

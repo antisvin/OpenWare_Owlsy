@@ -37,7 +37,9 @@
 #define OWLBOOT_MAGIC_NUMBER        (0xDADAB007)
 #define OWLBOOT_MAGIC_ADDRESS       ((uint32_t*)0x2000FFF0)
 
+#ifndef STORAGE_MAX_BLOCKS
 #define STORAGE_MAX_BLOCKS           64
+#endif
 
 #define DEBUG_DWT
 /* #define DEBUG_STACK */
