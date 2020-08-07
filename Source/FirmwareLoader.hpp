@@ -70,7 +70,7 @@ public:
     // first package
     if(length < 3+5+5)
       return setError("Invalid SysEx package");
-    // stop running program and free its memory
+    // stop running program and fr its memory
     program.exitProgram(true);
     // program.loadProgram(2); // load progress bar
     // program.resetProgram(true);

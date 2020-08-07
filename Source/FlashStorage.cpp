@@ -164,8 +164,6 @@ StorageBlock FlashStorage::createBlock(uint32_t page, uint32_t offset) {
 
 #ifndef DAISY
 FlashStorage storage(EEPROM_PAGE_BEGIN, EEPROM_PAGE_END, STORAGE_MAX_BLOCKS);
-#define settings_storage storage
-#define patch_storage storage
 #else
 FlashStorage settings_storage(SETTINGS_EEPROM_PAGE_BEGIN, SETTINGS_EEPROM_PAGE_END);
 FlashStorage patch_storage(PATCH_EEPROM_PAGE_BEGIN, PATCH_EEPROM_PAGE_END);

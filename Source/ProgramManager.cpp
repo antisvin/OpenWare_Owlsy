@@ -393,7 +393,7 @@ void programFlashTask(void* p){
 void eraseFlashTask(void* p){
   int sector = flashSectorToWrite;
   if(sector == 0xff){
-    storage.erase();
+    patch_storage.erase();
     // debugMessage("Erased flash storage");
     registry.init();
   }
