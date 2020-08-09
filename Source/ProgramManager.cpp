@@ -44,7 +44,12 @@
 #define ERASE_FLASH_NOTIFICATION    0x08
 
 ProgramManager program;
+#ifndef DAISY
 PatchRegistry registry;
+#else
+PatchRegistry patch_registry;
+PatchRegistry settings_registry;
+#endif
 ProgramVector staticVector;
 ProgramVector* programVector = &staticVector;
 static volatile TaskHandle_t audioTask = NULL;
@@ -379,7 +384,7 @@ void programFlashTask(void* p){
     // flashFirmware(source, size); 
     error(PROGRAM_ERROR, "Flash firmware TODO");
   }else{
-    registry.store(index, source, size);
+    patch_registry.store(index, source, size);
     program.loadProgram(index);
     program.resetProgram(false);
   }
@@ -395,7 +400,7 @@ void eraseFlashTask(void* p){
   if(sector == 0xff){
     patch_storage.erase();
     // debugMessage("Erased flash storage");
-    registry.init();
+    patch_registry.init(&patch_storage);
   }
   // midi_tx.sendProgramMessage();
   // midi_tx.sendDeviceStats();
@@ -595,7 +600,7 @@ void ProgramManager::updateProgramIndex(uint8_t index){
   patchindex = index;
   settings.program_index = index;
   midi_tx.sendPc(index);
-  midi_tx.sendPatchName(index, registry.getPatchName(index));
+  midi_tx.sendPatchName(index, patch_registry.getPatchName(index));
 #ifdef USE_BKPSRAM
   extern RTC_HandleTypeDef hrtc;
   HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, index);
@@ -609,10 +614,10 @@ void ProgramManager::loadDynamicProgram(void* address, uint32_t length){
   dynamo.load(address, length);
   if(dynamo.getProgramVector() != NULL){
     patchdef = &dynamo;
-    registry.setDynamicPatchDefinition(patchdef);
+    patch_registry.setDynamicPatchDefinition(patchdef);
     updateProgramIndex(0);
   }else{
-    registry.setDynamicPatchDefinition(NULL);
+    patch_registry.setDynamicPatchDefinition(NULL);
   }
 }
 

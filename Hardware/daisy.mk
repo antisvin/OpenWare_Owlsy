@@ -30,12 +30,11 @@ LDLIBS += -lc -lm
 CPPFLAGS += -fdata-sections
 CPPFLAGS += -ffunction-sections
 CPPFLAGS += -fno-builtin -ffreestanding
-CPPFLAGS += -DOWL_ARCH_H7
 LDFLAGS += -fno-builtin -ffreestanding
 CXXFLAGS = -fno-rtti -fno-exceptions -std=gnu++11
 CFLAGS  += -std=gnu99
 ARCH_FLAGS = -mcpu=cortex-m7 -mthumb -mfloat-abi=hard -mfpu=fpv5-d16
 ARCH_FLAGS += -fsingle-precision-constant
 DEF_FLAGS = -DSTM32H750xx -DARM_MATH_CM7
-# DEF_FLAGS += -D__FPU_PRESENT=1U
+DEF_FLAGS += -D__FPU_PRESENT=1
 S_SRC = startup_stm32h750xx.s

@@ -17,15 +17,21 @@ extern "C" {
 }
 
 #ifdef USE_CS4271
-#define HSAI_RX hsai_BlockB1
-#define HSAI_TX hsai_BlockA1
-#define HDMA_RX hdma_sai1_b
-#define HDMA_TX hdma_sai1_a
+  #define HSAI_RX1 hsai_BlockB1
+  #define HSAI_TX1 hsai_BlockA1
+  #define HDMA_RX1 hdma_sai1_b
+  #define HDMA_TX1 hdma_sai1_a
 #else
-#define HSAI_RX hsai_BlockA1
-#define HSAI_TX hsai_BlockB1
-#define HDMA_RX hdma_sai1_a
-#define HDMA_TX hdma_sai1_b
+  #define HSAI_RX1 hsai_BlockA1
+  #define HSAI_TX1 hsai_BlockB1
+  #define HDMA_RX1 hdma_sai1_a
+  #define HDMA_TX1 hdma_sai1_b
+  #if defined(USE_AK4556) && defined(USE_DUAL_CODECS)
+    #define HSAI_RX2 hsai_BlockB2
+    #define HSAI_TX2 hsai_BlockA2
+    #define HDMA_RX2 hdma_sai2_b
+    #define HDMA_TX2 hdma_sai2_a
+  #endif
 #endif
 
 #ifdef USE_USBD_AUDIO
@@ -42,16 +48,16 @@ typedef int8_t audio_t;
 #endif
 
 static void update_rx_read_index(){
-  extern DMA_HandleTypeDef HDMA_RX;
+  extern DMA_HandleTypeDef HDMA_RX1;
   // NDTR: the number of remaining data units in the current DMA Stream transfer.
-  size_t pos = audio_rx_buffer.getCapacity() - HDMA_RX.Instance->NDTR;
+  size_t pos = audio_rx_buffer.getCapacity() - ((DMA_Stream_TypeDef *)HDMA_RX1.Instance)->NDTR;
   audio_rx_buffer.setReadIndex(pos);
 }
 
 static void update_tx_write_index(){
-  extern DMA_HandleTypeDef HDMA_TX;
+  extern DMA_HandleTypeDef HDMA_TX1;
   // NDTR: the number of remaining data units in the current DMA Stream transfer.
-  size_t pos = audio_tx_buffer.getCapacity() - HDMA_TX.Instance->NDTR;
+  size_t pos = audio_tx_buffer.getCapacity() - ((DMA_Stream_TypeDef *)HDMA_TX1.Instance)->NDTR;
   audio_tx_buffer.setWriteIndex(pos);
 }
 
@@ -352,11 +358,11 @@ extern "C"{
 }
 #endif /* USE_WM8731 */
 
-#if defined USE_CS4271 || defined USE_PCM3168A
+#if defined USE_CS4271 || defined USE_PCM3168A || defined USE_AK4556
 
 extern "C" {
-  SAI_HandleTypeDef HSAI_RX;
-  SAI_HandleTypeDef HSAI_TX;
+  SAI_HandleTypeDef HSAI_RX1;
+  SAI_HandleTypeDef HSAI_TX1;
   void HAL_SAI_RxHalfCpltCallback(SAI_HandleTypeDef *hsai){
     audioCallback(codec_rxbuf, codec_txbuf, codec_blocksize);
   }
@@ -369,13 +375,13 @@ extern "C" {
 }
 
 void Codec::txrx(){
-  HAL_SAI_DMAStop(&HSAI_RX);
-  HAL_SAI_Transmit_DMA(&HSAI_RX, (uint8_t*)codec_rxbuf, codec_blocksize*AUDIO_CHANNELS*2);
+  HAL_SAI_DMAStop(&HSAI_RX1);
+  HAL_SAI_Transmit_DMA(&HSAI_RX1, (uint8_t*)codec_rxbuf, codec_blocksize*AUDIO_CHANNELS*2);
 }
 
 void Codec::stop(){
-  HAL_SAI_DMAStop(&HSAI_RX);
-  HAL_SAI_DMAStop(&HSAI_TX);
+  HAL_SAI_DMAStop(&HSAI_RX1);
+  HAL_SAI_DMAStop(&HSAI_TX1);
 }
 
 void Codec::start(){
@@ -384,26 +390,26 @@ void Codec::start(){
   codec_blocksize = CODEC_BUFFER_SIZE/(AUDIO_CHANNELS*2);
   HAL_StatusTypeDef ret;
 #ifdef USE_CS4271
-  ret = HAL_SAI_Receive_DMA(&HSAI_RX, (uint8_t*)codec_rxbuf, codec_blocksize*AUDIO_CHANNELS*2);
+  ret = HAL_SAI_Receive_DMA(&HSAI_RX1, (uint8_t*)codec_rxbuf, codec_blocksize*AUDIO_CHANNELS*2);
   if(ret == HAL_OK)
-    ret = HAL_SAI_Transmit_DMA(&HSAI_TX, (uint8_t*)codec_txbuf, codec_blocksize*AUDIO_CHANNELS*2);
+    ret = HAL_SAI_Transmit_DMA(&HSAI_TX1, (uint8_t*)codec_txbuf, codec_blocksize*AUDIO_CHANNELS*2);
 #else // PCM3168A
   // start slave first (Noctua)
-  ret = HAL_SAI_Transmit_DMA(&HSAI_TX, (uint8_t*)codec_txbuf, codec_blocksize*AUDIO_CHANNELS*2);
+  ret = HAL_SAI_Transmit_DMA(&HSAI_TX1, (uint8_t*)codec_txbuf, codec_blocksize*AUDIO_CHANNELS*2);
   if(ret == HAL_OK)
-    ret = HAL_SAI_Receive_DMA(&HSAI_RX, (uint8_t*)codec_rxbuf, codec_blocksize*AUDIO_CHANNELS*2);
+    ret = HAL_SAI_Receive_DMA(&HSAI_RX1, (uint8_t*)codec_rxbuf, codec_blocksize*AUDIO_CHANNELS*2);
 #endif
   ASSERT(ret == HAL_OK, "Failed to start SAI DMA");
 }
 
 void Codec::pause(){
-  HAL_SAI_DMAPause(&HSAI_RX);
-  HAL_SAI_DMAPause(&HSAI_TX);
+  HAL_SAI_DMAPause(&HSAI_RX1);
+  HAL_SAI_DMAPause(&HSAI_TX1);
 }
 
 void Codec::resume(){
-  HAL_SAI_DMAResume(&HSAI_RX);
-  HAL_SAI_DMAResume(&HSAI_TX);
+  HAL_SAI_DMAResume(&HSAI_RX1);
+  HAL_SAI_DMAResume(&HSAI_TX1);
 }
 
 extern "C" {

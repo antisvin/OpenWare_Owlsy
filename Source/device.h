@@ -97,5 +97,12 @@
 #define CCM                          __attribute__ ((section (".ccmdata")))
 
 /* #define USE_IWDG                     // compile with support for IWDG watchdog */
+#if defined(USE_IWDG) && !defined(IWDG_PERIPH)
+#define IWDG_PERIPH IWDG
+#endif
+
+#if defined(USE_ENCODERS) && defined(USE_ENCODERS_GPIO)
+#define USE_ENCODERS_SPI
+#endif
 
 #endif /* __DEVICE_H__ */

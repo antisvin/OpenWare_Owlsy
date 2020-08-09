@@ -13,6 +13,8 @@
 #include "PrismParameterController.hpp"
 #elif defined OWL_EFFECTSBOX
 #include "EffectsBoxParameterController.hpp"
+#elif defined DAISY
+#include "DaisyParameterController.hpp"
 #else
 #include "ParameterController.hpp"
 #endif

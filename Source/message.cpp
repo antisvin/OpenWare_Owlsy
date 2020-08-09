@@ -162,9 +162,13 @@ void assert_failed(const char* msg, const char* location, int line){
   error(AUDIO_ERROR_STATUS, buffer);
 }
 
-// void assert_failed(uint8_t* location, uint32_t line){
-//   assert_failed("Assertion Failed", (const char*)location, line);
-// }
+#ifdef OWL_ARCH_H7
+// Not sure where this is supposed to be implemented, but FW won't build on H7 with this
+// function commented out.
+void assert_failed(uint8_t* location, uint32_t line){
+  assert_failed("Assertion Failed", (const char*)location, line);
+}
+#endif
 
 // semihosting
 // static void put_char(char c){

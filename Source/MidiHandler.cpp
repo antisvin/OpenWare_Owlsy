@@ -264,7 +264,7 @@ void MidiHandler::runProgram(){
 void MidiHandler::handleFlashEraseCommand(uint8_t* data, uint16_t size){
   patch_storage.erase();
   patch_storage.init();
-  registry.init();
+  patch_registry.init(&patch_storage);
   settings.init();
   // if(size == 5){
   //   uint32_t sector = loader.decodeInt(data);

@@ -5,8 +5,13 @@
 #include "eepromcontrol.h"
 // #include "stm32f4xx.h"
 
+#ifndef DAISY
 extern char _FLASH_STORAGE_END;
 #define EEPROM_PAGE_END   ((uint32_t)&_FLASH_STORAGE_END)
+#else
+extern char _SETTINGS_STORAGE_END;
+#define EEPROM_PAGE_END   ((uint32_t)&_SETTINGS_STORAGE_END)
+#endif
 
 StorageBlock::StorageBlock() : header(nullptr){}
 
