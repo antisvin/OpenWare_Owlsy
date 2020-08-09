@@ -15,7 +15,5 @@
 #define QSPI_HANDLE hqspi
 //#define QSPI_DEVICE_IS25LP080D
 #define QSPI_DEVICE_IS25LP064A
-#define QSPI_FLASH_
 
-/* #define USE_IWDG */
-/* #define INIT_FMC */
+#define USE_IWDG

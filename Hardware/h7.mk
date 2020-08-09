@@ -1,14 +1,6 @@
 # Library path
 LIBROOT=$(BUILDROOT)/Drivers
 
-# Daisy path
-#DAISY=$(OPENWARE)/Libraries/libDaisy/src
-#CPPFLAGS += -I$(DAISY)
-
-#vpath %.c $(DAISY)
-# vpath %.cpp $(DAISY)
-
-
 # Build path
 BUILD=$(BUILDROOT)/Build
 
@@ -18,7 +10,7 @@ CMSIS_DEVICE=$(LIBROOT)/CMSIS/Device/ST/STM32H7xx
 CMSIS_CORE=$(LIBROOT)/CMSIS/Include
 DSPLIB=$(LIBROOT)/CMSIS/DSP/Source
 # DSPLIB=$(LIBROOT)/CMSIS/DSP_Lib/Source
-# USB_DEVICE_FILE=$(BUILDROOT)/STM32CubeExpansion_USBAudioStreaming_V1.0.0/Middlewares/ST/STM32_USB_Device_Library
+ USB_DEVICE_FILE=$(BUILDROOT)/STM32CubeExpansion_USBAudioStreaming_V1.0.0/Middlewares/ST/STM32_USB_Device_Library
 USB_DEVICE_FILE=$(BUILDROOT)/Middlewares/ST/STM32_USB_Device_Library
 USB_HOST_FILE=$(BUILDROOT)/Middlewares/ST/STM32_USB_Host_Library
 USB_OTG_FILE=$(LIBROOT)/STM32_USB_OTG_Driver
@@ -32,12 +24,12 @@ INC_FLAGS += -I$(USB_HOST_FILE)/Class/CDC/Inc
 INC_FLAGS += -I$(USB_DEVICE_FILE)/Class/CDC/Inc
 INC_FLAGS += -I$(USB_OTG_FILE)/inc
 INC_FLAGS += -I$(FREERTOS_DIR)/include
-INC_FLAGS += -I$(FREERTOS_DIR)/portable/GCC/ARM_CM7F/
+INC_FLAGS += -I$(FREERTOS_DIR)/portable/GCC/ARM_CM4F/
 INC_FLAGS += -I$(FREERTOS_DIR)/CMSIS_RTOS
 INC_FLAGS += -I$(FREERTOS_DIR)/CMSIS_RTOS_V2
 INC_FLAGS += -I$(LIBROOT)/CMSIS/DSP/Include
 
-CPPFLAGS += -mtune=cortex-m7
+CPPFLAGS += -mtune=cortex-m7 -DOWL_ARCH_H7
 CFLAGS += $(ARCH_FLAGS) $(INC_FLAGS) $(DEF_FLAGS)
 CXXFLAGS += $(ARCH_FLAGS) $(INC_FLAGS) $(DEF_FLAGS)
 LDFLAGS += -T$(LDSCRIPT) $(ARCH_FLAGS)

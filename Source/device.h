@@ -115,6 +115,9 @@
 #define CCM                          __attribute__ ((section (".ccmdata")))
 
 #define USE_IWDG                     // compile with support for IWDG watchdog
+#if defined(USE_IWDG) && !defined(IWDG_PERIPH)
+#define IWDG_PERIPH IWDG
+#endif
 
 #ifndef NO_EXTERNAL_RAM
 #define USE_EXTERNAL_RAM

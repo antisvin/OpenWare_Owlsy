@@ -1,5 +1,4 @@
 #include "PatchRegistry.h"
-#include "FlashStorage.h"
 // #include "FactoryPatches.h"
 #include "ProgramManager.h"
 #include "ResourceHeader.h"
@@ -17,7 +16,8 @@ static PatchDefinition emptyPatch("---", 0, 0);
 
 PatchRegistry::PatchRegistry() {}
 
-void PatchRegistry::init() {
+void PatchRegistry::init(FlashStorage* flash_storage) {
+  storage = flash_storage;
   patchCount = 0;
   // FactoryPatchDefinition::init();
   // PatchDefinition* def;
@@ -28,8 +28,8 @@ void PatchRegistry::init() {
   //   else
   //     registerPatch(def);
   // }
-  for(int i=0; i<patch_storage.getBlocksTotal(); ++i){
-    StorageBlock block = patch_storage.getBlock(i);
+  for(int i=0; i<storage->getBlocksTotal(); ++i){
+    StorageBlock block = storage->getBlock(i);
     if(block.verify() && block.getDataSize() > 4){
       uint32_t magic = *(uint32_t*)block.getData();
       int id = magic&0x00ff;
@@ -63,7 +63,7 @@ ResourceHeader* PatchRegistry::getResource(const char* name){
 }
 
 void PatchRegistry::store(uint8_t index, uint8_t* data, size_t size){
-  if(size > patch_storage.getFreeSize() + patch_storage.getDeletedSize())
+  if(size > storage->getFreeSize() + storage->getDeletedSize())
     return error(FLASH_ERROR, "Insufficient flash available");
   if(size < 4)
     return error(FLASH_ERROR, "Invalid resource size");
@@ -78,7 +78,7 @@ void PatchRegistry::store(uint8_t index, uint8_t* data, size_t size){
   if(*magic == 0xDADAC0DE && index > 0 && index <= MAX_NUMBER_OF_PATCHES){
     // if it is a patch, set the program id
     *magic = (*magic&0xffffff00) | (index&0xff);
-    StorageBlock block = patch_storage.append(data, size);
+    StorageBlock block = storage->append(data, size);
     if(block.verify()){
       debugMessage("Patch stored to flash");
       index = index - 1;
@@ -93,7 +93,7 @@ void PatchRegistry::store(uint8_t index, uint8_t* data, size_t size){
 	   index <= MAX_NUMBER_OF_PATCHES+MAX_NUMBER_OF_RESOURCES){
     // if it is data, set the resource id
     *magic = (*magic&0xffffff00) | (index&0xff);
-    StorageBlock block = patch_storage.append(data, size);
+    StorageBlock block = storage->append(data, size);
     if(block.verify()){
       debugMessage("Resource stored to\nflash"); // Do we want to show this to users?
       index = index - 1 - MAX_NUMBER_OF_PATCHES;
