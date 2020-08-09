@@ -44,7 +44,12 @@
 #define ERASE_FLASH_NOTIFICATION    0x08
 
 ProgramManager program;
+#ifndef DAISY
 PatchRegistry registry;
+#else
+PatchRegistry patch_registry;
+PatchRegistry settings_registry;
+#endif
 ProgramVector staticVector;
 ProgramVector* programVector = &staticVector;
 BootloaderStorage bootloader;
@@ -637,10 +642,10 @@ void ProgramManager::loadDynamicProgram(void* address, uint32_t length){
   dynamo.load(address, length);
   if(dynamo.getProgramVector() != NULL){
     patchdef = &dynamo;
-    registry.setDynamicPatchDefinition(patchdef);
+    patch_registry.setDynamicPatchDefinition(patchdef);
     updateProgramIndex(0);
   }else{
-    registry.setDynamicPatchDefinition(NULL);
+    patch_registry.setDynamicPatchDefinition(NULL);
   }
 }
 

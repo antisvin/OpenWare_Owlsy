@@ -22,6 +22,7 @@ OBJS += $(DRIVERS)/Src/stm32h7xx_hal_mdma.o
 
 # optionals
 OBJS_UART = $(DRIVERS)/Src/stm32h7xx_hal_uart.o
+OBJS_UART += $(DRIVERS)/Src/stm32h7xx_hal_uart_ex.o
 OBJS_DAC = $(DRIVERS)/Src/stm32h7xx_hal_dac.o
 OBJS_DAC += $(DRIVERS)/Src/stm32h7xx_hal_dac_ex.o
 OBJS_CRC = $(DRIVERS)/Src/stm32h7xx_hal_crc.o
@@ -96,7 +97,7 @@ OBJS_DSP += $(DSPLIB)/CommonTables/arm_const_structs.o
 OBJS_OS = $(FREERTOS_DIR)/CMSIS_RTOS/cmsis_os.o
 # OBJS_OS = $(FREERTOS_DIR)/CMSIS_RTOS/cmsis_os2.o
 # OBJS_OS += $(FREERTOS_DIR)/portable/GCC/ARM_CM7/r0p1/port.o
-OBJS_OS += $(FREERTOS_DIR)/portable/GCC/ARM_CM7/r0p1/port.o
+OBJS_OS += $(FREERTOS_DIR)/portable/GCC/ARM_CM4F/port.o
 OBJS_OS += $(FREERTOS_DIR)/tasks.o
 OBJS_OS += $(FREERTOS_DIR)/timers.o
 OBJS_OS += $(FREERTOS_DIR)/queue.o

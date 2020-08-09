@@ -258,10 +258,10 @@ static TickType_t xFrequency;
 
 void Owl::setup(void){
 #ifdef USE_IWDG
-  IWDG->KR = 0xCCCC; // Enable IWDG and turn on LSI
-  IWDG->KR = 0x5555; // ensure watchdog register write is allowed
-  IWDG->PR = 0x05;   // prescaler 128
-  IWDG->RLR = 0x753; // reload 8 seconds
+  IWDG_PERIPH->KR = 0xCCCC; // Enable IWDG and turn on LSI
+  IWDG_PERIPH->KR = 0x5555; // ensure watchdog register write is allowed
+  IWDG_PERIPH->PR = 0x05;   // prescaler 128
+  IWDG_PERIPH->RLR = 0x753; // reload 8 seconds
 #endif
   initLed();
   setLed(0, NO_COLOUR);
@@ -271,11 +271,13 @@ void Owl::setup(void){
   ledstatus = 0;
 #ifndef DAISY
   storage.init();
+  registry.init(&storage);
 #else
   patch_storage.init();
   settings_storage.init();
+  patch_registry.init(&patch_storage);
+  settings_registry.init(&settings_storage);
 #endif
-  registry.init();
   settings.init(); // settings need the registry to be initialised first
   onResourceUpdate();
 #ifdef USE_CODEC
@@ -382,7 +384,7 @@ int getGainSelectionValue(){
   return adc_values[MODE_BUTTON_GAIN]*128*4/4096;
 }
 int getPatchSelectionValue(){
-  return adc_values[MODE_BUTTON_PATCH]*(registry.getNumberOfPatches()-1)*4/4095;
+  return adc_values[MODE_BUTTON_PATCH]*(patch_registry.getNumberOfPatches()-1)*4/4095;
 }
 
 void owl_mode_button(void){
@@ -414,7 +416,7 @@ void owl_mode_button(void){
       int value = getPatchSelectionValue();
       if(abs(patchselect - value) > 1){
 	patchselect = value;
-	value = max(1, min((int)registry.getNumberOfPatches()-1, value/4 + 1));
+	value = max(1, min((int)patch_registry.getNumberOfPatches()-1, value/4 + 1));
 	if(program.getProgramIndex() != value){
 	  program.loadProgram(value);
 	  program.resetProgram(false);
@@ -511,7 +513,7 @@ void Owl::loop(){
 #endif
   midi_tx.transmit();
 #ifdef USE_IWDG
-  IWDG->KR = 0xaaaa; // reset the watchdog timer (if enabled)
+  IWDG_PERIPH->KR = 0xaaaa; // reset the watchdog timer (if enabled)
 #endif
   if(backgroundTask != NULL)
     backgroundTask->loop();
@@ -571,7 +573,11 @@ void jump_to_bootloader(void){
   HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, 0);
 #endif
   /* Disable all interrupts */
+#ifndef OWL_ARCH_H7
   RCC->CIR = 0x00000000;
+#else
+  RCC->CIER = 0x00000000;
+#endif
   NVIC_SystemReset();
   /* Shouldn't get here */
   while(1);

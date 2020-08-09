@@ -44,8 +44,7 @@ void FlashStorage::init() {
 }
 
 #if 0
-template<uint32_t start_page, uint32_t end_page, uint32_t max_blocks>
-void FlashStorage<start_page, end_page, max_blocks>::recover(){
+void FlashStorage::recover(){
   StorageBlock block = getLastBlock();
   if(!block.isFree() && !block.isValidSize()){
     // count backwards to see how much free space (0xff words) there is
@@ -164,7 +163,7 @@ StorageBlock FlashStorage::createBlock(uint32_t page, uint32_t offset) {
 #ifndef DAISY
 FlashStorage storage(EEPROM_PAGE_BEGIN, EEPROM_PAGE_END, STORAGE_MAX_BLOCKS);
 #else
-FlashStorage settings_storage(SETTINGS_EEPROM_PAGE_BEGIN, SETTINGS_EEPROM_PAGE_END);
-FlashStorage patch_storage(PATCH_EEPROM_PAGE_BEGIN, PATCH_EEPROM_PAGE_END);
+FlashStorage settings_storage(SETTINGS_EEPROM_PAGE_BEGIN, SETTINGS_EEPROM_PAGE_END, STORAGE_MAX_BLOCKS);
+FlashStorage patch_storage(PATCH_EEPROM_PAGE_BEGIN, PATCH_EEPROM_PAGE_END, STORAGE_MAX_BLOCKS);
 #endif
 

@@ -5,8 +5,10 @@
 #include "PatchDefinition.hpp"
 #include "StorageBlock.h"
 #include "ResourceHeader.h"
+#include "FlashStorage.h"
 
 class PatchRegistry;
+
 #ifndef DAISY
 extern PatchRegistry registry;
 #define settings_registry registry
@@ -16,10 +18,12 @@ extern PatchRegistry settings_registry;
 extern PatchRegistry patch_registry;
 #endif
 
+// This class should probably be refactored to separate resource management and patch registry
+
 class PatchRegistry {
 public:
   PatchRegistry();
-  void init();
+  void init(FlashStorage* flash_storage);
   /* const char* getName(unsigned int index); */
   const char* getPatchName(unsigned int index);
   const char* getResourceName(unsigned int index);
@@ -38,6 +42,7 @@ public:
   void store(uint8_t index, uint8_t* data, size_t size);
   void setDeleted(uint8_t index);
 private:
+  FlashStorage* storage;
   bool isPresetBlock(StorageBlock block);
   StorageBlock patchblocks[MAX_NUMBER_OF_PATCHES];
   StorageBlock resourceblocks[MAX_NUMBER_OF_RESOURCES];
