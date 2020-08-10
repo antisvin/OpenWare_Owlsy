@@ -39,6 +39,7 @@ CPP_SRC += MidiController.cpp
 OBJS = $(C_SRC:%.c=Build/%.o)
 OBJS += $(CPP_SRC:%.cpp=Build/%.o)
 OBJS += $(S_SRC:%.s=Build/%.o)
+OBJS += $(DRIVERS)/Src/stm32h7xx_hal_qspi.o
 
 OBJS += $(OBJS_SDRAM)
 OBJS += $(OBJS_USBD)
@@ -54,13 +55,13 @@ info:
 
 unlock:
 	$(OPENOCD) -c "init" -c "reset halt" -c "stm32h7x unlock 0" -c "exit"
-	$(OPENOCD) -c "init" -c "reset halt" -c "flash protect 0 0 1 off" -c "flash info 0" -c "exit"
+	$(OPENOCD) -c "init" -c "reset halt" -c "flash protect 0 0 0 off" -c "flash info 0" -c "exit"
 
 erase:
 	$(OPENOCD) -c "init" -c "halt" -c "stm32h7x mass_erase 0" -c "flash info 0" -c "exit"
 
-erase-boot: # flash erase_sector num first last
-	$(OPENOCD) -c "init" -c "halt" -c "flash erase_sector 0 0 1" -c "exit"
+#erase-boot: # flash erase_sector num first last
+#	$(OPENOCD) -c "init" -c "halt" -c "flash erase_sector 0 0 0" -c "exit"
 
 #erase-storage: # flash erase_sector num first last
 #	$(OPENOCD) -c "init" -c "halt" -c "flash erase_sector 0 7 11" -c "exit"

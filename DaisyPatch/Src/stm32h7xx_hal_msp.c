@@ -245,97 +245,6 @@ void HAL_DAC_MspDeInit(DAC_HandleTypeDef* hdac)
 }
 
 /**
-* @brief QSPI MSP Initialization
-* This function configures the hardware resources used in this example
-* @param hqspi: QSPI handle pointer
-* @retval None
-*/
-void HAL_QSPI_MspInit(QSPI_HandleTypeDef* hqspi)
-{
-  GPIO_InitTypeDef GPIO_InitStruct = {0};
-  if(hqspi->Instance==QUADSPI)
-  {
-  /* USER CODE BEGIN QUADSPI_MspInit 0 */
-
-  /* USER CODE END QUADSPI_MspInit 0 */
-    /* Peripheral clock enable */
-    __HAL_RCC_QSPI_CLK_ENABLE();
-
-    __HAL_RCC_GPIOG_CLK_ENABLE();
-    __HAL_RCC_GPIOF_CLK_ENABLE();
-    /**QUADSPI GPIO Configuration
-    PG6     ------> QUADSPI_BK1_NCS
-    PF7     ------> QUADSPI_BK1_IO2
-    PF6     ------> QUADSPI_BK1_IO3
-    PF10     ------> QUADSPI_CLK
-    PF9     ------> QUADSPI_BK1_IO1
-    PF8     ------> QUADSPI_BK1_IO0
-    */
-    GPIO_InitStruct.Pin = GPIO_PIN_6;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-    GPIO_InitStruct.Alternate = GPIO_AF10_QUADSPI;
-    HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
-
-    GPIO_InitStruct.Pin = GPIO_PIN_7|GPIO_PIN_6|GPIO_PIN_10;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-    GPIO_InitStruct.Alternate = GPIO_AF9_QUADSPI;
-    HAL_GPIO_Init(GPIOF, &GPIO_InitStruct);
-
-    GPIO_InitStruct.Pin = GPIO_PIN_9|GPIO_PIN_8;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-    GPIO_InitStruct.Alternate = GPIO_AF10_QUADSPI;
-    HAL_GPIO_Init(GPIOF, &GPIO_InitStruct);
-
-  /* USER CODE BEGIN QUADSPI_MspInit 1 */
-
-  /* USER CODE END QUADSPI_MspInit 1 */
-  }
-
-}
-
-/**
-* @brief QSPI MSP De-Initialization
-* This function freeze the hardware resources used in this example
-* @param hqspi: QSPI handle pointer
-* @retval None
-*/
-void HAL_QSPI_MspDeInit(QSPI_HandleTypeDef* hqspi)
-{
-  if(hqspi->Instance==QUADSPI)
-  {
-  /* USER CODE BEGIN QUADSPI_MspDeInit 0 */
-
-  /* USER CODE END QUADSPI_MspDeInit 0 */
-    /* Peripheral clock disable */
-    __HAL_RCC_QSPI_CLK_DISABLE();
-
-    /**QUADSPI GPIO Configuration
-    PG6     ------> QUADSPI_BK1_NCS
-    PF7     ------> QUADSPI_BK1_IO2
-    PF6     ------> QUADSPI_BK1_IO3
-    PF10     ------> QUADSPI_CLK
-    PF9     ------> QUADSPI_BK1_IO1
-    PF8     ------> QUADSPI_BK1_IO0
-    */
-    HAL_GPIO_DeInit(GPIOG, GPIO_PIN_6);
-
-    HAL_GPIO_DeInit(GPIOF, GPIO_PIN_7|GPIO_PIN_6|GPIO_PIN_10|GPIO_PIN_9
-                          |GPIO_PIN_8);
-
-  /* USER CODE BEGIN QUADSPI_MspDeInit 1 */
-
-  /* USER CODE END QUADSPI_MspDeInit 1 */
-  }
-
-}
-
-/**
 * @brief SPI MSP Initialization
 * This function configures the hardware resources used in this example
 * @param hspi: SPI handle pointer
@@ -366,7 +275,7 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* hspi)
     GPIO_InitStruct.Alternate = GPIO_AF5_SPI1;
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-    GPIO_InitStruct.Pin = GPIO_PIN_11|GPIO_PIN_10;
+    GPIO_InitStruct.Pin = GPIO_PIN_11|OLED_CS_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
@@ -425,7 +334,7 @@ void HAL_SPI_MspDeInit(SPI_HandleTypeDef* hspi)
     */
     HAL_GPIO_DeInit(GPIOB, GPIO_PIN_5);
 
-    HAL_GPIO_DeInit(GPIOG, GPIO_PIN_11|GPIO_PIN_10);
+    HAL_GPIO_DeInit(GPIOG, GPIO_PIN_11|OLED_CS_Pin);
 
     /* SPI1 DMA DeInit */
     HAL_DMA_DeInit(hspi->hdmatx);

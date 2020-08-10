@@ -16,7 +16,6 @@ OBJS += $(DRIVERS)/Src/stm32h7xx_hal_tim.o
 OBJS += $(DRIVERS)/Src/stm32h7xx_hal_cortex.o
 OBJS += $(DRIVERS)/Src/stm32h7xx_hal_spi.o
 # OBJS += $(DRIVERS)/Src/stm32h7xx_hal_rng.o
-OBJS += $(DRIVERS)/Src/stm32h7xx_hal_qspi.o
 OBJS += $(DRIVERS)/Src/stm32h7xx_hal_mdma.o
 # OBJS += $(DRIVERS)/Src/stm32h7xx_hal_dma2d.o
 
@@ -38,9 +37,6 @@ OBJS_SDRAM += $(DRIVERS)/Src/stm32h7xx_ll_fmc.o
 # required by Daisy Seed
 OBJS_SAI = $(DRIVERS)/Src/stm32h7xx_hal_sai.o
 OBJS_SAI += $(DRIVERS)/Src/stm32h7xx_hal_sai_ex.o
-
-#OBJS_DAISY = $(DAISY)/dev_sdram.o
-#OBJS_DAISY += $(DAISY)/dev_codec_ak4556.o
 
 # required by Daisy Patch
 

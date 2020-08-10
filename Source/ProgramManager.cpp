@@ -344,7 +344,7 @@ void updateProgramVector(ProgramVector* pv){
     // todo: add remaining program space
     { NULL, 0 }
   };  
-#elif defined OWL_ARCH_F7
+#elif defined OWL_ARCH_F7 || defined OWL_ARCH_H7
   extern char _EXTRAM, _EXTRAM_SIZE;
   static MemorySegment heapSegments[] = {
     { (uint8_t*)&_EXTRAM, (uint32_t)(&_EXTRAM_SIZE) },
@@ -519,7 +519,7 @@ void runManagerTask(void* p){
       PatchDefinition* def = getPatchDefinition();
       if(audioTask == NULL && def != NULL){
       	static StaticTask_t audioTaskBuffer;
-#ifdef OWL_ARCH_F7
+#if defined OWL_ARCH_F7 || defined OWL_ARCH_H7
 	extern char _PATCHRAM, _PATCHRAM_SIZE;
 	uint8_t* PROGRAMSTACK = ((uint8_t*)&_PATCHRAM )+_PATCHRAM_SIZE-PROGRAMSTACK_SIZE; // put stack at end of program ram (points to first byte of stack array, not last)
 #else
