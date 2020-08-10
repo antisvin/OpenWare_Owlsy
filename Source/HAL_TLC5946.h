@@ -6,7 +6,7 @@
 #endif
 
 #include <stdint.h>
-#include "stm32f4xx_hal.h"
+#include "stm32_arch_hal.h"
 
 // Modes
 #define Mode_GS 	0

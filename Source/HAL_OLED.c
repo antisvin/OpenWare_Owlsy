@@ -1,5 +1,4 @@
 // _____ Includes ______________________________________________________________________
-#include "stm32_arch_hal.h"
 #include "HAL_OLED.h"
 #include <string.h>
 

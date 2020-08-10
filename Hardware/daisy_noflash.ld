@@ -68,10 +68,13 @@ RAM_D2 (rwx)      : ORIGIN = 0x30000000, LENGTH = 288K
 RAM_D3 (rwx)      : ORIGIN = 0x38000000, LENGTH = 64K
 ITCMRAM (rwx)     : ORIGIN = 0x00000000, LENGTH = 64K
 EXTRAM (rwx)      : ORIGIN = 0xc0000000, LENGTH = 64M
-BOOTLOADER (r)    : ORIGIN = 0x08000000, LENGTH = 64K    /* Bootloader on flash*/
-SETTINGS (rwx)    : ORIGIN = 0x08010000, LENGTH = 64K    /* Writable flash part - should be used for storing settings from firmware  */
-FLASH (rx)        : ORIGIN = 0x90000000, LENGTH = 512K  /* QSPI flash - firmware part */
-STORAGE (rx)      : ORIGIN = 0x90080000, LENGTH = 7680K  /* QSPI flash - patch storage part. That's one hell of a lot of patches */
+/*BOOTLOADER (r)    : ORIGIN = 0x8000000, LENGTH = 64K    /* Bootloader on flash*/
+FLASH (rx)        : ORIGIN = 0x08000000, LENGTH = 120K /* Firmware minus settings and flash */
+SETTINGS (rwx)    : ORIGIN = 0x08001e00, LENGTH = 4K /* Firmware and settings are still stored in separate sections */
+STORAGE (rx)      : ORIGIN = 0x08001f00, LENGTH = 4K /* This way we don't need separate config option for Daisy without QSPi */
+
+/* FLASH (rx)        : ORIGIN = 0x90000000, LENGTH = 512K  /* QSPI flash - firmware part */
+/* STORAGE (rx)      : ORIGIN = 0x90080000, LENGTH = 7680K  /* QSPI flash - patch storage part. That's one hell of a lot of patches */
 }
 /* Device flash is 128k, we split it between bootloader and settings
  QSPI flash is 8M, split it between FW and patches
