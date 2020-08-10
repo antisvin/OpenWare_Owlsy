@@ -29,6 +29,9 @@
 #define NOF_ADC_VALUES               4
 #define NOF_PARAMETERS               20
 #define NOF_BUTTONS                  2 + 1
+#define USE_ENCODERS
+#define USE_ENCODERS_GPIO
+#define NOF_ENCODERS                 1
 
 
 #define USE_USBD_AUDIO

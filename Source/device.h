@@ -101,8 +101,4 @@
 #define IWDG_PERIPH IWDG
 #endif
 
-#if defined(USE_ENCODERS) && defined(USE_ENCODERS_GPIO)
-#define USE_ENCODERS_SPI
-#endif
-
 #endif /* __DEVICE_H__ */
