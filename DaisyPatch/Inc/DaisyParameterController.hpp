@@ -1,6 +1,7 @@
 #ifndef __ParameterController_hpp__
 #define __ParameterController_hpp__
 
+#include <cstring>
 #include "basicmaths.h"
 #include "errorhandlers.h"
 #include "ProgramVector.h"
@@ -110,7 +111,6 @@ public:
   }
 
   void drawDisplayMode(ScreenBuffer& screen){
-    screen.fill(BLUE);
     switch(display){
     case DISPLAY_STANDARD:
       drawParameter(86, selectedPid[0], screen);
@@ -143,15 +143,12 @@ public:
       drawDisplayMode(screen);
       break;
     case SELECTGLOBALPARAMETER:
-      screen.fill(BLACK);
       drawGlobalParameterNames(46, screen);
       break;
     case SELECTPROGRAM:
-      screen.fill(BLACK);
       drawProgramNames(46, screen);
       break;
     case MODE_ERROR:
-      screen.fill(RED);
       drawTitle("ERROR", screen);
       drawError(26, screen);
       drawMessage(46, screen);
