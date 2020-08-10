@@ -1,6 +1,7 @@
 #include "errorhandlers.h"
 #include "device.h"
 #include "Owl.h"
+#include "message.h"
 
 #ifdef DEBUG
 #include <stdio.h>
