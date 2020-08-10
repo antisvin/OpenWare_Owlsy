@@ -47,6 +47,5 @@ void setup(){
 }
 
 void loop(void){
-  MX_USB_HOST_Process(); // todo: enable PWR management
   owl_loop();
 }

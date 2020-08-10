@@ -25,7 +25,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "device.h"
-//#include "errorhandlers.h"
+#include "errorhandlers.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -49,8 +49,6 @@ DMA_HandleTypeDef hdma_adc1;
 DAC_HandleTypeDef hdac1;
 
 IWDG_HandleTypeDef hiwdg1;
-
-QSPI_HandleTypeDef hqspi;
 
 SAI_HandleTypeDef hsai_BlockA1;
 SAI_HandleTypeDef hsai_BlockB1;
@@ -78,7 +76,6 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
 static void MX_FMC_Init(void);
-static void MX_QUADSPI_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_IWDG1_Init(void);
 static void MX_ADC1_Init(void);
@@ -90,6 +87,11 @@ static void MX_SAI2_Init(void);
 void StartDefaultTask(void const * argument);
 
 /* USER CODE BEGIN PFP */
+void setup(void);
+void loop(void);
+void MX_USB_HOST_Process(void);
+void SDRAM_Initialization_Sequence(SDRAM_HandleTypeDef *hsdram);
+void initialise_monitor_handles(void);
 
 /* USER CODE END PFP */
 
@@ -105,7 +107,12 @@ void StartDefaultTask(void const * argument);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
+#ifdef DEBUG
+#warning "DEBUG uses printf and semihosting!"
+  if(CoreDebug->DHCSR & 0x01)
+    initialise_monitor_handles(); // remove when not semi-hosting
+  printf("showtime\n");
+#endif
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -128,7 +135,6 @@ int main(void)
   MX_GPIO_Init();
   MX_DMA_Init();
   MX_FMC_Init();
-  MX_QUADSPI_Init();
   MX_TIM1_Init();
   MX_IWDG1_Init();
   MX_ADC1_Init();
@@ -138,7 +144,12 @@ int main(void)
   MX_SAI1_Init();
   MX_SAI2_Init();
   /* USER CODE BEGIN 2 */
+// TODO: reinit SAI?
 
+  HAL_NVIC_SetPriority(EXTI2_IRQn, 3, 0);
+  HAL_NVIC_EnableIRQ(EXTI2_IRQn);
+
+  SDRAM_Initialization_Sequence(&hsdram1);   
   /* USER CODE END 2 */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -244,7 +255,7 @@ void SystemClock_Config(void)
   PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_USART1|RCC_PERIPHCLK_SPI1
                               |RCC_PERIPHCLK_SAI2|RCC_PERIPHCLK_SAI1
                               |RCC_PERIPHCLK_ADC|RCC_PERIPHCLK_USB
-                              |RCC_PERIPHCLK_QSPI|RCC_PERIPHCLK_FMC;
+                              |RCC_PERIPHCLK_FMC;
   PeriphClkInitStruct.PLL2.PLL2M = 1;
   PeriphClkInitStruct.PLL2.PLL2N = 12;
   PeriphClkInitStruct.PLL2.PLL2P = 8;
@@ -262,7 +273,6 @@ void SystemClock_Config(void)
   PeriphClkInitStruct.PLL3.PLL3VCOSEL = RCC_PLL3VCOWIDE;
   PeriphClkInitStruct.PLL3.PLL3FRACN = 2360;
   PeriphClkInitStruct.FmcClockSelection = RCC_FMCCLKSOURCE_PLL2;
-  PeriphClkInitStruct.QspiClockSelection = RCC_QSPICLKSOURCE_PLL;
   PeriphClkInitStruct.Sai1ClockSelection = RCC_SAI1CLKSOURCE_PLL3;
   PeriphClkInitStruct.Sai23ClockSelection = RCC_SAI23CLKSOURCE_PLL3;
   PeriphClkInitStruct.Spi123ClockSelection = RCC_SPI123CLKSOURCE_PLL;
@@ -404,7 +414,7 @@ static void MX_IWDG1_Init(void)
   /* USER CODE END IWDG1_Init 0 */
 
   /* USER CODE BEGIN IWDG1_Init 1 */
-
+#ifdef USE_IWDG
   /* USER CODE END IWDG1_Init 1 */
   hiwdg1.Instance = IWDG1;
   hiwdg1.Init.Prescaler = IWDG_PRESCALER_128;
@@ -415,43 +425,8 @@ static void MX_IWDG1_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN IWDG1_Init 2 */
-
+#endif
   /* USER CODE END IWDG1_Init 2 */
-
-}
-
-/**
-  * @brief QUADSPI Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_QUADSPI_Init(void)
-{
-
-  /* USER CODE BEGIN QUADSPI_Init 0 */
-
-  /* USER CODE END QUADSPI_Init 0 */
-
-  /* USER CODE BEGIN QUADSPI_Init 1 */
-
-  /* USER CODE END QUADSPI_Init 1 */
-  /* QUADSPI parameter configuration*/
-  hqspi.Instance = QUADSPI;
-  hqspi.Init.ClockPrescaler = 255;
-  hqspi.Init.FifoThreshold = 1;
-  hqspi.Init.SampleShifting = QSPI_SAMPLE_SHIFTING_NONE;
-  hqspi.Init.FlashSize = 1;
-  hqspi.Init.ChipSelectHighTime = QSPI_CS_HIGH_TIME_1_CYCLE;
-  hqspi.Init.ClockMode = QSPI_CLOCK_MODE_0;
-  hqspi.Init.FlashID = QSPI_FLASH_ID_1;
-  hqspi.Init.DualFlash = QSPI_DUALFLASH_DISABLE;
-  if (HAL_QSPI_Init(&hqspi) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN QUADSPI_Init 2 */
-
-  /* USER CODE END QUADSPI_Init 2 */
 
 }
 
@@ -873,10 +848,12 @@ void StartDefaultTask(void const * argument)
   /* init code for USB_DEVICE */
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 5 */
+  setup();
+
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+    loop();
   }
   /* USER CODE END 5 */
 }
@@ -888,8 +865,11 @@ void StartDefaultTask(void const * argument)
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
-  /* User can add his own implementation to report the HAL error return state */
-
+#ifdef DEBUG
+  __asm__("BKPT");
+#else
+  NVIC_SystemReset();
+#endif
   /* USER CODE END Error_Handler_Debug */
 }
 
@@ -904,8 +884,11 @@ void Error_Handler(void)
 void assert_failed(uint8_t *file, uint32_t line)
 {
   /* USER CODE BEGIN 6 */
-  /* User can add his own implementation to report the file name and line number,
-     tex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+#ifdef DEBUG
+  __asm__("BKPT");
+#else
+  NVIC_SystemReset();
+#endif  
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */

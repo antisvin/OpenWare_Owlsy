@@ -5,8 +5,10 @@
 #include "OpenWareMidiControl.h"
 #include "Owl.h"
 
+#ifndef MINIMAL_BUILD
 #define USE_FFT_TABLES
 #define USE_FAST_POW
+#endif
 
 #ifdef USE_FFT_TABLES
 #include "arm_const_structs.h"
