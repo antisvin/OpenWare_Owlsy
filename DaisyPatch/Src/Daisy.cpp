@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "device.h"
 #include "Owl.h"
+#include "Graphics.h"
 //#include "errorhandlers.h"
 #include "message.h"
 #include "ProgramManager.h"
@@ -43,6 +44,10 @@ void setup(){
   HAL_GPIO_WritePin(TR_OUT2_GPIO_Port, TR_OUT2_Pin, GPIO_PIN_SET);
   HAL_GPIO_WritePin(LEDPWM1_GPIO_Port, LEDPWM1_Pin, GPIO_PIN_SET);
 */
+  HAL_GPIO_WritePin(OLED_RST_GPIO_Port, OLED_RST_Pin, GPIO_PIN_RESET); // OLED off
+  extern SPI_HandleTypeDef OLED_SPI;
+  graphics.begin(&OLED_SPI);
+
   owl_setup();
 }
 
