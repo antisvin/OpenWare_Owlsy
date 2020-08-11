@@ -974,10 +974,10 @@ void jump_to_bootloader(void){
 // #endif
   *OWLBOOT_MAGIC_ADDRESS = OWLBOOT_MAGIC_NUMBER;
   /* Disable all interrupts */
-#ifndef OWL_ARCH_H7
-  RCC->CIR = 0x00000000;
-#else
+#ifdef OWL_ARCH_H7
   RCC->CIER = 0x00000000;
+#else
+  RCC->CIR = 0x00000000;
 #endif
   NVIC_SystemReset();
   /* Shouldn't get here */
