@@ -573,10 +573,10 @@ void jump_to_bootloader(void){
   HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, 0);
 #endif
   /* Disable all interrupts */
-#ifndef OWL_ARCH_H7
-  RCC->CIR = 0x00000000;
-#else
+#ifdef OWL_ARCH_H7
   RCC->CIER = 0x00000000;
+#else
+  RCC->CIR = 0x00000000;
 #endif
   NVIC_SystemReset();
   /* Shouldn't get here */
