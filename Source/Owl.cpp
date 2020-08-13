@@ -298,7 +298,7 @@ __weak void pinChanged(uint16_t pin){
   case ENC2_SW_Pin:
     setButtonValue(BUTTON_B, !(ENC2_SW_GPIO_Port->IDR & ENC2_SW_Pin));
     break;
-#endif    
+#endif
   }
 }
 
@@ -388,7 +388,7 @@ __weak void setup(){
   __HAL_TIM_SET_COUNTER(&ENCODER_TIM2, INT16_MAX/2);
   HAL_TIM_Encoder_Start_IT(&ENCODER_TIM1, TIM_CHANNEL_ALL);
   HAL_TIM_Encoder_Start_IT(&ENCODER_TIM2, TIM_CHANNEL_ALL);
-#endif /* OWL_PLAYERF7 */
+#endif /* USE_ENCODERS */
 
 #ifdef OWL_WAVETABLE
   extern ADC_HandleTypeDef hadc1;
