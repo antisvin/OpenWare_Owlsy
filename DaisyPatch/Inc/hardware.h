@@ -16,8 +16,8 @@
 
 #define USE_SCREEN
 #define SSD1309
-#define OLED_DMA
-//#define OLED_SOFT_CS
+//#define OLED_DMA
+// #define OLED_SOFT_CS
 #define OLED_SPI hspi1
 /* #define OLED_IT */
 /* #define OLED_BITBANG */
@@ -30,11 +30,11 @@
 #define ADC_D 3
 #define NOF_ADC_VALUES               4
 #define NOF_PARAMETERS               20
-#define NOF_BUTTONS                  2 + 1
+// Buttons are encoder short/long click, 2 x gate in, 1 x gate out
+#define NOF_BUTTONS                  2 + 2 + 1
 #define USE_ENCODERS
-#define USE_ENCODERS_GPIO
 #define NOF_ENCODERS                 1
-
+//#define ENCODER_TIM1 htim4
 
 #define USE_USBD_AUDIO
 #define USE_CODEC
