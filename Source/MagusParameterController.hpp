@@ -484,6 +484,9 @@ public:
     case EXIT:
       drawTitle("done", screen);
       break;
+    default:
+      drawTitle("Unknown mode", screen);
+      break;
     }
     // todo!
     // select: Scope, VU Meter, Patch Stats, Set Gain, Show MIDI, Reset Patch, Select Patch...

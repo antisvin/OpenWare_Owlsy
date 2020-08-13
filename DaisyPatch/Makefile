@@ -17,7 +17,6 @@ C_SRC += usbd_audio.c
 C_SRC += sdram_daisy.c
 C_SRC += ssd1309.c
 C_SRC += ak4556.c
-C_SRC += HAL_Encoders_GPIO.c
 CPP_SRC += ScreenBuffer.cpp ScreenBufferMono.cpp Graphics.cpp
 
 ifndef PLATFORM
