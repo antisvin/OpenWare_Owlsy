@@ -1,31 +1,29 @@
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
+//#include "Daisy.h"
 #include "device.h"
 #include "Owl.h"
 #include "Graphics.h"
 //#include "errorhandlers.h"
 #include "message.h"
+#include "gpio.h"
 #include "ProgramManager.h"
 #include "PatchRegistry.h"
 #include "OpenWareMidiControl.h"
 #include "SoftwareEncoder.hpp"
 
-#ifndef min
-#define min(a,b) ((a)<(b)?(a):(b))
-#endif
-#ifndef max
-#define max(a,b) ((a)>(b)?(a):(b))
-#endif
-#ifndef abs
-#define abs(x) ((x)>0?(x):-(x))
-#endif
-
-static int16_t counter;
+static int16_t encoder_counter;
 
 static SoftwareEncoder<> encoder(
   ENC_A_GPIO_Port, ENC_A_Pin,
   ENC_B_GPIO_Port, ENC_B_Pin, 
-  ENC_CLICK_GPIO_Port, ENC_CLICK_Pin, (uint16_t*)&counter);
+  ENC_CLICK_GPIO_Port, ENC_CLICK_Pin, (uint16_t*)&encoder_counter);
+
+
+extern "C" void updateEncoderState(){
+  encoder.update();
+}
 
 void setGateValue(uint8_t ch, int16_t value){
 /*
@@ -60,11 +58,11 @@ void setup(){
 }
 
 void loop(void){
-  encoder.update();
+  //encoder.update();
   setButtonValue(BUTTON_A, encoder.isPressed());
   setButtonValue(PUSHBUTTON, encoder.isPressed());
-  setButtonValue(BUTTON_B, encoder.isLongCLick());
-  graphics.params.updateEncoders(&counter, 1);
+  setButtonValue(BUTTON_B, encoder.isLongPress());
+  graphics.params.updateEncoders(&encoder_counter, 1);
 
   for(int i = 0; i < NOF_ADC_VALUES; ++i)
     graphics.params.updateValue(i, 4095 - (uint16_t(getAnalogValue(i)) >> 4));

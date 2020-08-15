@@ -14,14 +14,16 @@ public:
 
     void update() {
         click_state <<= 1;
-        click_state |= getPin(port_click, pin_click);
+        // This assumes that button is pulled up, so pin input gets inverted. We
+        // could have an option to remove inverting, or better a template parameter
+        click_state |= !getPin(port_click, pin_click);
     }        
 
     inline bool isPressed() const {
         return (click_state & short_click_mask) == short_click_mask;
     }
 
-    inline bool isLongCLick() const {
+    inline bool isLongPress() const {
         return (click_state & long_click_mask) == long_click_mask;
     }
 
