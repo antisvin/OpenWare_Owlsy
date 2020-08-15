@@ -3,6 +3,7 @@
 
 #include "DebouncedButton.hpp"
 
+
 // Durations should be up to bit length of click_state - 1
 template<uint8_t debounce_duration = 7, uint8_t long_press_duration = 31>
 class SoftwareEncoder : public DebouncedButton<debounce_duration, long_press_duration> {
@@ -14,6 +15,11 @@ public:
     ~SoftwareEncoder() = default;
 
     void update() {
+        /*
+        a_state = getPin(port_a, pin_a);
+        b_state = getPin(port_b, pin_b);
+        *counter += getPin(port_a, pin_a) - getPin(port_b, pin_b);
+        */
         a_state <<= 1;
         a_state |= getPin(port_a, pin_a);
         b_state <<= 1;
@@ -28,7 +34,7 @@ public:
     }
 
     inline uint16_t getValue() const {
-        return counter;
+        return *counter;
     }
 
 private:
@@ -36,7 +42,7 @@ private:
     uint32_t pin_a;
     GPIO_TypeDef *port_b;
     uint32_t pin_b;
-    uint8_t a_state, b_state;
+    uint8_t a_state = 0xff, b_state = 0xff;
     uint16_t *counter;
 };
 

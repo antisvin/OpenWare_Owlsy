@@ -32,7 +32,7 @@
 #define NOF_PARAMETERS               20
 // Buttons are encoder short/long click, 2 x gate in, 1 x gate out
 #define NOF_BUTTONS                  2 + 2 + 1
-#define USE_ENCODERS
+//#define USE_ENCODERS
 #define NOF_ENCODERS                 1
 //#define ENCODER_TIM1 htim4
 
