@@ -1,6 +1,10 @@
 #ifndef __ParameterController_hpp__
 #define __ParameterController_hpp__
 
+#include <cstring>
+#include "basicmaths.h"
+#include "errorhandlers.h"
+#include "message.h"
 #include "ApplicationSettings.h"
 #include "Codec.h"
 #include "OpenWareMidiControl.h"
@@ -8,10 +12,7 @@
 #include "PatchRegistry.h"
 #include "ProgramManager.h"
 #include "ProgramVector.h"
-#include "basicmaths.h"
-#include "errorhandlers.h"
-#include "message.h"
-#include <cstring>
+#include "Scope.hpp"
 
 #ifdef USE_DIGITALBUS
 #include "bus.h"
@@ -52,6 +53,7 @@ public:
     STATUS,
     PRESET,
     VOLUME,
+    SCOPE,
     EXIT,
     NOF_CONTROL_MODES, // Not an actual mode
   };
@@ -70,10 +72,20 @@ public:
 
   ControlMode controlMode;
   const char controlModeNames[NOF_CONTROL_MODES][12] = {
-      "  Play   >", "< Status >", "< Preset >", "< Volume >", "< Exit    ",
+    "  Play   >",
+    "< Status >",
+    "< Preset >",
+    "< Volume >",
+#ifdef USE_DIGITALBUS
+    "< Bus    >",
+#endif
+    "< Scope  >",
+    "< Exit    ",
   };
 
   DisplayMode displayMode;
+
+  Scope<512, 2, 2> scope;
 
   ParameterController() { reset(); }
   
@@ -124,6 +136,21 @@ public:
       screen.fillCircle(104, offset + 15, 6, WHITE);
   }
 
+  void drawScope(uint8_t selected, ScreenBuffer &screen) {
+    scope.update();
+    //scope.resync();
+    uint8_t offset = 36;
+    uint8_t y_prev = int16_t(scope.getBufferData()) * 28 / 128 + offset;
+    //uint16_t(data[0]) * 36U / 255U;
+    uint16_t step = 4;
+    for (int x = step; x < screen.getWidth(); x+= step) {
+      uint8_t y = int16_t(scope.getBufferData()) * 28 / 128 + offset;
+      //uint8_t y = uint16_t(data[x]) * 36 / 255 + offset;
+      screen.drawLine(x - step, y_prev, x, y, WHITE_COLOUR);
+      y_prev = y;
+    }
+  }
+
   void drawBlockValues(ScreenBuffer& screen){
     // draw 4x2x2 levels on bottom 8px row
     int x = 0;
@@ -135,13 +162,13 @@ public:
         screen.fillRectangle(x, y, max(1, min(16, parameters[i]/255)), 4, WHITE);
       else
         screen.drawRectangle(x, y, max(1, min(16, parameters[i]/255)), 4, WHITE);
-      x += 16;
-      if(i & 0x01)
-        block++;
-      if(i == 7){
-        x = 0;
-        y += 3;
-        block = 0;
+        x += 16;
+        if(i & 0x01)
+          block++;
+        if(i == 7){
+          x = 0;
+          y += 3;
+          block = 0;
       }
     }
   }  
@@ -178,8 +205,8 @@ public:
     screen.invert(0, 24, 40, 10);
   }
 
-  void drawBusStats(int y, ScreenBuffer &screen) {
 #ifdef USE_DIGITALBUS
+  void drawBusStats(int y, ScreenBuffer &screen) {
     extern int busstatus;
     extern uint32_t bus_tx_packets;
     extern uint32_t bus_rx_packets;
@@ -209,13 +236,13 @@ public:
     screen.print("tx");
     screen.setCursor(16, y);
     screen.print(int(bus_tx_packets));
-#endif
   }
+#endif
 
   void drawControlMode(ScreenBuffer &screen) {
     switch (controlMode) {
+      /*
     case PLAY:
-      // drawMessage("push to exit ->", screen);
       drawTitle(controlModeNames[controlMode], screen);
       drawPlay(screen);
       break;
@@ -228,17 +255,29 @@ public:
       drawTitle(controlModeNames[controlMode], screen);
       drawPresetNames(selectedPid[1], screen);
       break;
+#ifdef USE_DIGITALBUS
+    case BUS:
+      drawTitle(controlModeNames[controlMode], screen);
+      drawBusStats();
+      break;
+#endif
     case VOLUME:
       drawTitle(controlModeNames[controlMode], screen);
       drawVolume(selectedPid[1], screen);
       break;
+      */
+    default:
+    //case SCOPE:
+      drawTitle(controlModeNames[controlMode], screen);
+      drawScope(selectedPid[1], screen);
+      break;
+      /*
     case EXIT:
       drawTitle("done", screen);
-      break;
+      break;*/
     }
     // todo!
-    // select: Scope, VU Meter, Patch Stats, Set Gain, Show MIDI, Reset Patch,
-    // Select Patch...
+    // select: VU Meter, Patch Stats, Set Gain, Show MIDI, Reset Patch
   }
 
   void drawGlobalParameterNames(ScreenBuffer &screen) {

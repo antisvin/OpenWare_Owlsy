@@ -16,22 +16,22 @@ extern "C" {
   int32_t* codec_txbuf;
 }
 
-#ifdef USE_CS4271
+#if defined(USE_CS4271) || defined (USE_AK4556)
   #define HSAI_RX1 hsai_BlockB1
   #define HSAI_TX1 hsai_BlockA1
   #define HDMA_RX1 hdma_sai1_b
   #define HDMA_TX1 hdma_sai1_a
+  #if defined(USE_AK4556) && defined(DUAL_CODEC)
+    #define HSAI_RX2 hsai_BlockB2
+    #define HSAI_TX2 hsai_BlockA2
+    #define HDMA_RX2 hdma_sai2_b
+    #define HDMA_TX2 hdma_sai2_a
+  #endif  
 #else
   #define HSAI_RX1 hsai_BlockA1
   #define HSAI_TX1 hsai_BlockB1
   #define HDMA_RX1 hdma_sai1_a
   #define HDMA_TX1 hdma_sai1_b
-  #if defined(USE_AK4556) && defined(USE_DUAL_CODECS)
-    #define HSAI_RX2 hsai_BlockB2
-    #define HSAI_TX2 hsai_BlockA2
-    #define HDMA_RX2 hdma_sai2_b
-    #define HDMA_TX2 hdma_sai2_a
-  #endif
 #endif
 
 #ifdef USE_USBD_AUDIO
@@ -365,11 +365,26 @@ extern "C"{
 extern "C" {
   SAI_HandleTypeDef HSAI_RX1;
   SAI_HandleTypeDef HSAI_TX1;
+#ifdef DUAL_CODEC
+  SAI_HandleTypeDef HSAI_RX2;
+  SAI_HandleTypeDef HSAI_TX1;
+#endif
   void HAL_SAI_RxHalfCpltCallback(SAI_HandleTypeDef *hsai){
     audioCallback(codec_rxbuf, codec_txbuf, codec_blocksize);
   }
   void HAL_SAI_RxCpltCallback(SAI_HandleTypeDef *hsai){
-    audioCallback(codec_rxbuf+codec_blocksize*AUDIO_CHANNELS, codec_txbuf+codec_blocksize*AUDIO_CHANNELS, codec_blocksize);
+  #ifdef DUAL_CODEC
+    // Two codecs means that only half of audio channels is processed at once
+    audioCallback(
+      codec_rxbuf + codec_blocksize * AUDIO_CHANNELS / 2,
+      codec_txbuf + codec_blocksize * AUDIO_CHANNELS / 2,
+      codec_blocksize);
+  #else
+    audioCallback(
+      codec_rxbuf +codec_blocksize * AUDIO_CHANNELS,
+      codec_txbuf + codec_blocksize * AUDIO_CHANNELS,
+      codec_blocksize);
+  #endif
   }
   void HAL_SAI_ErrorCallback(SAI_HandleTypeDef *hsai){
     error(CONFIG_ERROR, "SAI DMA Error");
@@ -377,13 +392,24 @@ extern "C" {
 }
 
 void Codec::txrx(){
+  #ifdef DUAL_CODEC
   HAL_SAI_DMAStop(&HSAI_RX1);
-  HAL_SAI_Transmit_DMA(&HSAI_RX1, (uint8_t*)codec_rxbuf, codec_blocksize*AUDIO_CHANNELS*2);
+  HAL_SAI_DMAStop(&HSAI_RX2);  
+  HAL_SAI_Transmit_DMA(&HSAI_RX1, (uint8_t*)codec_rxbuf, codec_blocksize * AUDIO_CHANNELS);
+  HAL_SAI_Transmit_DMA(&HSAI_RX2, (uint8_t*)codec_rxbuf, codec_blocksize * AUDIO_CHANNELS);
+  #else
+  HAL_SAI_DMAStop(&HSAI_RX1);
+  HAL_SAI_Transmit_DMA(&HSAI_RX1, (uint8_t*)codec_rxbuf, codec_blocksize * AUDIO_CHANNELS * 2);
+  #endif
 }
 
 void Codec::stop(){
   HAL_SAI_DMAStop(&HSAI_RX1);
   HAL_SAI_DMAStop(&HSAI_TX1);
+  #if DUAL_CODECS
+  HAL_SAI_DMAStop(&HSAI_RX2);
+  HAL_SAI_DMAStop(&HSAI_TX2);
+  #endif
 }
 
 void Codec::start(){
@@ -391,10 +417,24 @@ void Codec::start(){
   // codec_blocksize = min(CODEC_BUFFER_SIZE/(AUDIO_CHANNELS*2), settings.audio_blocksize);
   codec_blocksize = CODEC_BUFFER_SIZE/(AUDIO_CHANNELS*2);
   HAL_StatusTypeDef ret;
-#ifdef USE_CS4271
+#if defined(USE_CS4271) || (defined(USE_AK4556) && !DUAL_CODEC)
   ret = HAL_SAI_Receive_DMA(&HSAI_RX1, (uint8_t*)codec_rxbuf, codec_blocksize*AUDIO_CHANNELS*2);
   if(ret == HAL_OK)
     ret = HAL_SAI_Transmit_DMA(&HSAI_TX1, (uint8_t*)codec_txbuf, codec_blocksize*AUDIO_CHANNELS*2);
+#elif defined(USE_AK4556 ) && DUAL_CODEC
+  ret = HAL_SAI_Receive_DMA(&HSAI_RX1, (uint8_t*)codec_rxbuf, codec_blocksize * AUDIO_CHANNELS);
+  if(ret == HAL_OK)
+    ret = HAL_SAI_Transmit_DMA(&HSAI_TX1, (uint8_t*)codec_txbuf, codec_blocksize * AUDIO_CHANNELS);
+  if (ret == HAL_OK)
+    ret = HAL_SAI_Receive_DMA(
+      &HSAI_RX2,
+      (uint8_t*)codec_rxbuf + codec_blocksize * AUDIO_CHANNELS / 2,
+      codec_blocksize * AUDIO_CHANNELS / 2);
+  if(ret == HAL_OK)
+    ret = HAL_SAI_Transmit_DMA(
+      &HSAI_TX2,
+      (uint8_t*)codec_txbuf + codec_blocksize * AUDIO_CHANNELS / 2,
+      codec_blocksize * AUDIO_CHANNELS / 2);
 #else // PCM3168A
   // start slave first (Noctua)
   ret = HAL_SAI_Transmit_DMA(&HSAI_TX1, (uint8_t*)codec_txbuf, codec_blocksize*AUDIO_CHANNELS*2);
@@ -407,11 +447,19 @@ void Codec::start(){
 void Codec::pause(){
   HAL_SAI_DMAPause(&HSAI_RX1);
   HAL_SAI_DMAPause(&HSAI_TX1);
+  #ifdef DUAL_CODEC
+  HAL_SAI_DMAPause(&HSAI_RX2);
+  HAL_SAI_DMAPause(&HSAI_TX2);
+  #endif
 }
 
 void Codec::resume(){
   HAL_SAI_DMAResume(&HSAI_RX1);
   HAL_SAI_DMAResume(&HSAI_TX1);
+  #ifdef DUAL_CODEC
+  HAL_SAI_DMAResume(&HSAI_RX2);
+  HAL_SAI_DMAResume(&HSAI_TX2);
+  #endif
 }
 
 extern "C" {
