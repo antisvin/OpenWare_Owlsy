@@ -573,7 +573,7 @@ ProgramManager::ProgramManager(){
 #ifdef DEBUG_DWT
   // DWT cycle count enable
   CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
-#ifdef OWL_ARCH_F7
+#if defined OWL_ARCH_F7 || defined OWL_ARCH_H7
   DWT->LAR = 0xC5ACCE55; // enable debug access: required on F7
 #endif
   DWT->CYCCNT = 0;
