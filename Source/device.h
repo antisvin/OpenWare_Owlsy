@@ -92,7 +92,11 @@
 #define MANAGER_TASK_STACK_SIZE      (1024/sizeof(portSTACK_TYPE))
 #define FLASH_TASK_STACK_SIZE        (512/sizeof(portSTACK_TYPE))
 #define UTILITY_TASK_STACK_SIZE      (512/sizeof(portSTACK_TYPE))
+#ifdef DAISY
+#define ARM_CYCLES_PER_SAMPLE        (400000000/AUDIO_SAMPLINGRATE) /* 400MHz / 48kHz */
+#else
 #define ARM_CYCLES_PER_SAMPLE        (168000000/AUDIO_SAMPLINGRATE) /* 168MHz / 48kHz */
+#endif
 
 #define CCM                          __attribute__ ((section (".ccmdata")))
 
