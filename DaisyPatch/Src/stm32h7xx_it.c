@@ -98,7 +98,7 @@ void SysTick_Handler(void)
   }
 #endif /* INCLUDE_xTaskGetSchedulerState */
   /* USER CODE BEGIN SysTick_IRQn 1 */
-  updateEncoderState();
+  updateEncoderCounter();
   /* USER CODE END SysTick_IRQn 1 */
 }
 

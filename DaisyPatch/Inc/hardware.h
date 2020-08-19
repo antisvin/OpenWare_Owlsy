@@ -33,7 +33,7 @@
 // Buttons are encoder short/long click, 2 x gate in, 1 x gate out
 #define NOF_BUTTONS                  2 + 2 + 1
 //#define USE_ENCODERS
-#define NOF_ENCODERS                 1
+#define NOF_ENCODERS                 2 // Second encoder is virtual - toggled by software mode
 //#define ENCODER_TIM1 htim4
 
 #define USE_USBD_AUDIO
