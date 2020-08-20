@@ -72,7 +72,7 @@ Codec codec;
 uint16_t adc_values[NOF_ADC_VALUES];
 #endif
 #ifdef USE_DAC
-extern DAC_HandleTypeDef hdac;
+extern DAC_HandleTypeDef DAC_PERIPH;
 #endif
 
 int16_t getAnalogValue(uint8_t ch){
@@ -87,10 +87,10 @@ __weak void setAnalogValue(uint8_t ch, int16_t value){
 #ifdef USE_DAC
   switch(ch){
   case PARAMETER_F:
-    HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, __USAT(value, 12));
+    HAL_DAC_SetValue(&DAC_PERIPH, DAC_CHANNEL_1, DAC_ALIGN_12B_R, __USAT(value, 12));
     break;
   case PARAMETER_G:
-    HAL_DAC_SetValue(&hdac, DAC_CHANNEL_2, DAC_ALIGN_12B_R, __USAT(value, 12));
+    HAL_DAC_SetValue(&DAC_PERIPH, DAC_CHANNEL_2, DAC_ALIGN_12B_R, __USAT(value, 12));
     break;
   }
 #endif
@@ -300,8 +300,8 @@ void Owl::setup(void){
   program.startManager();
 
 #ifdef USE_DAC
-  HAL_DAC_Start(&hdac, DAC_CHANNEL_1);
-  HAL_DAC_Start(&hdac, DAC_CHANNEL_2);
+  HAL_DAC_Start(&DAC_PERIPH, DAC_CHANNEL_1);
+  HAL_DAC_Start(&DAC_PERIPH, DAC_CHANNEL_2);
   setAnalogValue(PARAMETER_F, 0);
   setAnalogValue(PARAMETER_G, 0);
 #endif

@@ -124,6 +124,9 @@
 
 #ifndef MAIN_LOOP_SLEEP_MS
 #define MAIN_LOOP_SLEEP_MS           2
+
+#ifndef DAC_PERIPH
+#define DAC_PERIPH hdac
 #endif
 
 #ifndef LOAD_INDICATOR_PARAMETER

@@ -22,6 +22,8 @@
 /* #define OLED_IT */
 /* #define OLED_BITBANG */
 
+#define USE_DAC
+#define DAC_PERIPH hdac1
 #define USE_ADC
 #define ADC_PERIPH hadc1
 #define ADC_A 0

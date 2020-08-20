@@ -28,7 +28,7 @@ void setGateValue(uint8_t ch, int16_t value){
   switch(ch){
   case PUSHBUTTON:
   case BUTTON_A:
-    HAL_GPIO_WritePin(GATE_OUT_GPIO_Port, GATE_OUT_Pin, value ? GPIO_PIN_RESET :  GPIO_PIN_SET);
+    HAL_GPIO_WritePin(GATE_OUT_GPIO_Port, GATE_OUT_Pin, value ? GPIO_PIN_SET :  GPIO_PIN_RESET);
     break;
   }
 }
