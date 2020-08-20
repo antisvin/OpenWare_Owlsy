@@ -487,7 +487,7 @@ public:
           value = (uint8_t)encoderSensitivity;
           sensitivityChanged = true;
         }
-        else if (selectedPid[1] < encoderSensitivity) {
+        else if (value < (uint8_t)encoderSensitivity) {
           encoderSensitivity = (EncoderSensitivity)((uint8_t)encoderSensitivity - ENC_MULTIPLIER / 2);
           value = (uint8_t)encoderSensitivity;
           sensitivityChanged = true;
@@ -546,10 +546,6 @@ public:
       break;
     case CONTROL: {
       selectControlMode(value, pressed); // action if encoder is pressed
-      if (isLongPress) {
-        // Long press exits menu
-        controlMode = EXIT;
-      }
       /*
       if (activeEncoder == 1){
         int16_t delta = data[1] - encoders[activeEncoder];
@@ -642,7 +638,7 @@ public:
         break;
       }
     }
-    else if (controlMode == EXIT) {
+    if (controlMode == EXIT) {
       displayMode = STANDARD;
       activeEncoder = 1;
       selectedPid[0] = lastSelectedPid;
