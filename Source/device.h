@@ -104,6 +104,9 @@
 
 #ifndef MAIN_LOOP_SLEEP_MS
 #define MAIN_LOOP_SLEEP_MS           2
+
+#ifndef DAC_PERIPH
+#define DAC_PERIPH hdac
 #endif
 
 #define PROGRAM_TASK_STACK_SIZE      (4*1024/sizeof(portSTACK_TYPE))
