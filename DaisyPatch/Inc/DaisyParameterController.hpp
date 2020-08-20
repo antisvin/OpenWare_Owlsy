@@ -546,24 +546,15 @@ public:
       break;
     case CONTROL: {
       selectControlMode(value, pressed); // action if encoder is pressed
-      /*
-      if (activeEncoder == 1){
-        int16_t delta = data[1] - encoders[activeEncoder];
-        if(delta > 0 && selectedPid[activeEncoder] < 127) {
-          setControlModeValue(selectedPid[activeEncoder] + 1);
-        }
-        else if(delta < 0 && selectedPid[activeEncoder] > 0) {
-          setControlModeValue(selectedPid[activeEncoder] - 1);
-        }
+      if (isLongPress) {
+        // Long press exits menu
+        controlMode = EXIT;
       }
-      */
       break;
     }
     case SELECTGLOBALPARAMETER:
       if (!isLongPress) {
         displayMode = STANDARD;
-        //lastSelectedPid = selectedPid[0];
-        //selectedPid[0] = encoders[lastSelectedPid];
       }
       else {
         // Selected another parameter
