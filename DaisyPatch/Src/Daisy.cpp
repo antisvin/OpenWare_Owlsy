@@ -25,22 +25,12 @@ extern "C" void updateEncoderCounter(){
 }
 
 void setGateValue(uint8_t ch, int16_t value){
-/*
   switch(ch){
   case PUSHBUTTON:
   case BUTTON_A:
-    HAL_GPIO_WritePin(TR_OUT1_GPIO_Port, TR_OUT1_Pin, value ? GPIO_PIN_RESET :  GPIO_PIN_SET);
-    break;
-  case BUTTON_B:
-    HAL_GPIO_WritePin(TR_OUT2_GPIO_Port, TR_OUT2_Pin, value ? GPIO_PIN_RESET :  GPIO_PIN_SET);
+    HAL_GPIO_WritePin(GATE_OUT_GPIO_Port, GATE_OUT_Pin, value ? GPIO_PIN_RESET :  GPIO_PIN_SET);
     break;
   }
-*/
-}
-
-bool isModeButtonPressed(){
-//  return HAL_GPIO_ReadPin(SW5_GPIO_Port, SW5_Pin) == GPIO_PIN_RESET;
-   return false;
 }
 
 void setup(){

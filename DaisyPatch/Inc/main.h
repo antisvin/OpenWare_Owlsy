@@ -70,10 +70,12 @@ void Error_Handler(void);
 #define ADC1_GPIO_Port GPIOC
 #define GATE_IN1_Pin GPIO_PIN_1
 #define GATE_IN1_GPIO_Port GPIOC
+#define GATE_IN1_EXTI_IRQn EXTI1_IRQn
 #define ADC3_Pin GPIO_PIN_4
 #define ADC3_GPIO_Port GPIOC
 #define GATE_IN2_Pin GPIO_PIN_6
 #define GATE_IN2_GPIO_Port GPIOA
+#define GATE_IN2_EXTI_IRQn EXTI9_5_IRQn
 #define ENC_CLICK_Pin GPIO_PIN_12
 #define ENC_CLICK_GPIO_Port GPIOB
 #define ADC2_Pin GPIO_PIN_3
