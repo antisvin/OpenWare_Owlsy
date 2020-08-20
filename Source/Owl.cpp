@@ -250,6 +250,15 @@ __weak void pinChanged(uint16_t pin){
     setButtonValue(BUTTON_B, !(ENC2_SW_GPIO_Port->IDR & ENC2_SW_Pin));
     break;
 #endif
+#ifdef DAISY
+  case GATE_IN1_Pin:
+    setButtonValue(BUTTON_A, !(GATE_IN1_GPIO_Port->IDR & GATE_IN1_Pin));
+    setButtonValue(PUSHBUTTON, !(GATE_IN1_GPIO_Port->IDR & GATE_IN1_Pin));
+    break;
+  case GATE_IN2_Pin:
+    setButtonValue(BUTTON_B, !(GATE_IN2_GPIO_Port->IDR & GATE_IN2_Pin));
+    break;
+#endif
   }
 }
 
