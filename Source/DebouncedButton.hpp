@@ -5,7 +5,6 @@
 #include "ApplicationSettings.h"
 
 // Durations should be up to bit length of click_state - 2
-template<uint8_t debounce_duration = 8, uint8_t long_press_duration = 31>
 class DebouncedButton {
 public:
     DebouncedButton(GPIO_TypeDef *port_click, uint32_t pin_click)

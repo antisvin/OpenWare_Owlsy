@@ -14,7 +14,7 @@
 #include "SoftwareEncoder.hpp"
 
 
-static SoftwareEncoder<> encoder(
+static SoftwareEncoder encoder(
   ENC_A_GPIO_Port, ENC_A_Pin,
   ENC_B_GPIO_Port, ENC_B_Pin, 
   ENC_CLICK_GPIO_Port, ENC_CLICK_Pin);
@@ -34,11 +34,6 @@ void setGateValue(uint8_t ch, int16_t value){
 }
 
 void setup(){
-/*
-  HAL_GPIO_WritePin(TR_OUT1_GPIO_Port, TR_OUT1_Pin, GPIO_PIN_SET);
-  HAL_GPIO_WritePin(TR_OUT2_GPIO_Port, TR_OUT2_Pin, GPIO_PIN_SET);
-  HAL_GPIO_WritePin(LEDPWM1_GPIO_Port, LEDPWM1_Pin, GPIO_PIN_SET);
-*/
   HAL_GPIO_WritePin(OLED_RST_GPIO_Port, OLED_RST_Pin, GPIO_PIN_RESET); // OLED off
   extern SPI_HandleTypeDef OLED_SPI;
   graphics.begin(&OLED_SPI);
@@ -48,14 +43,9 @@ void setup(){
 
 void loop(void){
   encoder.debounce();
-  setButtonValue(BUTTON_A, encoder.isPressed());
-  setButtonValue(PUSHBUTTON, encoder.isPressed());
-  //setButtonValue(BUTTON_B, encoder.isLongPress());
-  //graphics.params.updateValue(PARAMETER_E, getPin(ENC_A_GPIO_Port, ENC_A_Pin) << 11);
-  //graphics.params.updateValue(PARAMETER_F, getPin(ENC_B_GPIO_Port, ENC_B_Pin) << 11);
   int16_t enc_data[] = {
-    encoder.isFallingEdge() | encoder.isLongPress() << 1,
-    encoder.getValue()
+    int16_t(encoder.isFallingEdge() | encoder.isLongPress() << 1),
+    int16_t(encoder.getValue())
   };
   graphics.params.updateEncoders(enc_data, 1);
 
