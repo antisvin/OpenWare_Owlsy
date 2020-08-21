@@ -50,8 +50,8 @@ class Codec {
 };
 
 #ifdef DUAL_CODEC
-#else
 extern Codec codec;
+#else
 #endif
    
 #endif

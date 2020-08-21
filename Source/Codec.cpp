@@ -371,7 +371,7 @@ extern "C" {
   SAI_HandleTypeDef HSAI_TX1;
 #ifdef DUAL_CODEC
   SAI_HandleTypeDef HSAI_RX2;
-  SAI_HandleTypeDef HSAI_TX1;
+  SAI_HandleTypeDef HSAI_TX2;
 #endif
   void HAL_SAI_RxHalfCpltCallback(SAI_HandleTypeDef *hsai){
     audioCallback(codec_rxbuf, codec_txbuf, codec_blocksize);
@@ -421,11 +421,11 @@ void Codec::start(){
   // codec_blocksize = min(CODEC_BUFFER_SIZE/(AUDIO_CHANNELS*2), settings.audio_blocksize);
   codec_blocksize = CODEC_BUFFER_SIZE/(AUDIO_CHANNELS*2);
   HAL_StatusTypeDef ret;
-#if defined(USE_CS4271) || (defined(USE_AK4556) && !DUAL_CODEC)
+#if defined(USE_CS4271) || (defined(USE_AK4556) && !defined(DUAL_CODEC))
   ret = HAL_SAI_Receive_DMA(&HSAI_RX1, (uint8_t*)codec_rxbuf, codec_blocksize*AUDIO_CHANNELS*2);
   if(ret == HAL_OK)
     ret = HAL_SAI_Transmit_DMA(&HSAI_TX1, (uint8_t*)codec_txbuf, codec_blocksize*AUDIO_CHANNELS*2);
-#elif defined(USE_AK4556 ) && DUAL_CODEC
+#elif defined(USE_AK4556) && defined(DUAL_CODEC)
   ret = HAL_SAI_Receive_DMA(&HSAI_RX1, (uint8_t*)codec_rxbuf, codec_blocksize * AUDIO_CHANNELS);
   if(ret == HAL_OK)
     ret = HAL_SAI_Transmit_DMA(&HSAI_TX1, (uint8_t*)codec_txbuf, codec_blocksize * AUDIO_CHANNELS);
