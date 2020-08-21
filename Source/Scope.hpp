@@ -7,40 +7,23 @@
 #include "ProgramVector.h"
 
 
-// This class uses a ring buffer of size twice as large as buffer_size parameter.
 template <uint16_t buffer_size, uint8_t input_channels = 2, uint8_t output_channels = 2>
 class Scope {
 public:
     /*
      * Both input and output channels can be selected
      */
-    void setChannel(uint8_t channel){
+    void setChannel(uint8_t new_channel){
         reset();
-        if (channel >= total_channels) {
-            channel = total_channels - 1;
+        if (new_channel >= total_channels) {
+            new_channel = total_channels - 1;
         }
+        channel = new_channel;
     }
-    /*
-     * Update channel
-     * 
-     * Returns true if enough data is stored for next screen update. This happens when buffer is fully
-     * written.
-     */
+
     void update(){
         readChannelData();        
     }
-
-    /*
-    bool hasData(uint16_t desired) {
-        return buffer.getReadCapacity() >= desired;
-    }
-
-    void resync(){
-        size_t pos = buffer.getWriteIndex() + buffer_size;
-        pos %= buffer_size * 2;
-        buffer.setReadIndex(pos);
-    }
-    */
 
     int8_t getBufferData(){
         return buffer.pull();

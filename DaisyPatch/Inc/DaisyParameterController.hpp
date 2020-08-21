@@ -62,7 +62,7 @@ public:
   int16_t user[SIZE];             // user set values (ie by encoder or MIDI)
   char names[SIZE][12];
   uint8_t selectedPid[NOF_ENCODERS];
-  uint8_t lastSelectedPid;
+  uint8_t lastSelectedPid, lastChannel;
   // Use first param after ADC as default to avoid confusion from accidental turns
   bool saveSettings;
   uint8_t activeEncoder;
@@ -148,10 +148,36 @@ public:
     //uint16_t(data[0]) * 36U / 255U;
     uint16_t step = 4;
     for (int x = step; x < screen.getWidth(); x+= step) {
-      uint8_t y = int16_t(scope.getBufferData()) * 28 / 128 + offset;
+      uint8_t y = int16_t(scope.getBufferData()) * 26 / 128 + offset;
       //uint8_t y = uint16_t(data[x]) * 36 / 255 + offset;
       screen.drawLine(x - step, y_prev, x, y, WHITE_COLOUR);
       y_prev = y;
+    }
+    screen.setTextSize(1);
+    offset = 26;
+    for (int i = 0; i < AUDIO_CHANNELS; i++){
+      screen.print(7 + i * 30, offset, "IN ");
+      screen.print(i + 1);
+    }
+    for (int i = 0; i < AUDIO_CHANNELS; i++){
+      screen.print(7 + i * 30, offset + 10, "OUT");
+      screen.print(i + 1);
+    }
+    if (selectedPid[1] < AUDIO_CHANNELS){
+      if (activeEncoder == 1) {        
+        screen.drawRectangle(4 + selectedPid[1] * 30, offset - 10, 30, 10, WHITE_COLOUR);
+      }
+      else {
+        screen.invert(4 + selectedPid[1] * 30, offset - 10, 30, 10);
+      }
+    }
+    else {
+      if (activeEncoder == 1) {        
+        screen.drawRectangle(4 + (selectedPid[1] - AUDIO_CHANNELS) * 30, offset, 30, 10, WHITE_COLOUR);
+      }
+      else {
+        screen.invert(4 + (selectedPid[1] - AUDIO_CHANNELS) * 30, offset, 30, 10);
+      }
     }
   }
 
@@ -493,19 +519,14 @@ public:
           sensitivityChanged = true;
         }
         selectedPid[1] = value;
-        /*
-        if (sensitivityChanged) {          
-          for (int eid = 1; eid < NOF_ENCODERS; eid++) {
-              // We update encoders with previous values recalculated with different sensitivity
-              if (eid != 1)
-                setEncoderValue(eid, user[selectedPid[eid]]);
-          }
-        }
-        */
         break;
     case PRESET:
       selectedPid[1] = max(1, min(patch_registry.getNumberOfPatches()-1, value));
       break;
+    case SCOPE:
+      selectedPid[1] = max(0, min(AUDIO_CHANNELS * 2 - 1, value));
+      lastChannel = selectedPid[1];
+      scope.setChannel(lastChannel);
     default:
       break;
     }
@@ -589,6 +610,8 @@ public:
     case PRESET:
       selectedPid[1] = settings.program_index;
       break;
+    case SCOPE:
+      selectedPid[1] = lastChannel;
     default:
       break;
     }
@@ -603,12 +626,8 @@ public:
       // Short press
       switch (controlMode) {
       case PLAY:
+      case SCOPE:
         activeEncoder = !activeEncoder;
-        /*
-        if (sensitivitySelected) {
-          controlMode = EXIT;
-        }
-        */
         break;
       case STATUS:
         setErrorStatus(NO_ERROR);
