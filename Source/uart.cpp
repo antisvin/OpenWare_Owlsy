@@ -58,7 +58,7 @@ extern "C"{
 
   void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
     // what is the correct size if IDLE interrupts?
-    size_t size = huart->RxXferSize - huart->hdmarx->Instance->NDTR;
+    size_t size = huart->RxXferSize -  ((DMA_Stream_TypeDef*)huart->hdmarx->Instance)->NDTR;
     bus_rx_buf.incrementWriteHead(size);
     /* bus_rx_packets += size; */
     initiateBusRead();

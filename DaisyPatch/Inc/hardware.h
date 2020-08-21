@@ -38,6 +38,10 @@
 #define NOF_ENCODERS                 2 // Second encoder is virtual - toggled by software mode
 //#define ENCODER_TIM1 htim4
 
+#define USE_UART_MIDI
+#define UART_MIDI_HANDLE huart1
+#define UART_MIDI_RX_BUFFER_SIZE 256
+
 #define USE_USBD_AUDIO
 #define USE_CODEC
 //#define DUAL_CODEC
