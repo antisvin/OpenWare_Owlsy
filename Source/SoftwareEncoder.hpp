@@ -5,13 +5,12 @@
 
 
 // Durations should be up to bit length of click_state - 1
-template<uint8_t debounce_duration = 8, uint8_t long_press_duration = 31>
-class SoftwareEncoder : public DebouncedButton<debounce_duration, long_press_duration> {
+class SoftwareEncoder : public DebouncedButton {
 public:
     SoftwareEncoder(GPIO_TypeDef *port_a, uint32_t pin_a, GPIO_TypeDef *port_b,
               uint32_t pin_b, GPIO_TypeDef *port_click, uint32_t pin_click)
-        : port_a(port_a), pin_a(pin_a), port_b(port_b), pin_b(pin_b),
-          DebouncedButton<debounce_duration, long_press_duration>(port_click, pin_click) {};
+        : DebouncedButton(port_click, pin_click), port_a(port_a)
+        , pin_a(pin_a), port_b(port_b), pin_b(pin_b) {};
     ~SoftwareEncoder() = default;
 
     /*

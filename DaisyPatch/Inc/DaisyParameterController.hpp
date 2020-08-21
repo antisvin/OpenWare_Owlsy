@@ -68,7 +68,6 @@ public:
   uint8_t activeEncoder;
   
   EncoderSensitivity encoderSensitivity = SENS_STANDARD;
-  //bool sensitivitySelected;  
 
   ControlMode controlMode;
   const char controlModeNames[NOF_CONTROL_MODES][12] = {
@@ -84,7 +83,7 @@ public:
 
   DisplayMode displayMode;
 
-  Scope<512, 2, 2> scope;
+  Scope<512, AUDIO_CHANNELS, AUDIO_CHANNELS> scope;
 
   ParameterController() { reset(); }
   
@@ -119,7 +118,7 @@ public:
     int offset = 16;
     screen.setTextSize(1);
     if (activeEncoder == 1) {
-      screen.drawRectangle(10, offset + 3, 108, 24, WHITE_COLOUR);
+      screen.drawRectangle(10, offset + 3, 108, 24, WHITE);
     }
     screen.print(1, offset + 36, " Encoder sensitivity");
 
@@ -150,7 +149,7 @@ public:
     for (int x = step; x < screen.getWidth(); x+= step) {
       uint8_t y = int16_t(scope.getBufferData()) * 26 / 128 + offset;
       //uint8_t y = uint16_t(data[x]) * 36 / 255 + offset;
-      screen.drawLine(x - step, y_prev, x, y, WHITE_COLOUR);
+      screen.drawLine(x - step, y_prev, x, y, WHITE);
       y_prev = y;
     }
     screen.setTextSize(1);
@@ -165,7 +164,7 @@ public:
     }
     if (selectedPid[1] < AUDIO_CHANNELS){
       if (activeEncoder == 1) {        
-        screen.drawRectangle(4 + selectedPid[1] * 30, offset - 10, 30, 10, WHITE_COLOUR);
+        screen.drawRectangle(4 + selectedPid[1] * 30, offset - 10, 30, 10, WHITE);
       }
       else {
         screen.invert(4 + selectedPid[1] * 30, offset - 10, 30, 10);
@@ -173,7 +172,7 @@ public:
     }
     else {
       if (activeEncoder == 1) {        
-        screen.drawRectangle(4 + (selectedPid[1] - AUDIO_CHANNELS) * 30, offset, 30, 10, WHITE_COLOUR);
+        screen.drawRectangle(4 + (selectedPid[1] - AUDIO_CHANNELS) * 30, offset, 30, 10, WHITE);
       }
       else {
         screen.invert(4 + (selectedPid[1] - AUDIO_CHANNELS) * 30, offset, 30, 10);
@@ -283,6 +282,8 @@ public:
     case EXIT:
       drawTitle("done", screen);
       break;
+    default:
+      break;
     }
     // todo!
     // select: VU Meter, Patch Stats, Set Gain, Show MIDI, Reset Patch
@@ -371,7 +372,7 @@ public:
     if (activeEncoder == 0)
       screen.invert(0, 25, 128, 10);
     else
-      screen.drawRectangle(0, 25, 128, 10, WHITE_COLOUR);
+      screen.drawRectangle(0, 25, 128, 10, WHITE);
   }
 
   void drawParameter(int pid, int y, ScreenBuffer &screen) {
@@ -387,7 +388,7 @@ public:
   void drawParameters(ScreenBuffer& screen){
     drawParameterValues(screen);
     int x = 0;
-    int y = 63-8;
+    //int y = 63-8;
     for(int i=2; i<NOF_ENCODERS; ++i){
       // screen.print(x+1, y, blocknames[i-1]);
       //if(selectedBlock == i)
@@ -504,19 +505,16 @@ public:
   */
 
   void setControlModeValue(uint8_t value){
-    bool sensitivityChanged = false;
     switch(controlMode){
     case PLAY:
         value = max((uint8_t)SENS_SUPER_FINE, min((uint8_t)SENS_SUPER_COARSE, value));
         if (value > (uint8_t)encoderSensitivity){
           encoderSensitivity = (EncoderSensitivity)((uint8_t)encoderSensitivity + ENC_MULTIPLIER / 2);
           value = (uint8_t)encoderSensitivity;
-          sensitivityChanged = true;
         }
         else if (value < (uint8_t)encoderSensitivity) {
           encoderSensitivity = (EncoderSensitivity)((uint8_t)encoderSensitivity - ENC_MULTIPLIER / 2);
           value = (uint8_t)encoderSensitivity;
-          sensitivityChanged = true;
         }
         selectedPid[1] = value;
         break;
