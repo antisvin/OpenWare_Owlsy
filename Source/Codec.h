@@ -49,10 +49,7 @@ class Codec {
   uint16_t getBlockSize();
 };
 
-#ifdef DUAL_CODEC
 extern Codec codec;
-#else
-#endif
    
 #endif
 

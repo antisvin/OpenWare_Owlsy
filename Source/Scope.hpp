@@ -7,7 +7,7 @@
 #include "ProgramVector.h"
 
 
-template <uint16_t buffer_size, uint8_t input_channels = 2, uint8_t output_channels = 2>
+template <uint8_t input_channels = 2, uint8_t output_channels = 2>
 class Scope {
 public:
     /*
@@ -29,11 +29,8 @@ public:
         return buffer.pull();
     }
 
-    static constexpr uint16_t getSize(){
-        return buffer_size;
-    }
 private:
-    SerialBuffer<buffer_size, int8_t> buffer;
+    SerialBuffer<CODEC_BLOCKSIZE, int8_t> buffer;
     uint8_t channel;
     static constexpr uint8_t total_channels = input_channels + output_channels;
 

@@ -26,6 +26,16 @@
 #define AUDIO_FORMAT_24B32_4X       0x24
 #define AUDIO_FORMAT_24B32_8X       0x28
 
+/*
+ * This would work correctly only with 24B32* formats!
+ * Others have inconsistent channels mask.
+ */
+#define AUDIO_CHANNELS_MASK         0x0F
+#define AUDIO_FORMAT_MASK           0x3F
+#define AUDIO_FORMAT(FORMAT)        (FORMAT & AUDIO_FORMAT_MASK)
+#define AUDIO_FORMAT_CHANNELS(FORMAT) (FORMAT & AUDIO_CHANNELS_MASK)
+
+
   typedef enum { 
     AUDIO_IDLE_STATUS = 0, 
     AUDIO_READY_STATUS, 
