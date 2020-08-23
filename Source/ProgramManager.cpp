@@ -365,6 +365,8 @@ void updateProgramVector(ProgramVector* pv){
   pv->audio_format = AUDIO_FORMAT_24B16_2X;
 #elif defined OWL_BIOSIGNALS || defined OWL_NOCTUA
   pv->audio_format = AUDIO_FORMAT_24B32 | AUDIO_CHANNELS;
+#elif defined USE_AK4556
+  pv->audio_format = AUDIO_FORMAT_24B32_4X;
 #else
   pv->audio_format = AUDIO_FORMAT_24B32;
   // pv->audio_format = AUDIO_FORMAT_24B32_2X;
