@@ -3,13 +3,19 @@
 #include "device.h"
 
 
-// Yeah this codec is implementation is brain dead, but nothing else is exposed to us
+// Yeah this codec's implementation is brain dead, but nothing else is exposed to us
 
 void codec_init(){
-    clearPin(CODEC_RESET_GPIO_Port, CODEC_RESET_Pin);
+    clearPin(CODEC_RESET1_GPIO_Port, CODEC_RESET1_Pin);
+#ifdef DUAL_CODEC
+    clearPin(CODEC_RESET2_GPIO_Port, CODEC_RESET2_Pin);
+#endif
     // Datasheet specifies minimum 150ns
     HAL_Delay(1);
-    setPin(CODEC_RESET_GPIO_Port, CODEC_RESET_Pin);
+    setPin(CODEC_RESET1_GPIO_Port, CODEC_RESET1_Pin);
+#ifdef DUAL_CODEC
+    setPin(CODEC_RESET2_GPIO_Port, CODEC_RESET2_Pin);
+#endif
 }
 
 void codec_bypass(int bypass){

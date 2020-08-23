@@ -44,14 +44,14 @@
 
 #define USE_USBD_AUDIO
 #define USE_CODEC
-//#define DUAL_CODEC
+#define DUAL_CODEC
 #define USE_AK4556
 #define USE_USBD_FS
 #define USBD_HANDLE hUsbDeviceFS
 #define AUDIO_BITS_PER_SAMPLE       16
 #define AUDIO_BYTES_PER_SAMPLE      (AUDIO_BITS_PER_SAMPLE/8)
-#define AUDIO_CHANNELS              2
-#define USB_AUDIO_CHANNELS          2
+#define AUDIO_CHANNELS              4
+#define USB_AUDIO_CHANNELS          4
 
 /*
 #define USE_UART_MIDI

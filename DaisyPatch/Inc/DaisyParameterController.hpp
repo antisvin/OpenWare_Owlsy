@@ -83,7 +83,7 @@ public:
 
   DisplayMode displayMode;
 
-  Scope<512, AUDIO_CHANNELS, AUDIO_CHANNELS> scope;
+  Scope<AUDIO_CHANNELS, AUDIO_CHANNELS> scope;
 
   ParameterController() { reset(); }
   
@@ -143,39 +143,33 @@ public:
     scope.update();
     //scope.resync();
     uint8_t offset = 36;
-    uint8_t y_prev = int16_t(scope.getBufferData()) * 28 / 128 + offset;
+    uint8_t y_prev = int16_t(scope.getBufferData()) * 32 / 128 + offset;
     //uint16_t(data[0]) * 36U / 255U;
     uint16_t step = 4;
     for (int x = step; x < screen.getWidth(); x+= step) {
-      uint8_t y = int16_t(scope.getBufferData()) * 26 / 128 + offset;
+      uint8_t y = int16_t(scope.getBufferData()) * 32 / 128 + offset;
       //uint8_t y = uint16_t(data[x]) * 36 / 255 + offset;
       screen.drawLine(x - step, y_prev, x, y, WHITE);
       y_prev = y;
     }
-    screen.setTextSize(1);
-    offset = 26;
-    for (int i = 0; i < AUDIO_CHANNELS; i++){
-      screen.print(7 + i * 30, offset, "IN ");
-      screen.print(i + 1);
-    }
-    for (int i = 0; i < AUDIO_CHANNELS; i++){
-      screen.print(7 + i * 30, offset + 10, "OUT");
-      screen.print(i + 1);
-    }
-    if (selectedPid[1] < AUDIO_CHANNELS){
-      if (activeEncoder == 1) {        
+
+    // Channel selection overlay
+    if (activeEncoder == 1) {
+      screen.setTextSize(1);
+      offset = 26;
+      for (int i = 0; i < AUDIO_CHANNELS; i++){
+        screen.print(7 + i * 30, offset, "IN ");
+        screen.print(i + 1);
+      }
+      for (int i = 0; i < AUDIO_CHANNELS; i++){
+        screen.print(7 + i * 30, offset + 10, "OUT");
+        screen.print(i + 1);
+      }
+      if (selectedPid[1] < AUDIO_CHANNELS){
         screen.drawRectangle(4 + selectedPid[1] * 30, offset - 10, 30, 10, WHITE);
       }
       else {
-        screen.invert(4 + selectedPid[1] * 30, offset - 10, 30, 10);
-      }
-    }
-    else {
-      if (activeEncoder == 1) {        
         screen.drawRectangle(4 + (selectedPid[1] - AUDIO_CHANNELS) * 30, offset, 30, 10, WHITE);
-      }
-      else {
-        screen.invert(4 + (selectedPid[1] - AUDIO_CHANNELS) * 30, offset, 30, 10);
       }
     }
   }

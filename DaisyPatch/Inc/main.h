@@ -84,8 +84,10 @@ void Error_Handler(void);
 #define ADC4_GPIO_Port GPIOA
 #define GATE_OUT_Pin GPIO_PIN_1
 #define GATE_OUT_GPIO_Port GPIOB
-#define CODEC_RESET_Pin GPIO_PIN_11
-#define CODEC_RESET_GPIO_Port GPIOB
+#define CODEC_RESET1_Pin GPIO_PIN_11
+#define CODEC_RESET1_GPIO_Port GPIOB
+#define CODEC_RESET2_Pin GPIO_PIN_14
+#define CODEC_RESET2_GPIO_Port GPIOB
 #define OLED_RST_Pin GPIO_PIN_15
 #define OLED_RST_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
