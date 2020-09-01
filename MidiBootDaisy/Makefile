@@ -20,6 +20,8 @@ C_SRC += crc32.c
 C_SRC += eepromcontrol.c
 C_SRC += message.c
 CPP_SRC += MidiWriter.cpp
+CPP_SRC += QspiStorage.cpp
+CPP_SRC += PatchRegistry.cpp
 # S_SRC = startup_openboot.s
 
 ifndef PLATFORM

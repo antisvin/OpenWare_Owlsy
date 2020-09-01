@@ -346,7 +346,7 @@ public:
 
   void drawPresetNames(int selected, ScreenBuffer &screen) {
     screen.setTextSize(1);
-    selected = min(selected, patch_registry.getNumberOfPatches() - 1);
+    selected = min(uint8_t(selected), patch_registry.getNumberOfPatches() - 1);
     if (selected > 1) {
       screen.setCursor(1, 24);
       screen.print((int)selected - 1);
