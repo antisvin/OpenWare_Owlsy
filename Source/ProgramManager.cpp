@@ -48,7 +48,7 @@ ProgramManager program;
 PatchRegistry registry;
 #else
 PatchRegistry patch_registry;
-PatchRegistry settings_registry;
+SettingsRegistry settings_registry;
 #endif
 ProgramVector staticVector;
 ProgramVector* programVector = &staticVector;
@@ -369,7 +369,7 @@ void updateProgramVector(ProgramVector* pv){
   pv->audio_format = AUDIO_FORMAT_24B16_2X;
 #elif defined OWL_BIOSIGNALS || defined OWL_NOCTUA
   pv->audio_format = AUDIO_FORMAT_24B32 | AUDIO_CHANNELS;
-#elif defined USE_AK4556
+#elif defined USE_AK4556 && defined DUAL_CODEC
   pv->audio_format = AUDIO_FORMAT_24B32_4X;
 #else
   pv->audio_format = AUDIO_FORMAT_24B32;

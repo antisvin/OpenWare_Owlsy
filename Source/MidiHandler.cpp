@@ -20,6 +20,9 @@ extern BootloaderStorage bootloader;
 #ifdef USE_DIGITALBUS
 #include "bus.h"
 #endif
+#ifdef DAISY
+#include "BootCommand.hpp"
+#endif
 
 #ifndef min
 #define min(a,b) ((a)<(b)?(a):(b))
@@ -313,8 +316,13 @@ void MidiHandler::handleFirmwareStoreCommand(uint8_t* data, uint16_t size){
   if(loader.isReady() && size == 5){
     uint32_t slot = loader.decodeInt(data);
     if(slot > 0 && slot <= MAX_NUMBER_OF_PATCHES+MAX_NUMBER_OF_RESOURCES){
+#ifndef DAISY
       program.saveToFlash(slot, loader.getData(), loader.getSize());
       loader.clear();
+#else
+      BootCommand::writePatch(slot, (uint32_t)loader.getData(), loader.getSize()).store();
+      jump_to_bootloader();
+#endif
     }else{
       error(PROGRAM_ERROR, "Invalid STORE slot");
     }

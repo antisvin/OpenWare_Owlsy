@@ -4,6 +4,7 @@
 #define USE_USBD_MIDI
 #define USBD_MAX_POWER              100 // 100mA for iPad compatibility
 #define USBD_HANDLE hUsbDeviceFS
+#define BOOTLOADER_MODE
 
 #if defined DAISY
   #define HARDWARE_VERSION    "Daisy Boot"
@@ -13,7 +14,6 @@
 #endif
 
 #define QSPI_HANDLE hqspi
-//#define QSPI_DEVICE_IS25LP080D
 #define QSPI_DEVICE_IS25LP064A
 
 #define USE_IWDG
