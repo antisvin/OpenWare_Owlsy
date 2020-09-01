@@ -17,7 +17,7 @@ int eeprom_wait(){
 int eeprom_erase_sector(uint32_t sector) {
   FLASH_EraseInitTypeDef cfg;
   cfg.TypeErase = FLASH_TYPEERASE_SECTORS;
-#ifndef OWL_ARCH_F7
+#ifndef OWL_ARCH_F7 || defined OWL_ARCH_H7
   cfg.Banks = FLASH_BANK_1;
 #endif
   cfg.Sector = sector;

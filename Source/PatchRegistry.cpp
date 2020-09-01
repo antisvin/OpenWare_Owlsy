@@ -1,6 +1,6 @@
 #include "PatchRegistry.h"
 // #include "FactoryPatches.h"
-#include "ProgramManager.h"
+// #include "ProgramManager.h"
 #include "ResourceHeader.h"
 #include "ProgramHeader.h"
 #include "DynamicPatchDefinition.hpp"
@@ -14,9 +14,8 @@
 
 static PatchDefinition emptyPatch("---", 0, 0);
 
-PatchRegistry::PatchRegistry() {}
-
-void PatchRegistry::init(FlashStorage* flash_storage) {
+template<class Storage, class StorageBlock>
+void ResourceRegistry<Storage, StorageBlock>::init(Storage* flash_storage) {
   storage = flash_storage;
   patchCount = 0;
   // FactoryPatchDefinition::init();
@@ -34,24 +33,26 @@ void PatchRegistry::init(FlashStorage* flash_storage) {
       uint32_t magic = *(uint32_t*)block.getData();
       int id = magic&0x00ff;
       if(id > 0 && id <= MAX_NUMBER_OF_PATCHES){
-	patchblocks[id-1] = block;
-	patchCount = max(patchCount, id);
+        patchblocks[id-1] = block;
+        patchCount = max(patchCount, id);
       }else if(id > MAX_NUMBER_OF_PATCHES && 
 	       id <= MAX_NUMBER_OF_PATCHES+MAX_NUMBER_OF_RESOURCES){
-	resourceblocks[id-1-MAX_NUMBER_OF_PATCHES] = block;
+          resourceblocks[id-1-MAX_NUMBER_OF_PATCHES] = block;
       }
     }
   }
 }
 
-ResourceHeader* PatchRegistry::getResource(uint8_t index){
+template<class Storage, class StorageBlock>
+ResourceHeader* ResourceRegistry<Storage, StorageBlock>::getResource(uint8_t index){
   index = index - 1 - MAX_NUMBER_OF_PATCHES;
   if(index < MAX_NUMBER_OF_RESOURCES && resourceblocks[index].verify())
     return (ResourceHeader*)resourceblocks[index].getData();
   return NULL;
 }
 
-ResourceHeader* PatchRegistry::getResource(const char* name){
+template<class Storage, class StorageBlock>
+ResourceHeader* ResourceRegistry<Storage, StorageBlock>::getResource(const char* name){
   for(int i=0; i<MAX_NUMBER_OF_RESOURCES; ++i){
     if(resourceblocks[i].verify()){
       ResourceHeader* hdr = (ResourceHeader*)resourceblocks[i].getData();
@@ -62,7 +63,18 @@ ResourceHeader* PatchRegistry::getResource(const char* name){
   return NULL;
 }
 
-void PatchRegistry::store(uint8_t index, uint8_t* data, size_t size){
+template<class Storage, class StorageBlock>
+StorageBlock* ResourceRegistry<Storage, StorageBlock>::getPatchBlock(uint8_t index){
+  if (index < MAX_NUMBER_OF_PATCHES - 1) {
+    return &patchblocks[index];
+  }
+  else {
+    return NULL;
+  }
+}
+
+template<class Storage, class StorageBlock>
+void ResourceRegistry<Storage, StorageBlock>::store(uint8_t index, uint8_t* data, size_t size){
   if(size > storage->getFreeSize() + storage->getDeletedSize())
     return error(FLASH_ERROR, "Insufficient flash available");
   if(size < 4)
@@ -80,10 +92,12 @@ void PatchRegistry::store(uint8_t index, uint8_t* data, size_t size){
     *magic = (*magic&0xffffff00) | (index&0xff);
     StorageBlock block = storage->append(data, size);
     if(block.verify()){
+#ifndef BOOTLOADER_MODE
       debugMessage("Patch stored to flash");
+#endif
       index = index - 1;
       if(patchblocks[index].verify())
-	patchblocks[index].setDeleted(); // delete old patch
+        patchblocks[index].setDeleted(); // delete old patch
       patchblocks[index] = block;
       patchCount = max(patchCount, index+1);
     }else{
@@ -95,7 +109,9 @@ void PatchRegistry::store(uint8_t index, uint8_t* data, size_t size){
     *magic = (*magic&0xffffff00) | (index&0xff);
     StorageBlock block = storage->append(data, size);
     if(block.verify()){
+#ifndef BOOTLOADER_MODE
       debugMessage("Resource stored to\nflash"); // Do we want to show this to users?
+#endif
       index = index - 1 - MAX_NUMBER_OF_PATCHES;
       if(resourceblocks[index].verify())
         resourceblocks[index].setDeleted();
@@ -108,32 +124,32 @@ void PatchRegistry::store(uint8_t index, uint8_t* data, size_t size){
   }
 }
 
-const char* PatchRegistry::getResourceName(unsigned int index){
+template<class Storage, class StorageBlock>
+const char* ResourceRegistry<Storage, StorageBlock>::getResourceName(unsigned int index){
   ResourceHeader* hdr = getResource(index);
   if(hdr == NULL)
     return emptyPatch.getName();
   return hdr->name;
 }
 
-const char* PatchRegistry::getPatchName(unsigned int index){
+template<class Storage, class StorageBlock>
+const char* ResourceRegistry<Storage, StorageBlock>::getPatchName(unsigned int index){
   PatchDefinition* def = getPatchDefinition(index);
   if(def == NULL)
     return emptyPatch.getName();
   return def->getName();
 }
 
-unsigned int PatchRegistry::getNumberOfPatches(){
+template<class Storage, class StorageBlock>
+unsigned int ResourceRegistry<Storage, StorageBlock>::getNumberOfPatches(){
   // +1 for the current / dynamic patch in slot 0
   // return nofPatches+1;
   // return MAX_NUMBER_OF_PATCHES+1;
   return patchCount+1;
 }
 
-bool PatchRegistry::hasPatches(){
-  return patchCount > 0 || dynamicPatchDefinition != NULL;
-}
-
-PatchDefinition* PatchRegistry::getPatchDefinition(unsigned int index){
+template<class Storage, class StorageBlock>
+PatchDefinition* ResourceRegistry<Storage, StorageBlock>::getPatchDefinition(unsigned int index){
   PatchDefinition *def = NULL;
   if(index == 0)
     def = dynamicPatchDefinition;
@@ -142,7 +158,7 @@ PatchDefinition* PatchRegistry::getPatchDefinition(unsigned int index){
     if(patchblocks[index].verify()){
       flashPatch.load(patchblocks[index].getData(), patchblocks[index].getDataSize());
       if(flashPatch.verify())
-	def = &flashPatch;
+        def = &flashPatch;
     }
   }
   if(def == &emptyPatch)
@@ -150,7 +166,8 @@ PatchDefinition* PatchRegistry::getPatchDefinition(unsigned int index){
   return def;
 }
 
-void PatchRegistry::registerPatch(PatchDefinition* def){
+template<class Storage, class StorageBlock>
+void ResourceRegistry<Storage, StorageBlock>::registerPatch(PatchDefinition* def){
   if(patchCount < MAX_NUMBER_OF_PATCHES)
     defs[patchCount++] = def;
 }

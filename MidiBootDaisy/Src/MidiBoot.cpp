@@ -1,8 +1,11 @@
+#include "BootCommand.hpp"
 #include "FirmwareLoader.hpp"
 #include "MidiController.h"
 #include "MidiReader.h"
 #include "MidiStatus.h"
 #include "OpenWareMidiControl.h"
+#include "PatchRegistry.h"
+#include "FlashStorage.h"
 #include "device.h"
 #include "errorhandlers.h"
 #include "midi.h"
@@ -14,6 +17,11 @@ static MidiReader midi_rx;
 MidiController midi_tx;
 FirmwareLoader loader;
 ProgramManager program;
+PatchRegistry patch_registry;
+
+// This is necessary to make PatchDefinition::~PatchDefinition happy during compilation
+// It's not expected to actually be used. 
+void operator delete(void* ptr) {  }
 
 MidiHandler::MidiHandler() {}
 ProgramManager::ProgramManager() {}
@@ -35,7 +43,7 @@ const char *getFirmwareVersion() {
   return (const char *)(HARDWARE_VERSION " " FIRMWARE_VERSION);
 }
 
-#define FIRMWARE_SECTOR 0xffffffff
+#define FIRMWARE_SECTOR 0xff
 
 const char *message = NULL;
 extern "C" void setMessage(const char *msg) { message = msg; }
@@ -54,10 +62,6 @@ void sendMessage() {
 }
 
 void eraseFromFlash(uint32_t sector) {
-  if (qspi_deinit() == MEMORY_OK) {
-    error(RUNTIME_ERROR, "Flash mode error");
-  }
-
   if (qspi_init(QSPI_MODE_INDIRECT_POLLING) == MEMORY_OK) {
     error(RUNTIME_ERROR, "Flash write mode error");
   }
@@ -80,38 +84,27 @@ void eraseFromFlash(uint32_t sector) {
     }
   }
 
-  if (qspi_deinit() == MEMORY_OK) {
-    error(RUNTIME_ERROR, "Flash mode error");
-  }
-
   if (qspi_init(QSPI_MODE_MEMORY_MAPPED) == MEMORY_OK) {
     error(RUNTIME_ERROR, "Flash read mode error");
   }
 }
 
 void saveToFlash(uint32_t address, void *data, uint32_t length) {
-  if (length > (64 + 3 * 128) * 1024)
+  if (length > 512 * 1024) {
     error(RUNTIME_ERROR, "Firmware too big");
-
-  if (qspi_init(QSPI_MODE_INDIRECT_POLLING) != MEMORY_OK) {
+  }
+  else if (qspi_init(QSPI_MODE_INDIRECT_POLLING) != MEMORY_OK) {
     error(RUNTIME_ERROR, "Flash write mode error");
   }
-
-  if (qspi_erase((uint32_t)&_FIRMWARE_STORAGE_BEGIN,
-      (uint32_t)(&_FIRMWARE_STORAGE_BEGIN + length)) != MEMORY_OK) {
+  else if (qspi_erase((uint32_t)&_FIRMWARE_STORAGE_BEGIN,
+                      (uint32_t)(&_FIRMWARE_STORAGE_BEGIN + length)) != MEMORY_OK) {
     error(RUNTIME_ERROR, "Flash erase error");
   }
-
-  if (qspi_write_block((uint32_t)&_FIRMWARE_STORAGE_BEGIN, (uint8_t *)data,
-                       length) != MEMORY_OK) {
+  else if (qspi_write_block((uint32_t)&_FIRMWARE_STORAGE_BEGIN,
+                            (uint8_t *)data, length) != MEMORY_OK) {
     error(RUNTIME_ERROR, "Flash firmware write error");
   }
-
-  if (qspi_deinit() == MEMORY_OK) {
-    error(RUNTIME_ERROR, "Flash mode error");
-  }
-
-  if (qspi_init(QSPI_MODE_MEMORY_MAPPED) == MEMORY_OK) {
+  else if (qspi_init(QSPI_MODE_MEMORY_MAPPED) != MEMORY_OK) {
     error(RUNTIME_ERROR, "Flash read mode error");
   }
 }
@@ -144,9 +137,29 @@ bool midi_error(const char *str) {
 
 void setup() {
   // led_on();
+  uint32_t* addr = OWLBOOT_COMMAND_ADDRESS;
+  if (*addr++ == OWLBOOT_COMMAND_NUMBER) {
+    patch_storage.init();
+    patch_registry.init(&patch_storage);
+    switch (*addr++) {
+    case CMD_WRITE_PATCH:
+      patch_registry.store(*addr++, (uint8_t*)(addr++), *addr++);
+      break;
+    case CMD_ERASE_BLOCK:
+      patch_storage.erase();
+      break;
+    case CMD_ERASE_ALL:
+      eraseFromFlash(FIRMWARE_SECTOR);
+      break;
+    }
+    *OWLBOOT_COMMAND_ADDRESS = 0U;
+  }
+  else {
+    setMessage("OWL Bootloader Ready");
+  }
+
   midi_tx.setOutputChannel(MIDI_OUTPUT_CHANNEL);
   midi_rx.setInputChannel(MIDI_INPUT_CHANNEL);
-  setMessage("OWL Bootloader Ready");
 }
 
 void loop(void) {
@@ -176,11 +189,13 @@ void MidiHandler::handleFirmwareUploadCommand(uint8_t *data, uint16_t size) {
     // firmware upload complete: wait for run or store
     // setLed(NONE); todo!
     led_off();
-  } else if (ret == 0) {
+  }
+  else if (ret == 0) {
     setMessage("Firmware upload in progress");
     led_toggle();
     // toggleLed(); todo!
-  } else {
+  }
+  else {
     error(RUNTIME_ERROR, "Firmware upload error");
   }
   // setParameterValue(PARAMETER_A, loader.index*4095/loader.size);
