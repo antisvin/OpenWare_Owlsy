@@ -48,21 +48,21 @@ IWDG_HandleTypeDef hiwdg1;
 
 QSPI_HandleTypeDef hqspi;
 
-TIM_HandleTypeDef htim1;
-
 SDRAM_HandleTypeDef hsdram1;
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
-
+extern char _FIRMWARE_STORAGE_BEGIN, _FIRMWARE_STORAGE_END, _FIRMWARE_STORAGE_SIZE;
+extern char _PATCH_STORAGE_BEGIN, _PATCH_STORAGE_END;
+extern char _BOOTROM_STORAGE_BEGIN, _BOOTROM_STORAGE_SIZE;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
+static void MPU_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_FMC_Init(void);
 static void MX_QUADSPI_Init(void);
-static void MX_TIM1_Init(void);
 static void MX_IWDG1_Init(void);
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
@@ -71,6 +71,7 @@ void setup();
 void SDRAM_Initialization_Sequence(SDRAM_HandleTypeDef *hsdram);
 void loop(void);
 void setMessage(const char* msg);
+void loadFirmware(uint32_t address, uint8_t* data, uint32_t length);
 
 typedef  void (*pFunction)(void);
 
@@ -91,7 +92,8 @@ static int testNoProgram(){
   // a. initialized successfully
   // b. is in memory-mapped mode
   // Otherwise we'll end in hard fault handler
-  return ((*(__IO uint32_t*)APPLICATION_ADDRESS) & 0x2FFE0000 ) != 0x24000000;
+  return ((*(__IO uint32_t*)APPLICATION_ADDRESS) & 0x2FFE0000 ) != 0x24080000;
+//  return ((*(__IO uint32_t*)APPLICATION_ADDRESS) & 0x2FFE0000 ) != 0x24000000;
   /* Check Vector Table: Test if valid stack pointer is programmed at APPLICATION_ADDRESS */
 }
 
@@ -116,6 +118,9 @@ int main(void)
 
   /* USER CODE END 1 */
 
+  /* MPU Configuration--------------------------------------------------------*/
+  //MPU_Config();
+
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
@@ -136,36 +141,54 @@ int main(void)
   MX_GPIO_Init();
   MX_FMC_Init();
   MX_QUADSPI_Init();
-  MX_TIM1_Init();
   MX_IWDG1_Init();
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
 
   SDRAM_Initialization_Sequence(&hsdram1);   
+  MPU_Config();
   if (qspi_init(QSPI_MODE_MEMORY_MAPPED) != MEMORY_OK){
+    // We can end here only if QSPI settings are misconfigured
     error(RUNTIME_ERROR, "Flash init error");
   }
-  else if(testMagic()){
-    setMessage("Bootloader starting");
-  }else if(testButton()){
-    setMessage("Bootloader requested");
-  }else if(testWatchdogReset()){
-    error(RUNTIME_ERROR, "Watchdog reset");
-  }else if(testNoProgram()){
-    error(RUNTIME_ERROR, "No valid firmware");
-  }else{
-    // jump to application code
+  else {
+    loadFirmware(
+      (uint32_t)&_FIRMWARE_STORAGE_BEGIN, (uint8_t*)&_BOOTROM_STORAGE_BEGIN,
+      (uint32_t)&_FIRMWARE_STORAGE_SIZE);
 
-    /* Disable all interrupts */
-    RCC->CIER = 0x00000000;
+    if(testMagic()){
+      setMessage("Bootloader starting");
+    }
+    else if(testButton()){
+      setMessage("Bootloader requested");
+    }
+    else if(testWatchdogReset()){
+      error(RUNTIME_ERROR, "Watchdog reset");
+    }
+    else if(testNoProgram()){
+      error(RUNTIME_ERROR, "No valid firmware");
+    }
+    else {
+      // jump to application code
 
-    /* Jump to user application */
-    uint32_t JumpAddress = *(__IO uint32_t*) (APPLICATION_ADDRESS + 4);
-    pFunction jumpToApplication = (pFunction) JumpAddress;
-    /* Initialize user application's Stack Pointer */
-    __set_MSP(*(__IO uint32_t*) APPLICATION_ADDRESS);
-    jumpToApplication();
-    for(;;);
+      /* Disable all interrupts */
+      //RCC->CIER = 0x00000000;
+      SysTick->CTRL = 0;
+
+      /* Jump to user application */
+      uint32_t JumpAddress = *(__IO uint32_t*) (APPLICATION_ADDRESS + 4);
+      pFunction jumpToApplication = (pFunction) JumpAddress;
+      /* Initialize user application's Stack Pointer */
+      __set_MSP(*(__IO uint32_t*) APPLICATION_ADDRESS);
+
+      /* Call the DeInit function to reset the driver */
+//      if (HAL_QSPI_DeInit(&hqspi) != HAL_OK) {
+//        error(RUNTIME_ERROR, "Flash deinit error");
+//      }
+
+      jumpToApplication();
+      for(;;);
+    }
   }
   /* Clear reset flags */
   __HAL_RCC_CLEAR_RESET_FLAGS();
@@ -183,6 +206,9 @@ int main(void)
   while (1)
   {
     loop();
+#ifdef USE_IWDG
+    IWDG1->KR = 0xaaaa; // reset the watchdog timer
+#endif
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -262,7 +288,7 @@ void SystemClock_Config(void)
   PeriphClkInitStruct.PLL2.PLL2VCOSEL = RCC_PLL2VCOWIDE;
   PeriphClkInitStruct.PLL2.PLL2FRACN = 0;
   PeriphClkInitStruct.FmcClockSelection = RCC_FMCCLKSOURCE_PLL2;
-  PeriphClkInitStruct.QspiClockSelection = RCC_QSPICLKSOURCE_PLL;
+  PeriphClkInitStruct.QspiClockSelection = RCC_QSPICLKSOURCE_D1HCLK;
   PeriphClkInitStruct.UsbClockSelection = RCC_USBCLKSOURCE_HSI48;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
   {
@@ -319,11 +345,11 @@ static void MX_QUADSPI_Init(void)
   /* USER CODE END QUADSPI_Init 1 */
   /* QUADSPI parameter configuration*/
   hqspi.Instance = QUADSPI;
-  hqspi.Init.ClockPrescaler = 255;
+  hqspi.Init.ClockPrescaler = 1;
   hqspi.Init.FifoThreshold = 1;
   hqspi.Init.SampleShifting = QSPI_SAMPLE_SHIFTING_NONE;
   hqspi.Init.FlashSize = 1;
-  hqspi.Init.ChipSelectHighTime = QSPI_CS_HIGH_TIME_1_CYCLE;
+  hqspi.Init.ChipSelectHighTime = QSPI_CS_HIGH_TIME_2_CYCLE;
   hqspi.Init.ClockMode = QSPI_CLOCK_MODE_0;
   hqspi.Init.FlashID = QSPI_FLASH_ID_1;
   hqspi.Init.DualFlash = QSPI_DUALFLASH_DISABLE;
@@ -334,76 +360,6 @@ static void MX_QUADSPI_Init(void)
   /* USER CODE BEGIN QUADSPI_Init 2 */
 
   /* USER CODE END QUADSPI_Init 2 */
-
-}
-
-/**
-  * @brief TIM1 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_TIM1_Init(void)
-{
-
-  /* USER CODE BEGIN TIM1_Init 0 */
-
-  /* USER CODE END TIM1_Init 0 */
-
-  TIM_MasterConfigTypeDef sMasterConfig = {0};
-  TIM_OC_InitTypeDef sConfigOC = {0};
-  TIM_BreakDeadTimeConfigTypeDef sBreakDeadTimeConfig = {0};
-
-  /* USER CODE BEGIN TIM1_Init 1 */
-
-  /* USER CODE END TIM1_Init 1 */
-  htim1.Instance = TIM1;
-  htim1.Init.Prescaler = 0;
-  htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim1.Init.Period = 65535;
-  htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-  htim1.Init.RepetitionCounter = 0;
-  htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
-  if (HAL_TIM_OC_Init(&htim1) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
-  sMasterConfig.MasterOutputTrigger2 = TIM_TRGO2_RESET;
-  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-  if (HAL_TIMEx_MasterConfigSynchronization(&htim1, &sMasterConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  sConfigOC.OCMode = TIM_OCMODE_TIMING;
-  sConfigOC.Pulse = 0;
-  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
-  sConfigOC.OCNPolarity = TIM_OCNPOLARITY_HIGH;
-  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
-  sConfigOC.OCIdleState = TIM_OCIDLESTATE_RESET;
-  sConfigOC.OCNIdleState = TIM_OCNIDLESTATE_RESET;
-  if (HAL_TIM_OC_ConfigChannel(&htim1, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  sBreakDeadTimeConfig.OffStateRunMode = TIM_OSSR_DISABLE;
-  sBreakDeadTimeConfig.OffStateIDLEMode = TIM_OSSI_DISABLE;
-  sBreakDeadTimeConfig.LockLevel = TIM_LOCKLEVEL_OFF;
-  sBreakDeadTimeConfig.DeadTime = 0;
-  sBreakDeadTimeConfig.BreakState = TIM_BREAK_DISABLE;
-  sBreakDeadTimeConfig.BreakPolarity = TIM_BREAKPOLARITY_HIGH;
-  sBreakDeadTimeConfig.BreakFilter = 0;
-  sBreakDeadTimeConfig.Break2State = TIM_BREAK2_DISABLE;
-  sBreakDeadTimeConfig.Break2Polarity = TIM_BREAK2POLARITY_HIGH;
-  sBreakDeadTimeConfig.Break2Filter = 0;
-  sBreakDeadTimeConfig.AutomaticOutput = TIM_AUTOMATICOUTPUT_DISABLE;
-  if (HAL_TIMEx_ConfigBreakDeadTime(&htim1, &sBreakDeadTimeConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN TIM1_Init 2 */
-
-  /* USER CODE END TIM1_Init 2 */
-  HAL_TIM_MspPostInit(&htim1);
 
 }
 
@@ -497,6 +453,34 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 
 /* USER CODE END 4 */
+
+/* MPU Configuration */
+
+void MPU_Config(void)
+{
+  MPU_Region_InitTypeDef MPU_InitStruct = {0};
+
+  /* Disables the MPU */
+  HAL_MPU_Disable();
+  /** Initializes and configures the Region and the memory to be protected
+  */
+  MPU_InitStruct.Enable = MPU_REGION_ENABLE;
+  MPU_InitStruct.Number = MPU_REGION_NUMBER0;
+  MPU_InitStruct.BaseAddress = 0xc3f80000;
+  MPU_InitStruct.Size = MPU_REGION_SIZE_512KB;
+  MPU_InitStruct.SubRegionDisable = 0x0;
+  MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL1;
+  MPU_InitStruct.AccessPermission = MPU_REGION_FULL_ACCESS;
+  MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_ENABLE;
+  MPU_InitStruct.IsShareable = MPU_ACCESS_NOT_SHAREABLE;
+  MPU_InitStruct.IsCacheable = MPU_ACCESS_CACHEABLE;
+  MPU_InitStruct.IsBufferable = MPU_ACCESS_BUFFERABLE;
+
+  HAL_MPU_ConfigRegion(&MPU_InitStruct);
+  /* Enables the MPU */
+  HAL_MPU_Enable(MPU_PRIVILEGED_DEFAULT);
+
+}
 
 /**
   * @brief  This function is executed in case of error occurrence.

@@ -7,8 +7,7 @@ OPENOCD ?= openocd -f $(OPENWARE)/Hardware/openocd_h7.cfg
 C_SRC = $(notdir $(wildcard Src/*.c))
 CPP_SRC = $(notdir $(wildcard Src/*.cpp))
 
-#LDSCRIPT = $(OPENWARE)/Hardware/daisy_noflash.ld
-LDSCRIPT = $(OPENWARE)/Hardware/daisy.ld
+LDSCRIPT = $(OPENWARE)/Hardware/daisy_rom.ld
 
 include $(OPENWARE)/Hardware/daisy.mk
 
@@ -18,8 +17,10 @@ C_SRC += usbd_audio.c
 C_SRC += sdram_daisy.c
 C_SRC += ssd1309.c
 C_SRC += ak4556.c
+C_SRC += qspicontrol.c
 CPP_SRC += uart.cpp MidiStreamReader.cpp
 CPP_SRC += ScreenBuffer.cpp ScreenBufferMono.cpp Graphics.cpp
+CPP_SRC += QspiStorage.cpp
 
 ifndef PLATFORM
 PLATFORM = Daisy

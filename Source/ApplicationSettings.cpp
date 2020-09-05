@@ -43,12 +43,12 @@ void ApplicationSettings::reset(){
 bool ApplicationSettings::settingsInFlash(){
   // return eeprom_read_word(APPLICATION_SETTINGS_ADDR) == checksum;
   // return false;
-  return settings_registry.getResource(APPLICATION_SETTINGS_RESOURCE_INDEX) != NULL;
+  return registry.getResource(APPLICATION_SETTINGS_RESOURCE_INDEX) != NULL;
 }
 
 void ApplicationSettings::loadFromFlash(){
   // eeprom_read_block(APPLICATION_SETTINGS_ADDR, this, sizeof(*this));
-  ResourceHeader* resource = settings_registry.getResource(APPLICATION_SETTINGS_RESOURCE_INDEX);
+  ResourceHeader* resource = registry.getResource(APPLICATION_SETTINGS_RESOURCE_INDEX);
   uint8_t* data = (uint8_t*)resource + sizeof(ResourceHeader);
   if(resource != NULL){
     memcpy(this, data, sizeof(*this));
@@ -63,5 +63,5 @@ void ApplicationSettings::saveToFlash(){
   resource->size = sizeof(*this);
   strcpy(resource->name, "Settings");  
   memcpy(buffer+sizeof(ResourceHeader), this, sizeof(*this));
-  settings_registry.store(APPLICATION_SETTINGS_RESOURCE_INDEX, buffer, totalsize);
+  registry.store(APPLICATION_SETTINGS_RESOURCE_INDEX, buffer, totalsize);
 }

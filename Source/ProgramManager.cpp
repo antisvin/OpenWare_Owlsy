@@ -44,12 +44,7 @@
 #define ERASE_FLASH_NOTIFICATION    0x08
 
 ProgramManager program;
-#ifndef DAISY
 PatchRegistry registry;
-#else
-PatchRegistry patch_registry;
-SettingsRegistry settings_registry;
-#endif
 ProgramVector staticVector;
 ProgramVector* programVector = &staticVector;
 static volatile TaskHandle_t audioTask = NULL;
@@ -386,7 +381,7 @@ void programFlashTask(void* p){
     // flashFirmware(source, size); 
     error(PROGRAM_ERROR, "Flash firmware TODO");
   }else{
-    patch_registry.store(index, source, size);
+    registry.store(index, source, size);
     program.loadProgram(index);
     program.resetProgram(false);
   }
@@ -400,11 +395,9 @@ void programFlashTask(void* p){
 void eraseFlashTask(void* p){
   int sector = flashSectorToWrite;
   if(sector == 0xff){
-#if !defined(DAISY) || defined(BOOTLOADER_MODE)
-    patch_storage.erase();
+    storage.erase();
     // debugMessage("Erased flash storage");
-    patch_registry.init(&patch_storage);
-#endif
+    registry.init();
   }
   // midi_tx.sendProgramMessage();
   // midi_tx.sendDeviceStats();
@@ -604,7 +597,7 @@ void ProgramManager::updateProgramIndex(uint8_t index){
   patchindex = index;
   settings.program_index = index;
   midi_tx.sendPc(index);
-  midi_tx.sendPatchName(index, patch_registry.getPatchName(index));
+  midi_tx.sendPatchName(index, registry.getPatchName(index));
 #ifdef USE_BKPSRAM
   extern RTC_HandleTypeDef hrtc;
   HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, index);
@@ -618,10 +611,10 @@ void ProgramManager::loadDynamicProgram(void* address, uint32_t length){
   dynamo.load(address, length);
   if(dynamo.getProgramVector() != NULL){
     patchdef = &dynamo;
-    patch_registry.setDynamicPatchDefinition(patchdef);
+    registry.setDynamicPatchDefinition(patchdef);
     updateProgramIndex(0);
   }else{
-    patch_registry.setDynamicPatchDefinition(NULL);
+    registry.setDynamicPatchDefinition(NULL);
   }
 }
 

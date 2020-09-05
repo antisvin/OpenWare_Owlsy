@@ -6,20 +6,17 @@
 #include "message.h"
 #include <string.h>
 
-#if defined DAISY && defined BOOTLOADER_MODE
-// Daisy uses separate storages for settings and patches
-extern char _PATCH_STORAGE_BEGIN;
-extern char _PATCH_STORAGE_END;
-#define PATCH_EEPROM_PAGE_BEGIN ((uint32_t)&_PATCH_STORAGE_BEGIN)
-#define PATCH_EEPROM_PAGE_END ((uint32_t)&_PATCH_STORAGE_END)
-#endif
+extern char _FLASH_STORAGE_BEGIN;
+extern char _FLASH_STORAGE_END;
+#define PATCH_EEPROM_PAGE_BEGIN ((uint32_t)&_FLASH_STORAGE_BEGIN)
+#define PATCH_EEPROM_PAGE_END ((uint32_t)&_FLASH_STORAGE_END)
 
 //#define QSPI_SECTOR_SIZE (128 * 1024)
 
 
 #if 0
 template<>
-void QspiStorage::recover(){
+void Storage::recover(){
   StorageBlock block = getLastBlock();
   if(!block.isFree() && !block.isValidSize()){
     // count backwards to see how much free space (0xff words) there is
@@ -42,13 +39,13 @@ void QspiStorage::recover(){
 
 // erase entire allocated FLASH memory
 template<>
-void QspiStorage::erase() {
+void Storage::erase() {
   qspi_erase(start_page, end_page);
   init();
 }
 
 template<>
-void QspiStorage::defrag(void *buffer, uint32_t size) {
+void Storage::defrag(void *buffer, uint32_t size) {
   // ASSERT(size >= getWrittenSize(), "Insufficient space for full defrag");
   uint8_t *ptr = (uint8_t *)buffer;
   if (getDeletedSize() > 0 && getWrittenSize() > 0) {
@@ -65,8 +62,5 @@ void QspiStorage::defrag(void *buffer, uint32_t size) {
   }
 }
 
-#ifdef DAISY
-//FlashStorage settings_storage(SETTINGS_EEPROM_PAGE_BEGIN, SETTINGS_EEPROM_PAGE_END);
-PatchStorage patch_storage(PATCH_EEPROM_PAGE_BEGIN, PATCH_EEPROM_PAGE_END);
-#endif
+Storage storage(PATCH_EEPROM_PAGE_BEGIN, PATCH_EEPROM_PAGE_END);
 

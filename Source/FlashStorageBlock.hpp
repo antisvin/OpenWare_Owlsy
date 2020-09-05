@@ -7,16 +7,8 @@
 #include "eepromcontrol.h"
 #include "BaseStorageBlock.hpp"
 
-#ifndef DAISY
 extern char _FLASH_STORAGE_END;
 #define EEPROM_PAGE_END   ((uint32_t)&_FLASH_STORAGE_END)
-#else
-extern char _SETTINGS_STORAGE_END;
-extern char _PATCH_STORAGE_END;
-#define EEPROM_PAGE_END   ((uint32_t)&_SETTINGS_STORAGE_END)
-#define PATCH_PAGE_END   ((uint32_t)&_PATCH_STORAGE_END)
-#endif
-
 
 
 class FlashStorageBlock : public BaseStorageBlock<4> {
@@ -73,28 +65,5 @@ public:
         }
     }
 };
-
-#ifdef DAISY
-class QspiStorageBlock : public BaseStorageBlock<4096> {
-public:
-    QspiStorageBlock() : BaseStorageBlock<4096>() {};
-    QspiStorageBlock(uint32_t* header) : BaseStorageBlock<4096>(header) {};
-
-    bool isValidSize() const {
-        return header != nullptr && getDataSize() > 0 && 
-        (uint32_t)header + getBlockSize() < PATCH_PAGE_END;
-    }
-
-    bool write(void* data, uint32_t size) {
-        error(FLASH_ERROR, "QSPI in readonly mode");
-        return false;
-    }
-
-    bool setDeleted() {
-        error(FLASH_ERROR, "QSPI in readonly mode");
-        return false;
-    }
-};
-#endif
 
 #endif

@@ -251,8 +251,8 @@ static uint32_t reset_memory(QSPI_HandleTypeDef *hqspi) {
   s_command.InstructionMode = QSPI_INSTRUCTION_1_LINE;
   s_command.Instruction = RESET_ENABLE_CMD;
   s_command.AddressMode = QSPI_ADDRESS_NONE;
-  s_command.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
   s_command.DataMode = QSPI_DATA_NONE;
+  s_command.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
   s_command.DummyCycles = 0;
   s_command.DdrMode = QSPI_DDR_MODE_DISABLE;
   s_command.DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY;

@@ -346,22 +346,22 @@ public:
 
   void drawPresetNames(int selected, ScreenBuffer &screen) {
     screen.setTextSize(1);
-    selected = min(uint8_t(selected), patch_registry.getNumberOfPatches() - 1);
+    selected = min(uint8_t(selected), registry.getNumberOfPatches() - 1);
     if (selected > 1) {
       screen.setCursor(1, 24);
       screen.print((int)selected - 1);
       screen.print(".");
-      screen.print(patch_registry.getPatchName(selected - 1));
+      screen.print(registry.getPatchName(selected - 1));
     };
     screen.setCursor(1, 24 + 10);
     screen.print((int)selected);
     screen.print(".");
-    screen.print(patch_registry.getPatchName(selected));
-    if (selected + 1 < (int)patch_registry.getNumberOfPatches()) {
+    screen.print(registry.getPatchName(selected));
+    if (selected + 1 < (int)registry.getNumberOfPatches()) {
       screen.setCursor(1, 24 + 20);
       screen.print((int)selected + 1);
       screen.print(".");
-      screen.print(patch_registry.getPatchName(selected + 1));
+      screen.print(registry.getPatchName(selected + 1));
     }
     if (activeEncoder == 0)
       screen.invert(0, 25, 128, 10);
@@ -513,7 +513,7 @@ public:
         selectedPid[1] = value;
         break;
     case PRESET:
-      selectedPid[1] = max(1, min(patch_registry.getNumberOfPatches()-1, value));
+      selectedPid[1] = max(1, min(registry.getNumberOfPatches()-1, value));
       break;
     case SCOPE:
       selectedPid[1] = max(0, min(AUDIO_CHANNELS * 2 - 1, value));
