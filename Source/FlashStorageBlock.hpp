@@ -7,7 +7,8 @@
 #include "eepromcontrol.h"
 #include "BaseStorageBlock.hpp"
 
-extern char _FLASH_STORAGE_END;
+extern char _FLASH_STORAGE_BEGIN, _FLASH_STORAGE_END;
+#define EEPROM_PAGE_START   ((uint32_t)&_FLASH_STORAGE_BEGIN)
 #define EEPROM_PAGE_END   ((uint32_t)&_FLASH_STORAGE_END)
 
 
@@ -16,12 +17,15 @@ public:
     FlashStorageBlock() : BaseStorageBlock<4>() {};
     FlashStorageBlock(uint32_t* header) : BaseStorageBlock<4>(header) {};
 
-    bool isValidSize() const {
-        return header != nullptr && getDataSize() > 0 && 
-        (uint32_t)header + getBlockSize() < EEPROM_PAGE_END;
+    bool isValidSize() const override {
+        return header != nullptr &&
+            (uint32_t)header >= EEPROM_PAGE_START &&
+            (uint32_t)header + getBlockSize() < EEPROM_PAGE_END &&
+            ((uint32_t)header & alignment_mask == 0) &&
+            getDataSize() > 0;
     }
 
-    bool write(void* data, uint32_t size) {
+    bool write(void* data, uint32_t size) override {
         if((uint32_t)header+4+size > EEPROM_PAGE_END)
             return false;
         eeprom_unlock();
@@ -44,7 +48,7 @@ public:
         return true;
     }
 
-    bool setDeleted() {
+    bool setDeleted() override {
         uint32_t size = getDataSize();
         if(size){
             eeprom_unlock();

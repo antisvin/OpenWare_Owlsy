@@ -7,7 +7,8 @@
 #include "qspicontrol.h"
 #include "BaseStorageBlock.hpp"
 
-extern char _FLASH_STORAGE_END;
+extern char _FLASH_STORAGE_BEGIN, _FLASH_STORAGE_END;
+#define PATCH_PAGE_BEGIN ((uint32_t)&_FLASH_STORAGE_BEGIN)
 #define PATCH_PAGE_END   ((uint32_t)&_FLASH_STORAGE_END)
 
 /*
@@ -25,11 +26,15 @@ public:
     QspiStorageBlock() : BaseStorageBlock<QSPI_ALIGNMENT>() {};
     QspiStorageBlock(uint32_t* header) : BaseStorageBlock<QSPI_ALIGNMENT>(header) {};
 
-    bool isValidSize() const {
-        return header != nullptr && getDataSize() > 0 && (uint32_t)header + getBlockSize() < PATCH_PAGE_END;
+    bool isValidSize() const override {
+        return header != nullptr &&
+            (uint32_t)header >= PATCH_PAGE_BEGIN &&
+            (uint32_t)header + getBlockSize() < PATCH_PAGE_END &&
+            ((uint32_t)header & alignment_mask == 0) &&
+            getDataSize() > 0;
     }
 
-    bool write(void* data, uint32_t size) {
+    bool write(void* data, uint32_t size) override {
         if((uint32_t)header+4+size > PATCH_PAGE_END)
             return false;
 
@@ -63,7 +68,7 @@ public:
         return true;
     }
 
-    bool setDeleted() {
+    bool setDeleted() override {
         uint32_t size = getDataSize();
         if(size){
             // We can't write a single word on QSPI, so we'll read 4k page, set necessary bits
