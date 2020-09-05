@@ -17,11 +17,9 @@ C_SRC += qspicontrol.c
 C_SRC += sdram_daisy.c
 C_SRC += sysex.c
 C_SRC += crc32.c
-C_SRC += eepromcontrol.c
+#C_SRC += eepromcontrol.c
 C_SRC += message.c
 CPP_SRC += MidiWriter.cpp
-CPP_SRC += QspiStorage.cpp
-CPP_SRC += PatchRegistry.cpp
 # S_SRC = startup_openboot.s
 
 ifndef PLATFORM
@@ -41,7 +39,6 @@ CPP_SRC += MidiController.cpp
 OBJS = $(C_SRC:%.c=Build/%.o)
 OBJS += $(CPP_SRC:%.cpp=Build/%.o)
 OBJS += $(S_SRC:%.s=Build/%.o)
-OBJS += $(DRIVERS)/Src/stm32h7xx_hal_qspi.o
 
 OBJS += $(OBJS_SDRAM)
 OBJS += $(OBJS_USBD)

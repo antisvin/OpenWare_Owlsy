@@ -58,12 +58,9 @@
 #define UART_MIDI_RX_BUFFER_SIZE 256
 */
 
-/* We shouldn't need to touch QSPI - it's initialized by bootloader */
-/*
 #define QSPI_HANDLE hqspi
 //#define QSPI_DEVICE_IS25LP080D
 #define QSPI_DEVICE_IS25LP064A
-*/
 
 #define USE_IWDG
 #define IWDG_PERIPH IWDG1

@@ -34,7 +34,7 @@
 
 extern char _EXTRAM;
 
-void MPU_Config(void){
+void _MPU_Config(void){
   MPU_Region_InitTypeDef MPU_InitStruct;
   
   /* Disable the MPU */

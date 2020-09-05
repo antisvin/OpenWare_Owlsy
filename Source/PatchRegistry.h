@@ -8,11 +8,9 @@
 #include "FlashStorage.h"
 
 
-template<class Storage, class StorageBlock>
-class ResourceRegistry {
+class PatchRegistry {
 public:
-  ResourceRegistry() = default;
-  void init(Storage* flash_storage);
+  void init();
   /* const char* getName(unsigned int index); */
   const char* getPatchName(unsigned int index);
   const char* getResourceName(unsigned int index);
@@ -37,18 +35,6 @@ private:
 };
 
 
-#ifndef DAISY
-using PatchRegistry = ResourceRegistry<FlashStorage, PatchStorageBlock>;
 extern PatchRegistry registry;
-#define settings_registry registry
-#define patch_registry registry
-#else
-using PatchRegistry = ResourceRegistry<PatchStorage, QspiStorageBlock>;
-using SettingsRegistry = ResourceRegistry<FlashStorage, FlashStorageBlock>;
-template class ResourceRegistry<PatchStorage, PatchStorageBlock>;
-template class ResourceRegistry<FlashStorage, FlashStorageBlock>;
-extern PatchRegistry patch_registry;
-extern SettingsRegistry settings_registry;
-#endif
 
 #endif // __PatchRegistry_h__

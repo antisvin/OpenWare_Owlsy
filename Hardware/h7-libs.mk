@@ -15,6 +15,7 @@ OBJS += $(DRIVERS)/Src/stm32h7xx_hal_tim_ex.o
 OBJS += $(DRIVERS)/Src/stm32h7xx_hal_tim.o
 OBJS += $(DRIVERS)/Src/stm32h7xx_hal_cortex.o
 OBJS += $(DRIVERS)/Src/stm32h7xx_hal_spi.o
+OBJS += $(DRIVERS)/Src/stm32h7xx_hal_qspi.o
 # OBJS += $(DRIVERS)/Src/stm32h7xx_hal_rng.o
 OBJS += $(DRIVERS)/Src/stm32h7xx_hal_mdma.o
 # OBJS += $(DRIVERS)/Src/stm32h7xx_hal_dma2d.o
@@ -41,8 +42,6 @@ OBJS_SAI += $(DRIVERS)/Src/stm32h7xx_hal_sai_ex.o
 # required by Daisy Patch
 
 # OBJS_SDIO
-# OBJS_OLED
-# OBJS_ENCODER
 
 ### USB Device Library ###
 OBJS_USBD = $(DRIVERS)/Src/stm32h7xx_hal_pcd.o
