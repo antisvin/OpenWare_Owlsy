@@ -7,10 +7,8 @@
 #include "qspicontrol.h"
 #include "BaseStorageBlock.hpp"
 
-#if defined DAISY && defined BOOTLOADER_MODE
-extern char _PATCH_STORAGE_END;
-#define PATCH_PAGE_END   ((uint32_t)&_PATCH_STORAGE_END)
-#endif
+extern char _FLASH_STORAGE_END;
+#define PATCH_PAGE_END   ((uint32_t)&_FLASH_STORAGE_END)
 
 /*
  * This is only intended to be used for storing patches on Daisy QSPI flash.

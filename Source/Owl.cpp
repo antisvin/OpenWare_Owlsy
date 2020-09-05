@@ -278,15 +278,8 @@ void Owl::setup(void){
   HAL_PWR_EnableBkUpAccess();
 #endif
   ledstatus = 0;
-#ifndef DAISY
   storage.init();
-  registry.init(&storage);
-#else
-  patch_storage.init();
-  settings_storage.init();
-  patch_registry.init(&patch_storage);
-  settings_registry.init(&settings_storage);
-#endif
+  registry.init();
   settings.init(); // settings need the registry to be initialised first
   onResourceUpdate();
 #ifdef USE_CODEC

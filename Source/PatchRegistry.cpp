@@ -14,9 +14,7 @@
 
 static PatchDefinition emptyPatch("---", 0, 0);
 
-template<class Storage, class StorageBlock>
-void ResourceRegistry<Storage, StorageBlock>::init(Storage* flash_storage) {
-  storage = flash_storage;
+void PatchRegistry::init() {
   patchCount = 0;
   resourceCount = 0;
   // FactoryPatchDefinition::init();
@@ -44,16 +42,14 @@ void ResourceRegistry<Storage, StorageBlock>::init(Storage* flash_storage) {
   }
 }
 
-template<class Storage, class StorageBlock>
-ResourceHeader* ResourceRegistry<Storage, StorageBlock>::getResource(uint8_t index){
+ResourceHeader* PatchRegistry::getResource(uint8_t index){
   index = index - 1 - MAX_NUMBER_OF_PATCHES;
   if(index < MAX_NUMBER_OF_RESOURCES && resourceblocks[index].verify())
     return (ResourceHeader*)resourceblocks[index].getData();
   return NULL;
 }
 
-template<class Storage, class StorageBlock>
-ResourceHeader* ResourceRegistry<Storage, StorageBlock>::getResource(const char* name){
+ResourceHeader* PatchRegistry::getResource(const char* name){
   for(int i=0; i<MAX_NUMBER_OF_RESOURCES; ++i){
     if(resourceblocks[i].verify()){
       ResourceHeader* hdr = (ResourceHeader*)resourceblocks[i].getData();
@@ -64,6 +60,7 @@ ResourceHeader* ResourceRegistry<Storage, StorageBlock>::getResource(const char*
   return NULL;
 }
 
+<<<<<<< HEAD
 template<class Storage, class StorageBlock>
 unsigned int PatchRegistry::getSlot(ResourceHeader* resource){
   const char* name = resource->name;
@@ -84,6 +81,9 @@ void* PatchRegistry::getData(ResourceHeader* resource){
 
 template<class Storage, class StorageBlock>
 StorageBlock* ResourceRegistry<Storage, StorageBlock>::getPatchBlock(uint8_t index){
+=======
+StorageBlock* PatchRegistry::getPatchBlock(uint8_t index){
+>>>>>>> c8bae27 (Bootrom loading - doesn't work either)
   if (index < MAX_NUMBER_OF_PATCHES - 1) {
     return &patchblocks[index];
   }
@@ -92,8 +92,7 @@ StorageBlock* ResourceRegistry<Storage, StorageBlock>::getPatchBlock(uint8_t ind
   }
 }
 
-template<class Storage, class StorageBlock>
-void ResourceRegistry<Storage, StorageBlock>::store(uint8_t index, uint8_t* data, size_t size){
+void PatchRegistry::store(uint8_t index, uint8_t* data, size_t size){
   if(size > storage->getFreeSize() + storage->getDeletedSize())
     return error(FLASH_ERROR, "Insufficient flash available");
   if(size < 4)
@@ -144,6 +143,7 @@ void ResourceRegistry<Storage, StorageBlock>::store(uint8_t index, uint8_t* data
   }
 }
 
+<<<<<<< HEAD
 template<class Storage, class StorageBlock>
 void PatchRegistry::setDeleted(uint8_t index) {
   if (!index) {
@@ -185,28 +185,30 @@ void PatchRegistry::setDeleted(uint8_t index) {
 
 template<class Storage, class StorageBlock>
 const char* ResourceRegistry<Storage, StorageBlock>::getResourceName(unsigned int index){
+=======
+const char* PatchRegistry::getResourceName(unsigned int index){
+>>>>>>> c8bae27 (Bootrom loading - doesn't work either)
   ResourceHeader* hdr = getResource(index);
   if(hdr == NULL)
     return emptyPatch.getName();
   return hdr->name;
 }
 
-template<class Storage, class StorageBlock>
-const char* ResourceRegistry<Storage, StorageBlock>::getPatchName(unsigned int index){
+const char* PatchRegistry::getPatchName(unsigned int index){
   PatchDefinition* def = getPatchDefinition(index);
   if(def == NULL)
     return emptyPatch.getName();
   return def->getName();
 }
 
-template<class Storage, class StorageBlock>
-unsigned int ResourceRegistry<Storage, StorageBlock>::getNumberOfPatches(){
+unsigned int PatchRegistry::getNumberOfPatches(){
   // +1 for the current / dynamic patch in slot 0
   // return nofPatches+1;
   // return MAX_NUMBER_OF_PATCHES+1;
   return patchCount+1;
 }
 
+<<<<<<< HEAD
 template<class Storage, class StorageBlock>
 unsigned int PatchRegistry::getNumberOfResources(){
   return resourceCount;
@@ -219,6 +221,9 @@ bool PatchRegistry::hasPatches(){
 
 template<class Storage, class StorageBlock>
 PatchDefinition* ResourceRegistry<Storage, StorageBlock>::getPatchDefinition(unsigned int index){
+=======
+PatchDefinition* PatchRegistry::getPatchDefinition(unsigned int index){
+>>>>>>> c8bae27 (Bootrom loading - doesn't work either)
   PatchDefinition *def = NULL;
   if(index == 0)
     def = dynamicPatchDefinition;
@@ -235,8 +240,7 @@ PatchDefinition* ResourceRegistry<Storage, StorageBlock>::getPatchDefinition(uns
   return def;
 }
 
-template<class Storage, class StorageBlock>
-void ResourceRegistry<Storage, StorageBlock>::registerPatch(PatchDefinition* def){
+void PatchRegistry::registerPatch(PatchDefinition* def){
   if(patchCount < MAX_NUMBER_OF_PATCHES)
     defs[patchCount++] = def;
 }

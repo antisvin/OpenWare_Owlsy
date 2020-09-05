@@ -1,24 +1,28 @@
+/*
+ This script is used when Daisy boots from QSPI flash. It must be initialized by bootloader in advance.
+*/
+
 /* Entry Point */
 ENTRY(Reset_Handler)
 
 /* Highest address of the user mode stack */
-/* _estack = 0x20020000;*/    /* end of RAM */
+/* _estack = 0x20020000; */   /* end of RAM */
 /* Generate a link error if heap and stack don't fit into RAM */
-_Min_Heap_Size = 0x000;      /* required amount of heap  */
-_Min_Stack_Size = 0x200; /* required amount of stack */
+_Min_Heap_Size = 0x2000;      /* required amount of heap  */
+_Min_Stack_Size = 0x4000; /* required amount of stack */
 
 /* Specify the memory areas */
 MEMORY
 {
-ITCMRAM (xrw)     : ORIGIN = 0x00000000, LENGTH = 64K
-DTCMRAM (xrw)     : ORIGIN = 0x20000000, LENGTH = 128K
-RAM (rwx)         : ORIGIN = 0x24000000, LENGTH = 512K
+ITCMRAM (rwx)     : ORIGIN = 0x00000000, LENGTH = 64K
+DTCMRAM (rwx)     : ORIGIN = 0x20000000, LENGTH = 128K
+RAM (rwx)         : ORIGIN = 0x24000000, LENGTH = 512K /* This probably should be moved to D2 */
 PATCHRAM (rwx)    : ORIGIN = 0x30000000, LENGTH = 288K
-RAM_D3 (xrw)      : ORIGIN = 0x38000000, LENGTH = 64K
+RAM_D3 (rwx)      : ORIGIN = 0x38000000, LENGTH = 64K
 EXTRAM (rwx)      : ORIGIN = 0xc0000000, LENGTH = 6400K /* 62 M + 512 K */
 PATCH (rwx)       : ORIGIN = 0xc3e80000, LENGTH = 1M /* Patch image - loaded from QSPI or dynamically */
-APPLICATION (rwx) : ORIGIN = 0xc3f80000, LENGTH = 512K /* This is FW image */
-FLASH (r)         : ORIGIN = 0x08000000, LENGTH = 128K  /* Bootloader on flash*/
+FLASH (rwx)       : ORIGIN = 0xc3f80000, LENGTH = 512K /* This is FW image, section name is just for compatibility */
+BOOTLOADER (rx)   : ORIGIN = 0x08000000, LENGTH = 128K  /* Bootloader on flash*/
 BOOTROM (rx)      : ORIGIN = 0x90000000, LENGTH = 512K  /* QSPI flash - firmware part */
 STORAGE (rx)      : ORIGIN = 0x90080000, LENGTH = 7680K  /* QSPI flash - patch storage part. That's one hell of a lot of patches */
 }
@@ -26,11 +30,17 @@ STORAGE (rx)      : ORIGIN = 0x90080000, LENGTH = 7680K  /* QSPI flash - patch s
  QSPI flash is 8M, split it between FW and patch/settings storage
 */
 
+/*
+	NOTE: we can write QSPI FLASH firmware, because we're running entirely from memory
+*/
+
+
 SECTIONS
 {
 	.isr_vector :
 	{
 		. = ALIGN(4);
+    	PROVIDE ( _ISR_VECTOR = . );
 		KEEP(*(.isr_vector))
 		. = ALIGN(4);
 	} > FLASH
@@ -42,10 +52,10 @@ SECTIONS
 
 		*(.text)
 		*(.text*)
-		*(.rodata)
-		*(.rodata*)
 		*(.glue_7)
 		*(.glue_7t)
+	    *(.eh_frame)
+		
 		KEEP(*(.init))
 		KEEP(*(.fini))
 		. = ALIGN(4);
@@ -57,61 +67,56 @@ SECTIONS
   	.rodata :
   	{
     	. = ALIGN(4);
-    	*(.rodata)         /* .rodata sections (constants, strings, etc.) */
+     	*(.rodata)         /* .rodata sections (constants, strings, etc.) */
     	*(.rodata*)        /* .rodata* sections (constants, strings, etc.) */
     	. = ALIGN(4);
+  	} > FLASH
+ 
+ 	.ARM.extab   : { *(.ARM.extab* .gnu.linkonce.armextab.*) } >FLASH
+  	.ARM : {
+    	__exidx_start = .;
+    	*(.ARM.exidx*)
+    	__exidx_end = .;
   	} >FLASH
-
-    .ARM.extab   : { *(.ARM.extab* .gnu.linkonce.armextab.*) } >FLASH
-    .ARM : {
-        __exidx_start = .;
-        *(.ARM.exidx*)
-        __exidx_end = .;
-    } >FLASH
-
-	.ARM.attributes :
-	{
-		*(.ARM.attributes)
-	} > FLASH
 
 	.preinit_array :
 	{
-		PROVIDE(__preinit_array_start = .);
+		PROVIDE_HIDDEN(__preinit_array_start = .);
 		KEEP(*(.preinit_array*))
-		PROVIDE(__preinit_array_end = .);
+		PROVIDE_HIDDEN(__preinit_array_end = .);
 	} > FLASH
 
 	.init_array :
 	{
-		PROVIDE(__init_array_start = .);
+		PROVIDE_HIDDEN(__init_array_start = .);
 		KEEP(*(SORT(.init_array.*)))
 		KEEP(*(.init_array*))
-		PROVIDE(__init_array_end = .);
+		PROVIDE_HIDDEN(__init_array_end = .);
 	} > FLASH
 
 	.fini_array :
 	{
-		PROVIDE(__fini_array_start = .);
+		PROVIDE_HIDDEN(__fini_array_start = .);
 		KEEP(*(.fini_array*))
 		KEEP(*(SORT(.fini_array.*)))
-		PROVIDE(__fini_array_end = .);
+		PROVIDE_HIDDEN(__fini_array_end = .);
 	} > FLASH
+
+	_sidata = LOADADDR(.data);
 
 	.data :
 	{
 		. = ALIGN(4);
 		_sdata = .;
 
-		PROVIDE(__data_start__ = _sdata);
+		PROVIDE(__data_start = _sdata);
 		*(.data)
 		*(.data*)
 		. = ALIGN(4);
 		_edata = .;
 
-		PROVIDE(__data_end__ = _edata);
-	} > RAM AT >FLASH
-
-	_sidata = LOADADDR(.data);
+		PROVIDE(__data_end = _edata);
+ 	} > RAM AT > FLASH
 
 	.bss :
 	{
@@ -134,6 +139,7 @@ SECTIONS
   	{
     	. = ALIGN(4);
 	    PROVIDE ( _end = . );
+		PROVIDE(end = .); 
     	. = . + _Min_Heap_Size;
 	    . = . + _Min_Stack_Size;
     	. = ALIGN(4);
@@ -141,7 +147,6 @@ SECTIONS
   	_estack = ORIGIN(RAM)+LENGTH(RAM); /* end of firmware RAM */
 
 
-	PROVIDE(end = .); 
 /*
 	.dtcmram_bss (NOLOAD) :
 	{
@@ -171,6 +176,7 @@ SECTIONS
 		PROVIDE(__sram1_bss_end__ = _esram1_bss);
 	} > RAM_D2
 */
+
   	/* External memory, vars must be located here explicitly */
   	/* Example: int foo __attribute__ ((section (".extdata"))); */
   	.extdata (NOLOAD) :
@@ -180,6 +186,14 @@ SECTIONS
     	PROVIDE ( _EXTRAM = . );
     } >EXTRAM
     _EXTRAM_END = ORIGIN(EXTRAM) + LENGTH(EXTRAM);
+	_EXTRAM_SIZE = LENGTH(EXTRAM);
+
+  	.patchram (NOLOAD) :
+  	{
+    	PROVIDE (_PATCHRAM = .);
+  	} >PATCHRAM
+  	_PATCHRAM_END = ORIGIN(PATCHRAM) + LENGTH(PATCHRAM);
+  	_PATCHRAM_SIZE = LENGTH(PATCHRAM);	
 
 	/*
 	.sdram_text :
@@ -255,35 +269,43 @@ SECTIONS
 	} > QSPIFLASH
 */
 
-  	.patchram (NOLOAD) :
+/* This would be used if we'll want to write FW ROM without bootloader */
+	.firmware_image (NOLOAD) :
 	{
-    	PROVIDE (_PATCHRAM = .);
-  	} >PATCHRAM
-  	_PATCHRAM_END = ORIGIN(PATCHRAM) + LENGTH(PATCHRAM);
+		. = ALIGN(4);
+	    PROVIDE (_FIRMWARE_STORAGE_BEGIN = .);
+  	} > BOOTROM
+  	_FIRMWARE_STORAGE_END = ORIGIN(BOOTROM) + LENGTH(BOOTROM);
+    _FIRMWARE_STORAGE_SIZE = LENGTH(BOOTROM);
 
-    .bootrom_storage (NOLOAD) :
-    {
-        PROVIDE (_BOOTROM_STORAGE_BEGIN = .);
-  	} >BOOTROM
-    _BOOTROM_STORAGE_END = ORIGIN(BOOTROM) + LENGTH(BOOTROM);
-    _BOOTROM_STORAGE_SIZE = LENGTH(BOOTROM);
+	.patch_storage (NOLOAD) :
+	{
+		. = ALIGN(4);
+	    PROVIDE (_FLASH_STORAGE_BEGIN = .);
+  	} >STORAGE
+  	_FLASH_STORAGE_END = ORIGIN(STORAGE) + LENGTH(STORAGE);
+    _FLASH_STORAGE_SIZE = LENGTH(STORAGE);
 
-    .firmware_storage (NOLOAD) :
-    {
-    . = ALIGN(4);
-        PROVIDE (_FIRMWARE_STORAGE_BEGIN = .);
-    } >APPLICATION
-    _FIRMWARE_STORAGE_END = ORIGIN(APPLICATION) + LENGTH(APPLICATION);
-    _FIRMWARE_STORAGE_SIZE = LENGTH(APPLICATION);
-
-   .patch_storage (NOLOAD) :
-    {
-	. = ALIGN(4);
-    PROVIDE (_PATCH_STORAGE_BEGIN = .);
-    } >STORAGE
-    _PATCH_STORAGE_END = ORIGIN(STORAGE) + LENGTH(STORAGE);
-    _PATCH_STORAGE_SIZE = LENGTH(STORAGE);
-
+/*
+	.heap (NOLOAD) :
+	{
+		. = ALIGN(4);
+		PROVIDE(__heap_start__ = .);
+		KEEP(*(.heap))
+		. = ALIGN(4);
+		PROVIDE(__heap_end__ = .);
+	} > SRAM
+*/
+/*
+	.reserved_for_stack (NOLOAD) :
+	{
+		. = ALIGN(4);
+		PROVIDE(__reserved_for_stack_start__ = .);
+		KEEP(*(.reserved_for_stack))
+		. = ALIGN(4);
+		PROVIDE(__reserved_for_stack_end__ = .);
+	} > SRAM
+*/
     /DISCARD/ :
     {
         libc.a ( * )
@@ -291,5 +313,6 @@ SECTIONS
         libgcc.a ( * )
     }
 
-  .ARM.attributes 0 : { *(.ARM.attributes) }
+	.ARM.attributes 0 : { *(.ARM.attributes) }
+	
 }

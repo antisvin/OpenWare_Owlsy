@@ -90,6 +90,15 @@ int qspi_erase(uint32_t start_adr, uint32_t end_adr);
  */
 int qspi_erase_sector(uint32_t addr);
 
+
+/**
+  Copy QSPI data to another location in memory
+  @param dst Address to write to
+  @param src Address to read from
+  @param size Data size
+ */
+int qspi_copy(uint32_t dst, uint32_t src, uint32_t size);
+
 #ifdef __cplusplus
 }
 #endif
