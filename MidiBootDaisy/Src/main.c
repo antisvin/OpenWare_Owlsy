@@ -172,8 +172,7 @@ int main(void)
       // jump to application code
 
       /* Disable all interrupts */
-      //RCC->CIER = 0x00000000;
-      SysTick->CTRL = 0;
+      RCC->CIER = 0x00000000;
 
       /* Jump to user application */
       uint32_t JumpAddress = *(__IO uint32_t*) (APPLICATION_ADDRESS + 4);

@@ -11,7 +11,7 @@
   #error Invalid configuration
 #endif
 
-//#define MINIMAL_BUILD
+#define MINIMAL_BUILD
 
 #define USE_SCREEN
 #define SSD1309
@@ -62,6 +62,6 @@
 //#define QSPI_DEVICE_IS25LP080D
 #define QSPI_DEVICE_IS25LP064A
 
-#define USE_IWDG
-#define IWDG_PERIPH IWDG1
+//#define USE_IWDG
+//#define IWDG_PERIPH IWDG1
 /* #define INIT_FMC */
