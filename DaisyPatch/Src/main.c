@@ -113,14 +113,16 @@ int main(void)
   /* USER CODE BEGIN 1 */
 
 #ifdef DEBUG
-/*
 #warning "DEBUG uses printf and semihosting!"
   if(CoreDebug->DHCSR & 0x01)
     initialise_monitor_handles(); // remove when not semi-hosting
   printf("showtime\n");
-*/
 #endif
 
+#if 0
+// !defined(DEBUG)
+// MPU is required for EXTRAM access, but it breaks debugging.
+// Also, MPU is necessary to make DMA buffers non-cacheable, so we can't enable cache withhout MPU
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -129,7 +131,9 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
+#else
+  HAL_Init();
+#endif
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -153,11 +157,11 @@ int main(void)
   MX_QUADSPI_Init();
   /* USER CODE BEGIN 2 */
 // TODO: reinit SAI?
-
   HAL_NVIC_SetPriority(EXTI2_IRQn, 3, 0);
   HAL_NVIC_EnableIRQ(EXTI2_IRQn);
 
-  SDRAM_Initialization_Sequence(&hsdram1);   
+  SDRAM_Initialization_Sequence(&hsdram1);
+
   /* USER CODE END 2 */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -485,7 +489,7 @@ static void MX_QUADSPI_Init(void)
   hqspi.Init.FifoThreshold = 1;
   hqspi.Init.SampleShifting = QSPI_SAMPLE_SHIFTING_NONE;
   hqspi.Init.FlashSize = 1;
-  hqspi.Init.ChipSelectHighTime = QSPI_CS_HIGH_TIME_2_CYCLE;
+  hqspi.Init.ChipSelectHighTime = QSPI_CS_HIGH_TIME_1_CYCLE;
   hqspi.Init.ClockMode = QSPI_CLOCK_MODE_0;
   hqspi.Init.FlashID = QSPI_FLASH_ID_1;
   hqspi.Init.DualFlash = QSPI_DUALFLASH_DISABLE;
@@ -793,10 +797,10 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOG_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
-  __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOI_CLK_ENABLE();
   __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOF_CLK_ENABLE();
+  __HAL_RCC_GPIOC_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, OLED_DC_Pin|GATE_OUT_Pin|CODEC_RESET1_Pin|CODEC_RESET2_Pin

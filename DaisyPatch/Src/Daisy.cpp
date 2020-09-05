@@ -8,6 +8,7 @@
 //#include "errorhandlers.h"
 #include "message.h"
 #include "gpio.h"
+#include "qspicontrol.h"
 #include "ProgramManager.h"
 #include "PatchRegistry.h"
 #include "OpenWareMidiControl.h"
@@ -35,6 +36,12 @@ void setGateValue(uint8_t ch, int16_t value){
 
 void setup(){
   HAL_GPIO_WritePin(OLED_RST_GPIO_Port, OLED_RST_Pin, GPIO_PIN_RESET); // OLED off
+
+  if (qspi_init(QSPI_MODE_MEMORY_MAPPED) != MEMORY_OK){
+    // We can end here only if QSPI settings are misconfigured
+    error(RUNTIME_ERROR, "Flash init error");
+  }
+
   extern SPI_HandleTypeDef OLED_SPI;
   graphics.begin(&OLED_SPI);
 

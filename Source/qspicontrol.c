@@ -17,7 +17,7 @@
 //		due to upgrading the RAM size for the new 4MB chip.
 // TODO: autopolling_mem_ready only works for 1-Line, not 4-Line
 
-extern QSPI_HandleTypeDef hqspi;
+extern QSPI_HandleTypeDef QSPI_HANDLE;
 
 static uint32_t reset_memory(QSPI_HandleTypeDef *hqspi);
 static uint32_t dummy_cycles_cfg(QSPI_HandleTypeDef *hqspi);
@@ -37,43 +37,43 @@ static uint8_t get_status_register(QSPI_HandleTypeDef *hqspi)
     __attribute__((unused));
 
 int qspi_init(QspiMode mode) {
-  // Set Handle Settings 	o
-  if (HAL_QSPI_DeInit(&hqspi) != HAL_OK) {
+  // Set Handle Settings
+  if (HAL_QSPI_DeInit(&QSPI_HANDLE) != HAL_OK) {
     return MEMORY_ERROR;
   }
   // HAL_QSPI_MspInit(&qspi_handle);	 // I think this gets called a
   // in HAL_QSPI_Init(); Set Initialization values for the QSPI Peripheral
   uint32_t flash_size;
   flash_size = QSPI_FLASH_SIZE;
-  hqspi.Instance = QUADSPI;
+  QSPI_HANDLE.Instance = QUADSPI;
   // qspi_handle.Init.ClockPrescaler = 7;
   // qspi_handle.Init.ClockPrescaler = 7;
   // qspi_handle.Init.ClockPrescaler = 2; // Conservative setting for now.
   // Signal gets very weak faster than this.
-  hqspi.Init.ClockPrescaler = 1;
-  hqspi.Init.FifoThreshold = 1;
-  hqspi.Init.SampleShifting = QSPI_SAMPLE_SHIFTING_NONE;
-  hqspi.Init.FlashSize = POSITION_VAL(flash_size) - 1;
-  hqspi.Init.ChipSelectHighTime = QSPI_CS_HIGH_TIME_2_CYCLE;
-  hqspi.Init.FlashID = QSPI_FLASH_ID_1;
-  hqspi.Init.DualFlash = QSPI_DUALFLASH_DISABLE;
+  QSPI_HANDLE.Init.ClockPrescaler = 1;
+  QSPI_HANDLE.Init.FifoThreshold = 1;
+  QSPI_HANDLE.Init.SampleShifting = QSPI_SAMPLE_SHIFTING_NONE;
+  QSPI_HANDLE.Init.FlashSize = POSITION_VAL(flash_size) - 1;
+  QSPI_HANDLE.Init.ChipSelectHighTime = QSPI_CS_HIGH_TIME_2_CYCLE;
+  QSPI_HANDLE.Init.FlashID = QSPI_FLASH_ID_1;
+  QSPI_HANDLE.Init.DualFlash = QSPI_DUALFLASH_DISABLE;
 
-  if (HAL_QSPI_Init(&hqspi) != HAL_OK) {
+  if (HAL_QSPI_Init(&QSPI_HANDLE) != HAL_OK) {
     return MEMORY_ERROR;
   }
-  if (reset_memory(&hqspi) != MEMORY_OK) {
+  if (reset_memory(&QSPI_HANDLE) != MEMORY_OK) {
     return MEMORY_ERROR;
   }
-  if (dummy_cycles_cfg(&hqspi) != MEMORY_OK) {
+  if (dummy_cycles_cfg(&QSPI_HANDLE) != MEMORY_OK) {
     return MEMORY_ERROR;
   }
   // Once writing test with 1 Line is confirmed lets move this out, and update
   // writing to use 4-line.
-  if (quad_enable(&hqspi) != MEMORY_OK) {
+  if (quad_enable(&QSPI_HANDLE) != MEMORY_OK) {
     return MEMORY_ERROR;
   }
   if (mode == QSPI_MODE_MEMORY_MAPPED) {
-    if (enable_memory_mapped_mode(&hqspi) != MEMORY_OK) {
+    if (enable_memory_mapped_mode(&QSPI_HANDLE) != MEMORY_OK) {
       return MEMORY_ERROR;
     }
   }
@@ -81,11 +81,11 @@ int qspi_init(QspiMode mode) {
 }
 
 int qspi_deinit() {
-  hqspi.Instance = QUADSPI;
-  if (HAL_QSPI_DeInit(&hqspi) != HAL_OK) {
+  QSPI_HANDLE.Instance = QUADSPI;
+  if (HAL_QSPI_DeInit(&QSPI_HANDLE) != HAL_OK) {
     return MEMORY_ERROR;
   }
-  HAL_QSPI_MspDeInit(&hqspi);
+  HAL_QSPI_MspDeInit(&QSPI_HANDLE);
   return MEMORY_OK;
 }
 
@@ -103,18 +103,18 @@ int qspi_write_page(uint32_t address, uint8_t *data, uint32_t size) {
   s_command.DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY;
   s_command.SIOOMode = QSPI_SIOO_INST_EVERY_CMD;
   s_command.Address = address;
-  if (write_enable(&hqspi) != MEMORY_OK) {
+  if (write_enable(&QSPI_HANDLE) != MEMORY_OK) {
     return MEMORY_ERROR;
   }
-  if (HAL_QSPI_Command(&hqspi, &s_command, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) !=
+  if (HAL_QSPI_Command(&QSPI_HANDLE, &s_command, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) !=
       MEMORY_OK) {
     return MEMORY_ERROR;
   }
-  if (HAL_QSPI_Transmit(&hqspi, (uint8_t *)data,
+  if (HAL_QSPI_Transmit(&QSPI_HANDLE, (uint8_t *)data,
                         HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != MEMORY_OK) {
     return MEMORY_ERROR;
   }
-  if (autopolling_mem_ready(&hqspi, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) !=
+  if (autopolling_mem_ready(&QSPI_HANDLE, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) !=
       MEMORY_OK) {
     return MEMORY_ERROR;
   }
@@ -229,14 +229,14 @@ int qspi_erase_sector(uint32_t addr) {
   s_command.DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY;
   s_command.SIOOMode = QSPI_SIOO_INST_EVERY_CMD;
   s_command.Address = addr;
-  if (write_enable(&hqspi) != MEMORY_OK) {
+  if (write_enable(&QSPI_HANDLE) != MEMORY_OK) {
     return MEMORY_ERROR;
   }
-  if (HAL_QSPI_Command(&hqspi, &s_command, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) !=
+  if (HAL_QSPI_Command(&QSPI_HANDLE, &s_command, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) !=
       MEMORY_OK) {
     return MEMORY_ERROR;
   }
-  if (autopolling_mem_ready(&hqspi, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) !=
+  if (autopolling_mem_ready(&QSPI_HANDLE, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) !=
       MEMORY_OK) {
     return MEMORY_ERROR;
   }

@@ -3,6 +3,8 @@
 
 #include <inttypes.h>
 
+// Note: we can't use start/end page as template parameters, because they come from linker
+
 template<uint32_t alignment=4>
 class BaseStorageBlock {
 protected:
@@ -62,9 +64,14 @@ public:
   /* Base class is read-only.
    * Valid size depends on storage type that uses boundaries from linker script, we can't define it here
    */
-  bool isValidSize() const { return true; };
-  bool setDeleted() { return false; };
-  bool write(void* data, uint32_t size) { return false; };
+  virtual bool isValidSize() const { return true; };
+  virtual bool setDeleted() { return false; };
+  virtual bool write(void* data, uint32_t size) { return false; };
+
+  static constexpr uint8_t num_trailing_zeros = __builtin_ctz(alignment);
+  // I.e. for alignment = 4, we have 2 trailing zeros
+  static constexpr uint32_t alignment_mask    = (1 << num_trailing_zeros) - 1;
+  // For alignment = 4, mask is 0b000..011
 };
 
 #endif // __BaseStorageBlock_hpp__
