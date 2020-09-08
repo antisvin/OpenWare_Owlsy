@@ -13,9 +13,15 @@
 
 #define MINIMAL_BUILD
 
+// FW size limit would matter only if we use bootloader, otherwise linker scripts sets this limit
+//#define MAX_SYSEX_FIRMWARE_SIZE 128 * 1024
+// Program size is limited by patch RAM section size
+//#define MAX_SYSEX_PROGRAM_SIZE 448 * 1024
+//#define MAX_SYSEX_PROGRAM_SIZE 256 * 1024
+
 #define USE_SCREEN
 #define SSD1309
-//#define OLED_DMA
+#define OLED_DMA
 // #define OLED_SOFT_CS
 #define OLED_SPI hspi1
 /* #define OLED_IT */

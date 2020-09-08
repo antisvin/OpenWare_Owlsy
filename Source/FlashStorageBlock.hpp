@@ -19,9 +19,9 @@ public:
 
     bool isValidSize() const override {
         return header != nullptr &&
+            (((uint32_t)header & alignment_mask) == 0) &&
             (uint32_t)header >= EEPROM_PAGE_START &&
             (uint32_t)header + getBlockSize() < EEPROM_PAGE_END &&
-            ((uint32_t)header & alignment_mask == 0) &&
             getDataSize() > 0;
     }
 

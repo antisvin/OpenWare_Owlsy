@@ -26,11 +26,11 @@ public:
     QspiStorageBlock() : BaseStorageBlock<QSPI_ALIGNMENT>() {};
     QspiStorageBlock(uint32_t* header) : BaseStorageBlock<QSPI_ALIGNMENT>(header) {};
 
-    bool isValidSize() const override {
+    bool isValidSize() const override {    
         return header != nullptr &&
+            (((uint32_t)header & alignment_mask) == 0) &&
             (uint32_t)header >= PATCH_PAGE_BEGIN &&
             (uint32_t)header + getBlockSize() < PATCH_PAGE_END &&
-            ((uint32_t)header & alignment_mask == 0) &&
             getDataSize() > 0;
     }
 

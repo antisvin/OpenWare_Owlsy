@@ -15,9 +15,6 @@
 #ifdef USE_DIGITALBUS
 #include "bus.h"
 #endif
-#ifdef DAISY
-#include "BootCommand.hpp"
-#endif
 
 #ifndef min
 #define min(a,b) ((a)<(b)?(a):(b))
@@ -255,17 +252,10 @@ void MidiHandler::runProgram(){
 }
 
 void MidiHandler::handleFlashEraseCommand(uint8_t* data, uint16_t size){
-#if !defined(DAISY) || defined(BOOTLOADER_MODE)
-  patch_storage.erase();
-  patch_storage.init();
-  patch_registry.init(&patch_storage);
+  storage.erase();
+  storage.init();
+  registry.init();
   settings.init();
-#else
-// TODO - this is flash erase from daisy app
-  program.exitProgram(false);
-  BootCommand::eraseAll().store();
-  jump_to_bootloader();
-#endif
   // if(size == 5){
   //   uint32_t sector = loader.decodeInt(data);
   //   program.eraseFromFlash(sector);
@@ -293,13 +283,8 @@ void MidiHandler::handleFirmwareStoreCommand(uint8_t* data, uint16_t size){
   if(loader.isReady() && size == 5){
     uint32_t slot = loader.decodeInt(data);
     if(slot > 0 && slot <= MAX_NUMBER_OF_PATCHES+MAX_NUMBER_OF_RESOURCES){
-#ifndef DAISY
       program.saveToFlash(slot, loader.getData(), loader.getSize());
       loader.clear();
-#else
-      BootCommand::writePatch(slot, (uint32_t)loader.getData(), loader.getSize()).store();
-      jump_to_bootloader();
-#endif
     }else{
       error(PROGRAM_ERROR, "Invalid program slot");
     }

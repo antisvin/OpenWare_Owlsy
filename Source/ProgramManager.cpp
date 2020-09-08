@@ -468,44 +468,47 @@ void runManagerTask(void* p){
        Bits in this RTOS task's notification value are set by the notifying
        tasks and interrupts to indicate which events have occurred. */
     xTaskNotifyWait(pdFALSE,          /* Don't clear any notification bits on entry. */
-		    UINT32_MAX,       /* Reset the notification value to 0 on exit. */
-		    &ulNotifiedValue, /* Notified value pass out in ulNotifiedValue. */
-		    xMaxBlockTime); 
+      UINT32_MAX,       /* Reset the notification value to 0 on exit. */
+      &ulNotifiedValue, /* Notified value pass out in ulNotifiedValue. */
+      xMaxBlockTime); 
     if(ulNotifiedValue & STOP_PROGRAM_NOTIFICATION){ // stop program
       if(audioTask != NULL){
-	// codec.softMute(true);
-	// capture program error before pv is changed
-	if(programVector != NULL){
-	  staticVector.error = programVector->error;
-	  staticVector.heap_bytes_used = programVector->heap_bytes_used;
-	  staticVector.cycles_per_block = programVector->cycles_per_block;
-	  staticVector.message = programVector->message;
-	}
-	programVector = &staticVector;
-	// clear callbacks
+        // codec.softMute(true);
+        // capture program error before pv is changed
+        if(programVector != NULL){
+          staticVector.error = programVector->error;
+          staticVector.heap_bytes_used = programVector->heap_bytes_used;
+          staticVector.cycles_per_block = programVector->cycles_per_block;
+          staticVector.message = programVector->message;
+        }
+        programVector = &staticVector;
+        // clear callbacks
 #ifdef USE_SCREEN
-	graphics.setCallback(NULL);
+        graphics.setCallback(NULL);
 #endif /* USE_SCREEN */
-	midi_rx.setCallback(NULL);
+        midi_rx.setCallback(NULL);
 #ifdef USE_CODEC
-	codec.set(0);
+        codec.set(0);
 #endif
-	vTaskDelete(audioTask);
-	audioTask = NULL;
+        vTaskDelete(audioTask);
+        audioTask = NULL;
+  
+        // allow idle task to garbage collect if necessary
+        vTaskDelay(20);
       }
     }
-    // allow idle task to garbage collect if necessary
-    vTaskDelay(20);
+
     if(ulNotifiedValue & PROGRAM_FLASH_NOTIFICATION){ // program flash
       if(utilityTask != NULL)
-	error(PROGRAM_ERROR, "Utility task already running");
+        error(PROGRAM_ERROR, "Utility task already running");
       xTaskCreate(programFlashTask, "Flash Write", FLASH_TASK_STACK_SIZE, NULL, FLASH_TASK_PRIORITY, &utilityTask);
       // bool ret = utilityTask.create(programFlashTask, "Flash Write", FLASH_TASK_PRIORITY);
       // if(!ret)
       // 	error(PROGRAM_ERROR, "Failed to start Flash Write task");
-    }else if(ulNotifiedValue & ERASE_FLASH_NOTIFICATION){ // erase flash
+    }
+    else if(ulNotifiedValue & ERASE_FLASH_NOTIFICATION){ // erase flash
       if(utilityTask != NULL)
-	error(PROGRAM_ERROR, "Utility task already running");
+        error(PROGRAM_ERROR, "Utility task already running");
       xTaskCreate(eraseFlashTask, "Flash Write", FLASH_TASK_STACK_SIZE, NULL, FLASH_TASK_PRIORITY, &utilityTask);
       // bool ret = utilityTask.create(eraseFlashTask, "Flash Erase", FLASH_TASK_PRIORITY);
       // if(!ret)
@@ -516,22 +519,26 @@ void runManagerTask(void* p){
       PatchDefinition* def = getPatchDefinition();
       if(audioTask == NULL && def != NULL){
       	static StaticTask_t audioTaskBuffer;
-#if defined OWL_ARCH_F7 || defined OWL_ARCH_H7
-	extern char _PATCHRAM, _PATCHRAM_SIZE;
-	uint8_t* PROGRAMSTACK = ((uint8_t*)&_PATCHRAM )+_PATCHRAM_SIZE-PROGRAMSTACK_SIZE; // put stack at end of program ram (points to first byte of stack array, not last)
+#if defined OWL_ARCH_F7
+        extern char _PATCHRAM, _PATCHRAM_SIZE;
+        uint8_t* PROGRAMSTACK = ((uint8_t*)&_PATCHRAM )+_PATCHRAM_SIZE-PROGRAMSTACK_SIZE; // put stack at end of program ram (points to first byte of stack array, not last)
+#elif defined OWL_ARCH_H7
+        // NOTE: calculation used for F7 leads to HardFault on Daisy
+        extern char _PATCHRAM_END;
+        uint8_t* PROGRAMSTACK = ((uint8_t*)&_PATCHRAM_END ) - PROGRAMSTACK_SIZE; // put stack at end of program ram (points to first byte of stack array, not last)
 #else
-	extern char _CCMRAM_END;
-	uint8_t* PROGRAMSTACK = ((uint8_t*)&_CCMRAM_END) - PROGRAMSTACK_SIZE;
+        extern char _CCMRAM_END;
+        uint8_t* PROGRAMSTACK = ((uint8_t*)&_CCMRAM_END) - PROGRAMSTACK_SIZE;
 #endif
-	memset(PROGRAMSTACK, 0xda, PROGRAMSTACK_SIZE);
-	audioTask = xTaskCreateStatic(runAudioTask, "Audio", 
-				      PROGRAMSTACK_SIZE/sizeof(portSTACK_TYPE),
-				      NULL, AUDIO_TASK_PRIORITY, 
-				      (StackType_t*)PROGRAMSTACK, 
-				      &audioTaskBuffer);
+        memset(PROGRAMSTACK, 0xda, PROGRAMSTACK_SIZE);
+        audioTask = xTaskCreateStatic(runAudioTask, "Audio", 
+          PROGRAMSTACK_SIZE/sizeof(portSTACK_TYPE),
+          NULL, AUDIO_TASK_PRIORITY, 
+          (StackType_t*)PROGRAMSTACK, 
+          &audioTaskBuffer);
       }
       if(audioTask == NULL && registry.hasPatches())
-	error(PROGRAM_ERROR, "Failed to start program task");
+        error(PROGRAM_ERROR, "Failed to start program task");
     }
   }
 }
@@ -541,7 +548,7 @@ ProgramManager::ProgramManager(){
   // DWT cycle count enable
   CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
 #if defined OWL_ARCH_F7 || defined OWL_ARCH_H7
-  DWT->LAR = 0xC5ACCE55; // enable debug access: required on F7
+  DWT->LAR = 0xC5ACCE55; // enable debug access: required on F7/H7
 #endif
   DWT->CYCCNT = 0;
   DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
@@ -608,8 +615,7 @@ void ProgramManager::updateProgramIndex(uint8_t index){
 }
 
 void ProgramManager::loadDynamicProgram(void* address, uint32_t length){
-  dynamo.load(address, length);
-  if(dynamo.getProgramVector() != NULL){
+  if (dynamo.load(address, length) && dynamo.getProgramVector() != NULL){
     patchdef = &dynamo;
     registry.setDynamicPatchDefinition(patchdef);
     updateProgramIndex(0);
