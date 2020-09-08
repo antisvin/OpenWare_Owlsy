@@ -48,3 +48,5 @@ OBJS += $(OBJS_IWDG)
 
 include $(OPENWARE)/Hardware/h7.mk
 
+upload:
+	$(OPENOCD) -c "program Build/DaisyPatch.elf verify reset exit"
