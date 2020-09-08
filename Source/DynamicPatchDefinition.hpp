@@ -58,7 +58,10 @@ public:
   void run(){
     if(linkAddress != programAddress)
       copy();
-    programFunction();
+    // We must verify that there's still a valid program function - it can be set to
+    // NULL in copy method
+    if (programFunction != NULL)
+      programFunction();
   }
   uint32_t getProgramSize(){
     return programSize;

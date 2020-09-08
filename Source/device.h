@@ -77,6 +77,9 @@
 #define BOOTLOADER_MAGIC             0xB007C0DE
 #define BOOTLOADER_VERSION           "v0.1"
 
+#ifndef MAX_SYSEX_PROGRAM_SIZE
+#define MAX_SYSEX_PROGRAM_SIZE       (128*1024) // 128k, one flash sector
+#endif
 #define MAX_FACTORY_PATCHES          36
 #define MAX_USER_PATCHES             4
 
