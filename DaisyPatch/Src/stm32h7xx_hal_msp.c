@@ -26,8 +26,6 @@
 /* USER CODE END Includes */
 extern DMA_HandleTypeDef hdma_adc1;
 
-extern DMA_HandleTypeDef hdma_spi1_tx;
-
 extern DMA_HandleTypeDef hdma_usart1_rx;
 
 extern DMA_HandleTypeDef hdma_usart1_tx;
@@ -379,25 +377,6 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* hspi)
     GPIO_InitStruct.Alternate = GPIO_AF5_SPI1;
     HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
 
-    /* SPI1 DMA Init */
-    /* SPI1_TX Init */
-    hdma_spi1_tx.Instance = DMA1_Stream3;
-    hdma_spi1_tx.Init.Request = DMA_REQUEST_SPI1_TX;
-    hdma_spi1_tx.Init.Direction = DMA_MEMORY_TO_PERIPH;
-    hdma_spi1_tx.Init.PeriphInc = DMA_PINC_DISABLE;
-    hdma_spi1_tx.Init.MemInc = DMA_MINC_ENABLE;
-    hdma_spi1_tx.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
-    hdma_spi1_tx.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
-    hdma_spi1_tx.Init.Mode = DMA_NORMAL;
-    hdma_spi1_tx.Init.Priority = DMA_PRIORITY_LOW;
-    hdma_spi1_tx.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
-    if (HAL_DMA_Init(&hdma_spi1_tx) != HAL_OK)
-    {
-      Error_Handler();
-    }
-
-    __HAL_LINKDMA(hspi,hdmatx,hdma_spi1_tx);
-
     /* SPI1 interrupt Init */
     HAL_NVIC_SetPriority(SPI1_IRQn, 10, 0);
     HAL_NVIC_EnableIRQ(SPI1_IRQn);
@@ -432,9 +411,6 @@ void HAL_SPI_MspDeInit(SPI_HandleTypeDef* hspi)
     HAL_GPIO_DeInit(GPIOB, GPIO_PIN_5);
 
     HAL_GPIO_DeInit(GPIOG, GPIO_PIN_11|GPIO_PIN_10);
-
-    /* SPI1 DMA DeInit */
-    HAL_DMA_DeInit(hspi->hdmatx);
 
     /* SPI1 interrupt DeInit */
     HAL_NVIC_DisableIRQ(SPI1_IRQn);
