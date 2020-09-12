@@ -63,13 +63,12 @@ extern PCD_HandleTypeDef hpcd_USB_OTG_FS;
 extern DMA_HandleTypeDef hdma_adc1;
 extern DMA_HandleTypeDef hdma_sai1_a;
 extern DMA_HandleTypeDef hdma_sai1_b;
-extern DMA_HandleTypeDef hdma_sai2_a;
 extern DMA_HandleTypeDef hdma_sai2_b;
+extern DMA_HandleTypeDef hdma_sai2_a;
 extern SAI_HandleTypeDef hsai_BlockA1;
 extern SAI_HandleTypeDef hsai_BlockB1;
 extern SAI_HandleTypeDef hsai_BlockA2;
 extern SAI_HandleTypeDef hsai_BlockB2;
-extern SPI_HandleTypeDef hspi1;
 extern DMA_HandleTypeDef hdma_usart1_rx;
 extern DMA_HandleTypeDef hdma_usart1_tx;
 extern UART_HandleTypeDef huart1;
@@ -222,20 +221,6 @@ void EXTI9_5_IRQHandler(void)
 }
 
 /**
-  * @brief This function handles SPI1 global interrupt.
-  */
-void SPI1_IRQHandler(void)
-{
-  /* USER CODE BEGIN SPI1_IRQn 0 */
-
-  /* USER CODE END SPI1_IRQn 0 */
-  HAL_SPI_IRQHandler(&hspi1);
-  /* USER CODE BEGIN SPI1_IRQn 1 */
-
-  /* USER CODE END SPI1_IRQn 1 */
-}
-
-/**
   * @brief This function handles USART1 global interrupt.
   */
 void USART1_IRQHandler(void)
@@ -287,6 +272,7 @@ void SAI1_IRQHandler(void)
 void SAI2_IRQHandler(void)
 {
   /* USER CODE BEGIN SAI2_IRQn 0 */
+  //__HAL_SAI_DISABLE_IT(&hsai_BlockA2, SAI_IT_AFSDET);
 
   /* USER CODE END SAI2_IRQn 0 */
   HAL_SAI_IRQHandler(&hsai_BlockA2);

@@ -414,7 +414,7 @@ public:
     // draw CPU load
     screen.print(110, offset+8, "cpu");
     screen.setCursor(110, offset+17);
-    screen.print((int)((pv->cycles_per_block)/pv->audio_blocksize)/35);
+    screen.print((int)((pv->cycles_per_block)/pv->audio_blocksize)/83);
     screen.print("%");
   }
 

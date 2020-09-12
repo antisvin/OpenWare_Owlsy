@@ -47,7 +47,7 @@
 #define UART_MIDI_HANDLE huart1
 #define UART_MIDI_RX_BUFFER_SIZE 256
 
-#define USE_USBD_AUDIO
+//#define USE_USBD_AUDIO
 #define USE_CODEC
 #define DUAL_CODEC
 #define USE_AK4556
