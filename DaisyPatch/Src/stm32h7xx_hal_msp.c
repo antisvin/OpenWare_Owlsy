@@ -377,9 +377,6 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* hspi)
     GPIO_InitStruct.Alternate = GPIO_AF5_SPI1;
     HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
 
-    /* SPI1 interrupt Init */
-    HAL_NVIC_SetPriority(SPI1_IRQn, 10, 0);
-    HAL_NVIC_EnableIRQ(SPI1_IRQn);
   /* USER CODE BEGIN SPI1_MspInit 1 */
 
   /* USER CODE END SPI1_MspInit 1 */
@@ -412,8 +409,6 @@ void HAL_SPI_MspDeInit(SPI_HandleTypeDef* hspi)
 
     HAL_GPIO_DeInit(GPIOG, GPIO_PIN_11|GPIO_PIN_10);
 
-    /* SPI1 interrupt DeInit */
-    HAL_NVIC_DisableIRQ(SPI1_IRQn);
   /* USER CODE BEGIN SPI1_MspDeInit 1 */
 
   /* USER CODE END SPI1_MspDeInit 1 */
@@ -786,9 +781,9 @@ extern DMA_HandleTypeDef hdma_sai1_a;
 
 extern DMA_HandleTypeDef hdma_sai1_b;
 
-extern DMA_HandleTypeDef hdma_sai2_a;
-
 extern DMA_HandleTypeDef hdma_sai2_b;
+
+extern DMA_HandleTypeDef hdma_sai2_a;
 
 static uint32_t SAI1_client =0;
 static uint32_t SAI2_client =0;

@@ -493,11 +493,14 @@ void runManagerTask(void* p){
         vTaskDelete(audioTask);
         audioTask = NULL;
   
-        // allow idle task to garbage collect if necessary
-        vTaskDelay(20);
       }
     }
 
+    // NOTE: this delay prevents audio task from starting on Daisy if USB audio is enabled.
+    // Moving it up to run only after stop notification works, but USB audio seems to lock
+    // default thread (so UI freezes).
+    vTaskDelay(20);
+  
     if(ulNotifiedValue & PROGRAM_FLASH_NOTIFICATION){ // program flash
       if(utilityTask != NULL)
         error(PROGRAM_ERROR, "Utility task already running");

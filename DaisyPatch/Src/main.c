@@ -59,8 +59,8 @@ SAI_HandleTypeDef hsai_BlockA2;
 SAI_HandleTypeDef hsai_BlockB2;
 DMA_HandleTypeDef hdma_sai1_a;
 DMA_HandleTypeDef hdma_sai1_b;
-DMA_HandleTypeDef hdma_sai2_a;
 DMA_HandleTypeDef hdma_sai2_b;
+DMA_HandleTypeDef hdma_sai2_a;
 
 SPI_HandleTypeDef hspi1;
 
@@ -155,14 +155,16 @@ int main(void)
   MX_ADC1_Init();
   MX_DAC1_Init();
   MX_USART1_UART_Init();
-  MX_SPI1_Init();
   MX_SAI1_Init();
   MX_SAI2_Init();
+  MX_SPI1_Init();
   MX_QUADSPI_Init();
   /* USER CODE BEGIN 2 */
-// TODO: reinit SAI?
-  HAL_NVIC_SetPriority(EXTI2_IRQn, 3, 0);
-  HAL_NVIC_EnableIRQ(EXTI2_IRQn);
+  //MX_SAI1_Init();
+  //MX_SAI2_Init();
+
+  //HAL_NVIC_SetPriority(EXTI2_IRQn, 3, 0);
+  //HAL_NVIC_EnableIRQ(EXTI2_IRQn);
 
   SDRAM_Initialization_Sequence(&hsdram1);
 
@@ -326,7 +328,7 @@ static void MX_ADC1_Init(void)
   /** Common config
   */
   hadc1.Instance = ADC1;
-  hadc1.Init.ClockPrescaler = ADC_CLOCK_ASYNC_DIV1;
+  hadc1.Init.ClockPrescaler = ADC_CLOCK_ASYNC_DIV8;
   hadc1.Init.Resolution = ADC_RESOLUTION_16B;
   hadc1.Init.ScanConvMode = ADC_SCAN_ENABLE;
   hadc1.Init.EOCSelection = ADC_EOC_SEQ_CONV;
@@ -341,7 +343,7 @@ static void MX_ADC1_Init(void)
   hadc1.Init.LeftBitShift = ADC_LEFTBITSHIFT_NONE;
   hadc1.Init.OversamplingMode = ENABLE;
   hadc1.Init.Oversampling.Ratio = 1;
-  hadc1.Init.Oversampling.RightBitShift = ADC_RIGHTBITSHIFT_5;
+  hadc1.Init.Oversampling.RightBitShift = ADC_RIGHTBITSHIFT_4;
   hadc1.Init.Oversampling.TriggeredMode = ADC_TRIGGEREDMODE_SINGLE_TRIGGER;
   hadc1.Init.Oversampling.OversamplingStopReset = ADC_REGOVERSAMPLING_CONTINUED_MODE;
   if (HAL_ADC_Init(&hadc1) != HAL_OK)
@@ -577,7 +579,7 @@ static void MX_SAI2_Init(void)
   /* USER CODE END SAI2_Init 1 */
   hsai_BlockA2.Instance = SAI2_Block_A;
   hsai_BlockA2.Init.AudioMode = SAI_MODESLAVE_TX;
-  hsai_BlockA2.Init.Synchro = SAI_SYNCHRONOUS_EXT_SAI1;
+  hsai_BlockA2.Init.Synchro = SAI_SYNCHRONOUS;
   hsai_BlockA2.Init.OutputDrive = SAI_OUTPUTDRIVE_DISABLE;
   hsai_BlockA2.Init.FIFOThreshold = SAI_FIFOTHRESHOLD_EMPTY;
   hsai_BlockA2.Init.SynchroExt = SAI_SYNCEXT_DISABLE;
