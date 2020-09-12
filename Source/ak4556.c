@@ -10,8 +10,9 @@ void codec_init(){
 #ifdef DUAL_CODEC
     clearPin(CODEC_RESET2_GPIO_Port, CODEC_RESET2_Pin);
 #endif
-    // Datasheet specifies minimum 150ns
     HAL_Delay(1);
+    // Datasheet specifies minimum 150ns delay. We don't really need it as codec would be
+    // running longer than that by now, but better safe than sorry.
     setPin(CODEC_RESET1_GPIO_Port, CODEC_RESET1_Pin);
 #ifdef DUAL_CODEC
     setPin(CODEC_RESET2_GPIO_Port, CODEC_RESET2_Pin);

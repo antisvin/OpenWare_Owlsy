@@ -6,6 +6,10 @@
 #include <cstring>
 #include "ProgramManager.h"
 
+#ifdef USE_AK4556
+#include "gpio.h"
+#endif
+
 #include "SerialBuffer.hpp"
 SerialBuffer<CODEC_BUFFER_SIZE, int32_t> audio_rx_buffer;
 SerialBuffer<CODEC_BUFFER_SIZE, int32_t> audio_tx_buffer;
@@ -398,53 +402,60 @@ extern "C" {
 #endif
   void HAL_SAI_RxHalfCpltCallback(SAI_HandleTypeDef *hsai){
 #ifdef DUAL_CODEC
-    if (hsai->Instance == HSAI_RX1.Instance || hsai->Instance == HSAI_TX1.Instance){
+    if (hsai->Instance == HSAI_RX1.Instance){
       int32_t* src1r = codec_rxbuf1;
       int32_t* src2r = codec_rxbuf2;
       int32_t* dstr = codec_rxbuf;
-      int32_t* src1t = codec_txbuf1;
-      int32_t* src2t = codec_txbuf2;
-      int32_t* dstt = codec_txbuf;
+      int32_t* dst1t = codec_txbuf1;
+      int32_t* dst2t = codec_txbuf2;
+      int32_t* srct = codec_txbuf;
       while (dstr < codec_rxbuf + codec_blocksize * AUDIO_CHANNELS) {
         *dstr++ = *src1r++;
         *dstr++ = *src1r++;
         *dstr++ = *src2r++;
         *dstr++ = *src2r++;
-        *dstt++ = *src1t++;
-        *dstt++ = *src1t++;
-        *dstt++ = *src2t++;
-        *dstt++ = *src2t++;
+        *dst1t++ = *srct++;
+        *dst1t++ = *srct++;
+        *dst2t++ = *srct++;
+        *dst2t++ = *srct++;
       }
-    }
-#endif
       audioCallback(codec_rxbuf, codec_txbuf, codec_blocksize);
+    }
+#else
+    audioCallback(codec_rxbuf, codec_txbuf, codec_blocksize);
+#endif
   }
   void HAL_SAI_RxCpltCallback(SAI_HandleTypeDef *hsai){
 #ifdef DUAL_CODEC
     // Merge codec buffers
-    if (hsai->Instance == HSAI_RX1.Instance || hsai->Instance == HSAI_TX1.Instance) {
+    if (hsai->Instance == HSAI_RX1.Instance) {
       int32_t* src1r = codec_rxbuf1 + codec_blocksize * AUDIO_CHANNELS / 2;
       int32_t* src2r = codec_rxbuf2 + codec_blocksize * AUDIO_CHANNELS / 2;
       int32_t* dstr = codec_rxbuf + codec_blocksize * AUDIO_CHANNELS;
-      int32_t* src1t = codec_txbuf1 + codec_blocksize * AUDIO_CHANNELS / 2;
-      int32_t* src2t = codec_txbuf2 + codec_blocksize * AUDIO_CHANNELS / 2;
-      int32_t* dstt = codec_txbuf + codec_blocksize * AUDIO_CHANNELS;
-      while (dstr < codec_rxbuf + codec_blocksize * AUDIO_CHANNELS * 2) {
+      int32_t* dst1t = codec_txbuf1 + codec_blocksize * AUDIO_CHANNELS / 2;
+      int32_t* dst2t = codec_txbuf2 + codec_blocksize * AUDIO_CHANNELS / 2;
+      int32_t* srct = codec_txbuf + codec_blocksize * AUDIO_CHANNELS;
+      while (dstr < codec_rxbuf + 2 * codec_blocksize * AUDIO_CHANNELS) {
         *dstr++ = *src1r++;
         *dstr++ = *src1r++;
         *dstr++ = *src2r++;
         *dstr++ = *src2r++;
-        *dstt++ = *src1t++;
-        *dstt++ = *src1t++;
-        *dstt++ = *src2t++;
-        *dstt++ = *src2t++;
+        *dst1t++ = *srct++;
+        *dst1t++ = *srct++;
+        *dst2t++ = *srct++;
+        *dst2t++ = *srct++;
       }
+      audioCallback(
+        codec_rxbuf + codec_blocksize * AUDIO_CHANNELS,
+        codec_txbuf + codec_blocksize * AUDIO_CHANNELS,
+        codec_blocksize);
     }
-#endif
+#else
     audioCallback(
       codec_rxbuf + codec_blocksize * AUDIO_CHANNELS,
       codec_txbuf + codec_blocksize * AUDIO_CHANNELS,
       codec_blocksize);
+#endif
   }
   void HAL_SAI_ErrorCallback(SAI_HandleTypeDef *hsai){
     error(CONFIG_ERROR, "SAI DMA Error");
@@ -453,10 +464,13 @@ extern "C" {
 
 void Codec::txrx(){
   #ifdef DUAL_CODEC
+  /*
+   * This doesn't work, but it's not used in FW anyway.
   HAL_SAI_DMAStop(&HSAI_RX1);
   HAL_SAI_DMAStop(&HSAI_RX2);  
   HAL_SAI_Transmit_DMA(&HSAI_RX1, (uint8_t*)codec_rxbuf1, codec_blocksize * AUDIO_CHANNELS);
   HAL_SAI_Transmit_DMA(&HSAI_RX2, (uint8_t*)codec_rxbuf2, codec_blocksize * AUDIO_CHANNELS);
+  */
   #else
   HAL_SAI_DMAStop(&HSAI_RX1);
   HAL_SAI_Transmit_DMA(&HSAI_RX1, (uint8_t*)codec_rxbuf, codec_blocksize * AUDIO_CHANNELS * 2);
@@ -482,13 +496,14 @@ void Codec::start(){
   if(ret == HAL_OK)
     ret = HAL_SAI_Transmit_DMA(&HSAI_TX1, (uint8_t*)codec_txbuf, codec_blocksize*AUDIO_CHANNELS*2);
 #elif defined(USE_AK4556) && defined(DUAL_CODEC)
-  ret = HAL_SAI_Receive_DMA(&HSAI_RX1, (uint8_t*)codec_rxbuf1, codec_blocksize * AUDIO_CHANNELS);
+  ret = HAL_SAI_Receive_DMA(&HSAI_RX1, (uint8_t*)codec_rxbuf1, codec_blocksize * AUDIO_CHANNELS);  
   if(ret == HAL_OK)
     ret = HAL_SAI_Transmit_DMA(&HSAI_TX1, (uint8_t*)codec_txbuf1, codec_blocksize * AUDIO_CHANNELS);
-  if (ret == HAL_OK)
-    ret = HAL_SAI_Receive_DMA(&HSAI_RX2, (uint8_t*)codec_rxbuf2, codec_blocksize * AUDIO_CHANNELS);
   if(ret == HAL_OK)
     ret = HAL_SAI_Transmit_DMA(&HSAI_TX2, (uint8_t*)codec_txbuf2, codec_blocksize * AUDIO_CHANNELS);
+  if (ret == HAL_OK)
+    ret = HAL_SAI_Receive_DMA(&HSAI_RX2, (uint8_t*)codec_rxbuf2, codec_blocksize * AUDIO_CHANNELS);
+  //codec_init();
 #else // PCM3168A
   // start slave first (Noctua)
   ret = HAL_SAI_Transmit_DMA(&HSAI_TX1, (uint8_t*)codec_txbuf, codec_blocksize*AUDIO_CHANNELS*2);

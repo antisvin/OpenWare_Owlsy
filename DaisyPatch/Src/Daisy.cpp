@@ -58,7 +58,7 @@ void loop(void){
 
   for(int i = 0; i < NOF_ADC_VALUES; ++i)
     //graphics.params.updateValue(i, 4095 - (uint16_t(getAnalogValue(i)) >> 4));
-    graphics.params.updateValue(i, 4095 - (int16_t(getAnalogValue(i))));
+    graphics.params.updateValue(i, 4095 - (uint16_t(getAnalogValue(i))));
   for(int i = NOF_ADC_VALUES; i < NOF_PARAMETERS; ++i) {
     graphics.params.updateValue(i, 0);
   }

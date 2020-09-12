@@ -37,18 +37,11 @@ private:
     void readChannelData(){
         ProgramVector *pv = getProgramVector();
         // We could skip some element in loops below to scale horizontal resolution
-        if (channel < input_channels) {
-            for (int i = 0; i < 32; i++){
-                int32_t sample = (int32_t)(pv->audio_input[input_channels * i + channel]);
-                //int32_t sample = pv->audio_input[input_channels * i + channel];
-                buffer.push(int8_t(sample >> 16));
-            }
-        }
-        else {
-            for (int i = 0; i < 32; i++){
-                int32_t* sample = pv->audio_output + (channel - input_channels) * i + (channel - input_channels);
-                buffer.push(int8_t(*sample >> 16));
-            }
+        int32_t* stream = channel < input_channels ? pv->audio_input : pv->audio_output;
+        uint8_t rel_channel = channel < input_channels ? channel : (channel - input_channels);
+        for (int i = 0; i < 32; i++){
+            int32_t sample = stream[input_channels * i + rel_channel];
+            buffer.push(int8_t(sample >> 16));
         }
     }
 
