@@ -96,11 +96,11 @@ public:
   StorageBlock append(void *data, uint32_t size) {
     StorageBlock last = getLastBlock();
     if (last.isFree()) {
-      write(last, data, size);
-      if (count < max_blocks)
-        blocks[count++] =
-            createBlock((uint32_t)last.getBlock(), last.getBlockSize());
-      return last;
+      if (last.write(data, size)) {
+        if (count < max_blocks)
+          blocks[count++] = createBlock((uint32_t)last.getBlock(), last.getBlockSize());
+        return last;
+      }
     }
     else if (last.isValidSize()) {
       if (count < max_blocks) {
@@ -126,7 +126,6 @@ public:
 
   void erase() {};
   bool setDeleted(StorageBlock &block) { return false; }
-  bool write(StorageBlock &block, void *data, uint32_t size) { return false; };
   void defrag(void *buffer, uint32_t size) {};
 
 protected:

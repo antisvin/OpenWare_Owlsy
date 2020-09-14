@@ -14,7 +14,7 @@
 #include "Codec.h"
 #endif
 #include "ServiceCall.h"
-#include "FlashStorage.h"
+#include "Storage.h"
 #include "BitState.hpp"
 #include "MidiReceiver.h"
 #include "MidiController.h"

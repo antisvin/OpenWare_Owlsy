@@ -10,7 +10,7 @@
 #include "ApplicationSettings.h"
 #include "ProgramVector.h"
 #include "ProgramManager.h"
-#include "FlashStorage.h"
+#include "Storage.h"
 #include "Owl.h"
 #ifdef DEBUG_BOOTLOADER
 #include "BootloaderStorage.h"

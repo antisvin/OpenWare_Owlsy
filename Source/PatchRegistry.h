@@ -3,9 +3,8 @@
 
 #include "device.h"
 #include "PatchDefinition.hpp"
-#include "FlashStorageBlock.hpp"
 #include "ResourceHeader.h"
-#include "FlashStorage.h"
+#include "Storage.h"
 
 
 class PatchRegistry {
@@ -29,8 +28,8 @@ public:
   void store(uint8_t index, uint8_t* data, size_t size);
   void setDeleted(uint8_t index);
   StorageBlock* getPatchBlock(uint8_t index);
+  bool store(uint8_t index, uint8_t* data, size_t size);  
 private:
-  Storage* storage;
   bool isPresetBlock(StorageBlock block);
   StorageBlock patchblocks[MAX_NUMBER_OF_PATCHES];
   StorageBlock resourceblocks[MAX_NUMBER_OF_RESOURCES];

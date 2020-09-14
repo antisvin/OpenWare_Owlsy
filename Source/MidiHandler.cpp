@@ -11,7 +11,7 @@
 #include "Codec.h"
 #endif
 #include "Owl.h"
-#include "FlashStorage.h"
+#include "Storage.h"
 #include "PatchRegistry.h"
 #ifndef USE_BOOTLOADER_MODE
 #include "BootloaderStorage.h"
