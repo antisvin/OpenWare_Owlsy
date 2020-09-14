@@ -62,11 +62,13 @@ public:
     return isValidSize() && isWritten() && !isDeleted();
   }
   /* Base class is read-only.
-   * Valid size depends on storage type that uses boundaries from linker script, we can't define it here
+   * Valid size depends on storage type that uses boundaries from linker script, we can't define it here.
+   * 
+   * Note that we don't use pointers to this class, so virtual methods are not required.
    */
-  virtual bool isValidSize() const { return true; };
-  virtual bool setDeleted() { return false; };
-  virtual bool write(void* data, uint32_t size) { return false; };
+  bool isValidSize() const { return true; };
+  bool setDeleted() { return false; };
+  bool write(void* data, uint32_t size) { return false; };
 
   static constexpr uint8_t num_trailing_zeros = __builtin_ctz(alignment);
   // I.e. for alignment = 4, we have 2 trailing zeros

@@ -25,8 +25,8 @@ void PatchRegistry::init() {
   //   else
   //     registerPatch(def);
   // }
-  for(int i=0; i<storage->getBlocksTotal(); ++i){
-    StorageBlock block = storage->getBlock(i);
+  for(int i=0; i<storage.getBlocksTotal(); ++i){
+    StorageBlock block = storage.getBlock(i);
     if(block.verify() && block.getDataSize() > 4){
       uint32_t magic = *(uint32_t*)block.getData();
       int id = magic&0x00ff;
@@ -68,12 +68,16 @@ StorageBlock* PatchRegistry::getPatchBlock(uint8_t index){
   }
 }
 
-void PatchRegistry::store(uint8_t index, uint8_t* data, size_t size){
-  if(size > storage->getFreeSize() + storage->getDeletedSize())
-    return error(FLASH_ERROR, "Insufficient flash available");
-  if(size < 4)
-    return error(FLASH_ERROR, "Invalid resource size");
-#ifdef USE_EXTERNAL_RAM
+bool PatchRegistry::store(uint8_t index, uint8_t* data, size_t size){
+  if(size > storage.getFreeSize() + storage.getDeletedSize()) {
+    error(FLASH_ERROR, "Insufficient flash available");
+    return false;
+  }
+  if(size < 4) {
+    error(FLASH_ERROR, "Invalid resource size");
+    return false;
+  }
+#if USE_EXTERNAL_RAM
   extern char _EXTRAM_END, _FLASH_STORAGE_SIZE;
   if(size > storage.getFreeSize())
     storage.defrag(
@@ -84,7 +88,7 @@ void PatchRegistry::store(uint8_t index, uint8_t* data, size_t size){
   if(*magic == 0xDADAC0DE && index > 0 && index <= MAX_NUMBER_OF_PATCHES){
     // if it is a patch, set the program id
     *magic = (*magic&0xffffff00) | (index&0xff);
-    StorageBlock block = storage->append(data, size);
+    StorageBlock block = storage.append(data, size);
     if(block.verify()){
 #ifndef BOOTLOADER_MODE
       debugMessage("Patch stored to flash");
@@ -94,14 +98,16 @@ void PatchRegistry::store(uint8_t index, uint8_t* data, size_t size){
         patchblocks[index].setDeleted(); // delete old patch
       patchblocks[index] = block;
       patchCount = max(patchCount, index+1);
-    }else{
+    }
+    else{
       error(FLASH_ERROR, "Failed to verify patch");
+      return false;
     }
   }else if(*magic == 0xDADADEED && index > MAX_NUMBER_OF_PATCHES &&
 	   index <= MAX_NUMBER_OF_PATCHES+MAX_NUMBER_OF_RESOURCES){
     // if it is data, set the resource id
     *magic = (*magic&0xffffff00) | (index&0xff);
-    StorageBlock block = storage->append(data, size);
+    StorageBlock block = storage.append(data, size);
     if(block.verify()){
 #ifndef BOOTLOADER_MODE
       debugMessage("Resource stored to\nflash"); // Do we want to show this to users?
@@ -112,10 +118,13 @@ void PatchRegistry::store(uint8_t index, uint8_t* data, size_t size){
       resourceblocks[index] = block;
     }else{
       error(FLASH_ERROR, "failed to verify resource");
+      return false;
     }
   }else{
     error(PROGRAM_ERROR, "Invalid magic");
+    return false;
   }
+  return true;
 }
 
 const char* PatchRegistry::getResourceName(unsigned int index){

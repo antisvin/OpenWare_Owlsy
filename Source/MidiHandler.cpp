@@ -10,7 +10,7 @@
 #include "Codec.h"
 #endif
 #include "Owl.h"
-#include "FlashStorage.h"
+#include "Storage.h"
 #include "PatchRegistry.h"
 #ifdef USE_DIGITALBUS
 #include "bus.h"

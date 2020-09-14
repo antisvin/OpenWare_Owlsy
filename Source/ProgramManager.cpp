@@ -12,7 +12,7 @@
 #include "Codec.h"
 #endif
 #include "ServiceCall.h"
-#include "FlashStorage.h"
+#include "Storage.h"
 #include "BitState.hpp"
 #include "MidiReceiver.h"
 #include "MidiController.h"
@@ -381,9 +381,10 @@ void programFlashTask(void* p){
     // flashFirmware(source, size); 
     error(PROGRAM_ERROR, "Flash firmware TODO");
   }else{
-    registry.store(index, source, size);
-    program.loadProgram(index);
-    program.resetProgram(false);
+    if (registry.store(index, source, size)) {
+      program.loadProgram(index);
+      program.resetProgram(false);
+    }
   }
   // midi_tx.sendProgramMessage();
   // midi_tx.sendDeviceStats();

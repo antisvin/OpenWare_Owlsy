@@ -160,8 +160,6 @@ int main(void)
   MX_SPI1_Init();
   MX_QUADSPI_Init();
   /* USER CODE BEGIN 2 */
-  //MX_SAI1_Init();
-  //MX_SAI2_Init();
 
   //HAL_NVIC_SetPriority(EXTI2_IRQn, 3, 0);
   //HAL_NVIC_EnableIRQ(EXTI2_IRQn);
