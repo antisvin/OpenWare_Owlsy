@@ -16,9 +16,9 @@ private:
   char programName[24];
 public:
   DynamicPatchDefinition() :
-    PatchDefinition(programName, 2, 2) {}
+    PatchDefinition(programName, AUDIO_CHANNELS, AUDIO_CHANNELS) {}
   DynamicPatchDefinition(void* addr, uint32_t sz) :
-    PatchDefinition(programName, 2, 2) {
+    PatchDefinition(programName, AUDIO_CHANNELS, AUDIO_CHANNELS) {
     load(addr, sz);
   }
   bool load(void* addr, uint32_t sz){
