@@ -99,10 +99,18 @@
 #define DAC_PERIPH hdac
 #endif
 
+#ifndef PROGRAM_TASK_STACK_SIZE
 #define PROGRAM_TASK_STACK_SIZE      (4*1024/sizeof(portSTACK_TYPE))
+#endif
+#ifndef MANAGER_TASK_STACK_SIZE
 #define MANAGER_TASK_STACK_SIZE      (1024/sizeof(portSTACK_TYPE))
+#endif
+#ifndef FLASH_TASK_STACK_SIZE
 #define FLASH_TASK_STACK_SIZE        (512/sizeof(portSTACK_TYPE))
+#endif
+#ifndef UTILITY_TASK_STACK_SIZE
 #define UTILITY_TASK_STACK_SIZE      (512/sizeof(portSTACK_TYPE))
+#endif
 #ifdef DAISY
 #define ARM_CYCLES_PER_SAMPLE        (400000000/AUDIO_SAMPLINGRATE) /* 400MHz / 48kHz */
 #else

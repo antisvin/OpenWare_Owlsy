@@ -90,9 +90,7 @@ bool PatchRegistry::store(uint8_t index, uint8_t* data, size_t size){
     *magic = (*magic&0xffffff00) | (index&0xff);
     StorageBlock block = storage.append(data, size);
     if(block.verify()){
-#ifndef BOOTLOADER_MODE
       debugMessage("Patch stored to flash");
-#endif
       index = index - 1;
       if(patchblocks[index].verify())
         patchblocks[index].setDeleted(); // delete old patch
