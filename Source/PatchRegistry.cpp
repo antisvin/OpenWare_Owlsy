@@ -77,11 +77,11 @@ bool PatchRegistry::store(uint8_t index, uint8_t* data, size_t size){
     error(FLASH_ERROR, "Invalid resource size");
     return false;
   }
-#if USE_EXTERNAL_RAM
+#ifdef USE_EXTERNAL_RAM
   extern char _EXTRAM_END, _FLASH_STORAGE_SIZE;
   if(size > storage.getFreeSize())
     storage.defrag(
-      (uint8_t*)&_EXTRAM_END_END - (uint32_t)(&_FLASH_STORAGE_SIZE),
+      (uint8_t*)&_EXTRAM_END - (uint32_t)(&_FLASH_STORAGE_SIZE),
       (uint32_t)(&_FLASH_STORAGE_SIZE));
 #endif
   uint32_t* magic = (uint32_t*)data;
