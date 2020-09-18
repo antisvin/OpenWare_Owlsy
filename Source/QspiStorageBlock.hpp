@@ -17,9 +17,12 @@ extern char _FLASH_STORAGE_BEGIN, _FLASH_STORAGE_END;
 
 #define QSPI_PAGE_SIZE 256
 #define QSPI_SECTOR_SIZE 4096
-#define QSPI_ALIGNMENT QSPI_SECTOR_SIZE
-// Writes are in 256 byte pages
-// Erasure is in 4k subsectors
+#define QSPI_ALIGNMENT QSPI_PAGE_SIZE
+/*
+ * Writes will be performed in 256 byte pages. Whole storage could be aligned to 4k sector
+ * to enable erasure for individual patches. But using flash modification would better distrubet
+ * writes over the whole chip.
+ */
 
 using QspiStorageBlock = BaseStorageBlock<QSPI_ALIGNMENT>;
 
@@ -35,33 +38,40 @@ inline bool QspiStorageBlock::isValidSize() const {
 
 template<>
 inline bool QspiStorageBlock::write(void* data, uint32_t size) {
-    if((uint32_t)header+4+size > PATCH_PAGE_END)
+    if((uint32_t)header+4+size >= PATCH_PAGE_END)
         return false;
 
     // On first page we write header + beginning of data
-    uint32_t header_page[QSPI_ALIGNMENT / 4];
-    header_page[0] = 0xcf000000 | size;
-    size_t header_size = (size < QSPI_ALIGNMENT - 4) ? size + 4 : QSPI_ALIGNMENT;
-    memcpy((void*)(header_page + 1), data, header_size);
+    //uint32_t header_page[QSPI_PAGE_SIZE / 4];
+    //header_page[0] = 0xcf000000 | size;
+    //size_t header_size = (size < QSPI_PAGE_SIZE - 4) ? size + 4 : QSPI_PAGE_SIZE;
+    // Header size is counted in bytes
+    //memcpy((void*)(header_page + 1), data, header_size - 4);
 
     int status = qspi_init(QSPI_MODE_INDIRECT_POLLING);
     if (status != MEMORY_OK) {
-        error(FLASH_ERROR, "Flash write failed");
+        error(FLASH_ERROR, "Flash init failed");
+        qspi_init(QSPI_MODE_MEMORY_MAPPED);
         return false;
     }
-    
-    status = qspi_write_block((uint32_t)getBlock(), (uint8_t*)header_page, header_size);
 
-    if (status == MEMORY_OK && size > QSPI_ALIGNMENT - 4) {
+    uint32_t new_header = 0xcf000000 | size;
+    status = qspi_write_block((uint32_t)getBlock(), (uint8_t*)&new_header, 4);
+    if (status == MEMORY_OK) {
+        status = qspi_write_block((uint32_t)getBlock() + 4, (uint8_t*)data, size);
+    }
+    
+    //status = qspi_write_block((uint32_t)getBlock(), (uint8_t*)header_page, header_size);
+
+    //if (status == MEMORY_OK && size > QSPI_PAGE_SIZE - 4) {
         // Remaining data write.
         // This will be called only when header_size is 256
-        status = qspi_write_block(
-            (uint32_t)header + QSPI_ALIGNMENT,
-            (uint8_t*)data + (QSPI_ALIGNMENT - 4),
-            size - QSPI_ALIGNMENT + 4);
-    }
-    if (status == MEMORY_OK)
-        status = qspi_init(QSPI_MODE_MEMORY_MAPPED);
+        //status = qspi_write_block(
+        //    (uint32_t)getBlock() + QSPI_PAGE_SIZE,
+        //    (uint8_t*)data + (QSPI_PAGE_SIZE - 4),
+        //    size - (QSPI_PAGE_SIZE - 4));
+    //}
+    qspi_init(QSPI_MODE_MEMORY_MAPPED);
     if (status != MEMORY_OK) {
         error(FLASH_ERROR, "Flash write failed");
         return false;
@@ -81,32 +91,31 @@ template<>
 inline bool QspiStorageBlock::setDeleted() {
     uint32_t size = getDataSize();
     if(size){
-        // We can't write a single word on QSPI, so we'll read 4k page, set necessary bits
-        // and write it back
-        uint32_t old_page[1024];
-        // Copy sector to memory
-        memcpy((void*)old_page, getData(), QSPI_SECTOR_SIZE);
-        old_page[0] =  0xc0000000 | size;
-
-        // Erase sector
-        int status = qspi_erase_sector((uint32_t)getBlock());
-
+        // We preallocate full page in order to prevent accidental reading outside of valid
+        // memory region in certain cases
+        uint32_t header_page[QSPI_PAGE_SIZE / 4];
+        header_page[0] = 0xc0000000 | size;        
+        int status = qspi_init(QSPI_MODE_INDIRECT_POLLING);
+        //if (status == MEMORY_OK) {
+        //    //status = 
+        //    status = qspi_erase((uint32_t)header, (uint32_t)header + QSPI_SECTOR_SIZE);
+        //}
         if (status == MEMORY_OK) {
-            // Write updated sector
-            status = qspi_write_block((uint32_t)getBlock(), (uint8_t*)old_page, QSPI_SECTOR_SIZE);
-            if (status != MEMORY_OK) {
-                error(FLASH_ERROR, "Flash write failed");
+            status = qspi_write_block((uint32_t)header, (uint8_t*)header_page, 4);
+        }
+
+        qspi_init(QSPI_MODE_MEMORY_MAPPED);
+        
+        if (status != MEMORY_OK) {
+            // We want to return to memory mapped mode even on error
+            error(FLASH_ERROR, "Flash write failed");
+            return false;
+        }     
+        else {
+            if(size != getDataSize() || !isDeleted()){
+                error(FLASH_ERROR, "Flash delete error");
                 return false;
             }
-        }
-        else {
-            error(FLASH_ERROR, "Flash erasure failed");
-            return false;
-        }
-
-        if(size != getDataSize() || !isDeleted()){
-            error(FLASH_ERROR, "Flash delete error");
-            return false;
         }
         return true;
     }

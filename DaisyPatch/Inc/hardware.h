@@ -11,6 +11,8 @@
   #error Invalid configuration
 #endif
 
+#define FLASH_TASK_STACK_SIZE        (1024/sizeof(portSTACK_TYPE))
+
 #define MINIMAL_BUILD
 
 // FW size limit would matter only if we use bootloader, otherwise linker scripts sets this limit

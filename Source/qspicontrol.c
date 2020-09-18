@@ -198,7 +198,7 @@ int qspi_erase(uint32_t start_adr, uint32_t end_adr) {
   uint32_t block_size = QSPI_SECTOR_SIZE; // 4kB blocks for now.
   // 64kB chunks for now.
   start_adr = start_adr - (start_adr % block_size);
-  while (end_adr >= start_adr) {
+  while (end_adr > start_adr) {
     block_addr = start_adr & 0x0FFFFFFF;
     if (qspi_erase_sector(block_addr) != MEMORY_OK) {
       return MEMORY_ERROR;

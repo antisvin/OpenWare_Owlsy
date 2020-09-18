@@ -724,7 +724,7 @@ extern "C" {
        function is called from PendSV ISR if a stack overflow is detected. */
     error(PROGRAM_ERROR, "Stack overflow");
     program.exitProgram(true);
-    HAL_Delay(5000);
+//    vTaskDelay(5000);
     assert_param(0);
   }
 }
