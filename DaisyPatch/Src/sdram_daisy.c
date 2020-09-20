@@ -1,4 +1,5 @@
 #include "stm32_arch_hal.h"
+#include "device.h"
 #include "sdram.h"
 
 // TODO:
@@ -32,13 +33,13 @@
 #define SDRAM_MODEREG_WRITEBURST_MODE_PROG_BURST ((0 << 9))
 
 
-extern char _EXTRAM, _sdata;
+extern char _EXTRAM, _sdata, _BUFFERS_BEGIN;
 
 /*
  * MPU settings:
  * 
  * Region 0 - external RAM (64M)
- * Region 1 - non-cacheable region for DMA buffers on RAM2 (32K, but can be lower)
+ * Region 1 - non-cacheable region for DMA buffers on RAM2 (128K, but can be lower)
  */
 
 void MPU_Config(void){
@@ -62,15 +63,28 @@ void MPU_Config(void){
   HAL_MPU_ConfigRegion(&MPU_InitStruct);
 
 #ifdef USE_CACHE
-  MPU_InitStruct.BaseAddress = _BUFFERS;
-  //(uint32_t)&_sdata;
-  MPU_InitStruct.Size = MPU_REGION_SIZE_32KB;
+  MPU_InitStruct.BaseAddress = (uint32_t)&_BUFFERS_BEGIN;
+  MPU_InitStruct.Size = MPU_REGION_SIZE_128KB;
   MPU_InitStruct.IsBufferable = MPU_ACCESS_NOT_BUFFERABLE;
   MPU_InitStruct.IsCacheable = MPU_ACCESS_NOT_CACHEABLE;
   MPU_InitStruct.IsShareable = MPU_ACCESS_SHAREABLE;
   MPU_InitStruct.Number = MPU_REGION_NUMBER1;
   MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL1;
+  MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_DISABLE;
   HAL_MPU_ConfigRegion(&MPU_InitStruct);
+
+/*
+  MPU_InitStruct.BaseAddress = (uint32_t)&_sdata;
+  MPU_InitStruct.Size = MPU_REGION_SIZE_512KB;
+  MPU_InitStruct.IsBufferable = MPU_ACCESS_NOT_BUFFERABLE;
+  MPU_InitStruct.IsCacheable = MPU_ACCESS_NOT_CACHEABLE;
+  MPU_InitStruct.IsShareable = MPU_ACCESS_SHAREABLE;
+  MPU_InitStruct.Number = MPU_REGION_NUMBER2;
+  MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL1;
+  MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_ENABLE;
+  HAL_MPU_ConfigRegion(&MPU_InitStruct);
+*/
+
 #endif
 
   /* Enable the MPU */

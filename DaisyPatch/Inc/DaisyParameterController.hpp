@@ -22,9 +22,6 @@ void defaultDrawCallback(uint8_t *pixels, uint16_t width, uint16_t height);
 
 #define ENC_MULTIPLIER 6 // shift left by this many steps
 
-extern uint16_t adc_values[NOF_ADC_VALUES];
-
-
 /* shows a single parameter selected and controlled with a single encoder
  */
 template <uint8_t SIZE>

@@ -11,14 +11,22 @@
 #endif
 
 #include "SerialBuffer.hpp"
-SerialBuffer<CODEC_BUFFER_SIZE, int32_t> audio_rx_buffer;
-SerialBuffer<CODEC_BUFFER_SIZE, int32_t> audio_tx_buffer;
+SerialBuffer<CODEC_BUFFER_SIZE, int32_t> audio_rx_buffer
+#ifndef DUAL_CODEC
+NO_CACHE
+#endif
+;
+SerialBuffer<CODEC_BUFFER_SIZE, int32_t> audio_tx_buffer
+#ifndef DUAL_CODEC
+NO_CACHE
+#endif
+;
 
 #ifdef DUAL_CODEC
-SerialBuffer<CODEC_BUFFER_SIZE / 2, int32_t> audio_rx1_buffer;
-SerialBuffer<CODEC_BUFFER_SIZE / 2, int32_t> audio_tx1_buffer;
-SerialBuffer<CODEC_BUFFER_SIZE / 2, int32_t> audio_rx2_buffer;
-SerialBuffer<CODEC_BUFFER_SIZE / 2, int32_t> audio_tx2_buffer;
+SerialBuffer<CODEC_BUFFER_SIZE / 2, int32_t> audio_rx1_buffer NO_CACHE;
+SerialBuffer<CODEC_BUFFER_SIZE / 2, int32_t> audio_tx1_buffer NO_CACHE;
+SerialBuffer<CODEC_BUFFER_SIZE / 2, int32_t> audio_rx2_buffer NO_CACHE;
+SerialBuffer<CODEC_BUFFER_SIZE / 2, int32_t> audio_tx2_buffer NO_CACHE;
 #endif
 
 extern "C" {

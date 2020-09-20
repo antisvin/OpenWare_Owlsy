@@ -629,7 +629,7 @@ void ProgramManager::loadDynamicProgram(void* address, uint32_t length){
 }
 
 void ProgramManager::loadProgram(uint8_t pid){
-  // We must always force loading patch definition, because it uses cached value that
+  // We must always force loading patch definition, because it uses d value that
   // is also updated in other places
   PatchDefinition* def = registry.getPatchDefinition(pid);
   if(patchindex != pid){
