@@ -27,9 +27,9 @@ public:
   void draw();
   void setCallback(void *callback);
 #ifdef OWL_MAGUS
-  ParameterController<20> params CACHE_ALIGNED;
+  ParameterController<20> params;
 #else
-  ParameterController<NOF_PARAMETERS> params CACHE_ALIGNED;
+  ParameterController<NOF_PARAMETERS> params;
 #endif
   ScreenBuffer screen;
 private:

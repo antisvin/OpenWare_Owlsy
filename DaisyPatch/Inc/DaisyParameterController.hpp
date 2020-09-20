@@ -56,7 +56,7 @@ public:
   int16_t parameters[SIZE];
   int16_t encoders[NOF_ENCODERS]; // last seen encoder values
   int16_t offsets[NOF_ENCODERS];  // last seen encoder values
-  int16_t user[SIZE];             // user set values (ie by encoder or MIDI)
+  int16_t user[SIZE] CACHE_ALIGNED;             // user set values (ie by encoder or MIDI)
   char names[SIZE][12];
   uint8_t selectedPid[NOF_ENCODERS];
   uint8_t lastSelectedPid, lastChannel;
