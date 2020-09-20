@@ -46,6 +46,7 @@
 //#define ENCODER_TIM1 htim4
 
 #define USE_EXTERNAL_RAM
+#define USE_CACHE
 
 #define USE_UART_MIDI
 #define UART_MIDI_HANDLE huart1

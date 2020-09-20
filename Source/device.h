@@ -119,6 +119,14 @@
 
 #define CCM                          __attribute__ ((section (".ccmdata")))
 
+#ifdef USE_CACHE
+#define NO_CACHE                     __attribute__ ((section (".buffers")))
+#define CACHE_ALIGNED                __attribute__ ((aligned(32)))
+#else
+#define NO_CACHE
+#define CACHE_ALIGNED
+#endif
+
 /* #define USE_IWDG                     // compile with support for IWDG watchdog */
 #if defined(USE_IWDG) && !defined(IWDG_PERIPH)
 #define IWDG_PERIPH IWDG

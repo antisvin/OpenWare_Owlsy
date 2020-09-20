@@ -34,6 +34,19 @@ void setGateValue(uint8_t ch, int16_t value){
   }
 }
 
+
+extern uint16_t adc_values[NOF_ADC_VALUES];
+
+/*
+void updateParameters(){
+#ifdef USE_CACHE
+  SCB_InvalidateDCache_by_Addr((uint32_t*)((uint32_t)(adc_values) & ~(uint32_t)0x1F), sizeof(adc_values));
+#endif
+  for(int i = 0; i < NOF_ADC_VALUES; ++i)
+    graphics.params.updateValue(i, 4095 - adc_values[i]);
+}
+*/
+
 void setup(){
   HAL_GPIO_WritePin(OLED_RST_GPIO_Port, OLED_RST_Pin, GPIO_PIN_RESET); // OLED off
 
@@ -48,20 +61,30 @@ void setup(){
   owl_setup();
 }
 
+extern uint16_t adc_values[NOF_ADC_VALUES];
+static int16_t enc_data[2];
+
 void loop(void){
+#ifdef USE_CACHE
+  SCB_InvalidateDCache_by_Addr((uint32_t*)((uint32_t)(adc_values) & ~(uint32_t)0x1F), sizeof(adc_values));
+  #ifdef USE_SCREEN
+  SCB_CleanInvalidateDCache_by_Addr((uint32_t*)((uint32_t)(&graphics.params) & ~(uint32_t)0x1F), sizeof(graphics.params));
+  #endif
+#endif
+
   encoder.debounce();
-  int16_t enc_data[] = {
-    int16_t(encoder.isFallingEdge() | encoder.isLongPress() << 1),
-    int16_t(encoder.getValue())
-  };
+  enc_data[0] = int16_t(encoder.isFallingEdge() | encoder.isLongPress() << 1);
+  enc_data[1] = int16_t(encoder.getValue());
   graphics.params.updateEncoders(enc_data, 1);
 
+
   for(int i = 0; i < NOF_ADC_VALUES; ++i)
-    //graphics.params.updateValue(i, 4095 - (uint16_t(getAnalogValue(i)) >> 4));
     graphics.params.updateValue(i, 4095 - (uint16_t(getAnalogValue(i))));
+
   for(int i = NOF_ADC_VALUES; i < NOF_PARAMETERS; ++i) {
     graphics.params.updateValue(i, 0);
   }
+
   
   owl_loop();
 }
