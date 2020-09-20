@@ -68,7 +68,8 @@ void loop(void){
 #ifdef USE_CACHE
   SCB_InvalidateDCache_by_Addr((uint32_t*)((uint32_t)(adc_values) & ~(uint32_t)0x1F), sizeof(adc_values));
   #ifdef USE_SCREEN
-  SCB_CleanInvalidateDCache_by_Addr((uint32_t*)((uint32_t)(&graphics.params) & ~(uint32_t)0x1F), sizeof(graphics.params));
+  //SCB_CleanInvalidateDCache_by_Addr((uint32_t*)((uint32_t)(&graphics.params.parameters) & ~(uint32_t)0x1F), sizeof(graphics.params.parameters));
+  SCB_CleanInvalidateDCache_by_Addr((uint32_t*)((uint32_t)(&graphics.params.user) & ~(uint32_t)0x1F), sizeof(graphics.params.user));
   #endif
 #endif
 
