@@ -16,10 +16,8 @@ C_SRC += usbd_audio.c
 # C_SRC += usbd_midi_if.c
 C_SRC += ssd1309.c
 C_SRC += ak4556.c
-C_SRC += qspicontrol.c
 CPP_SRC += uart.cpp MidiStreamReader.cpp
 CPP_SRC += ScreenBuffer.cpp ScreenBufferMono.cpp Graphics.cpp
-CPP_SRC += QspiStorage.cpp
 
 ifndef PLATFORM
 PLATFORM = Daisy
@@ -49,3 +47,6 @@ include $(OPENWARE)/Hardware/h7.mk
 
 upload:
 	$(OPENOCD) -c "program Build/DaisyPatch.elf verify reset exit"
+
+dfu:
+	sudo dfu-util -a 0 -s 0x08000000:leave -D Build/DaisyPatch.bin -d 0483:df11
