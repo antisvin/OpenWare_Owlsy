@@ -23,7 +23,7 @@
 
 #define USE_SCREEN
 #define SSD1309
-//#define OLED_DMA
+#define OLED_DMA
 // #define OLED_SOFT_CS
 #define OLED_SPI hspi1
 /* #define OLED_IT */
@@ -46,7 +46,7 @@
 //#define ENCODER_TIM1 htim4
 
 #define USE_EXTERNAL_RAM
-//#define USE_CACHE
+#define USE_CACHE
 
 #define USE_UART_MIDI
 #define UART_MIDI_HANDLE huart1

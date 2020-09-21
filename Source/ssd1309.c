@@ -97,6 +97,9 @@ void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi){
 void oled_write(const uint8_t* data, uint16_t length)
 {
 #ifdef OLED_DMA
+#ifdef USE_CACHE
+  SCB_CleanInvalidateDCache_by_Addr((uint32_t*)data, length);
+#endif
   while(OLED_SPIInst->State != HAL_SPI_STATE_READY); // wait
   pCS_Clr();	// CS low
   pDC_Set();	// DC high
