@@ -33,7 +33,7 @@ public:
 #endif
   ScreenBuffer screen;
 private:
-  uint8_t pixelbuffer[OLED_BUFFER_SIZE];
+  uint8_t pixelbuffer[OLED_BUFFER_SIZE] CACHE_ALIGNED;
 };
 
 extern Graphics graphics;
