@@ -7,7 +7,7 @@
 #ifdef USE_UART_MIDI
 
 extern UART_HandleTypeDef UART_MIDI_HANDLE;
-static SerialBuffer<UART_MIDI_RX_BUFFER_SIZE> bus_rx_buf;
+static SerialBuffer<UART_MIDI_RX_BUFFER_SIZE> bus_rx_buf NO_CACHE;
 
 #define min(a,b) ((a)<(b)?(a):(b))
 
