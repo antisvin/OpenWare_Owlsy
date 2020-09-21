@@ -46,13 +46,26 @@
 //#define ENCODER_TIM1 htim4
 
 #define USE_EXTERNAL_RAM
-#define USE_CACHE
+//#define USE_CACHE
 
 #define USE_UART_MIDI
 #define UART_MIDI_HANDLE huart1
 #define UART_MIDI_RX_BUFFER_SIZE 256
 
-//#define USE_USBD_AUDIO
+#define USE_USBD_AUDIO
+#define USE_USBD_MIDI
+//#define USE_USBD_AUDIO_TX  // microphone
+//#define USE_USBD_AUDIO_RX // speaker
+/* USB audio settings */
+#define AUDIO_BITS_PER_SAMPLE       16
+#define AUDIO_BYTES_PER_SAMPLE      (AUDIO_BITS_PER_SAMPLE/8)
+#define USB_AUDIO_CHANNELS          4
+/* #define AUDIO_INT32_TO_SAMPLE(x)    (__REV16((x)>>8)) */
+/* #define AUDIO_SAMPLE_TO_INT32(x)    ((int32_t)(__REV16(x))<<8) */
+#define AUDIO_INT32_TO_SAMPLE(x)    ((x)>>8)
+#define AUDIO_SAMPLE_TO_INT32(x)    ((int32_t)(x)<<8)
+
+
 #define USE_CODEC
 #define DUAL_CODEC
 #define USE_AK4556
