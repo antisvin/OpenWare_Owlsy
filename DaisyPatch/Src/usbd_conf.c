@@ -26,7 +26,7 @@
 #include "usbd_core.h"
 
 /* USER CODE BEGIN Includes */
-
+#include "device.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -76,19 +76,25 @@ void HAL_PCD_MspInit(PCD_HandleTypeDef* pcdHandle)
     /**USB_OTG_FS GPIO Configuration
     PA12     ------> USB_OTG_FS_DP
     PA11     ------> USB_OTG_FS_DM
+    PA9     ------> USB_OTG_FS_VBUS
     */
     GPIO_InitStruct.Pin = GPIO_PIN_12|GPIO_PIN_11;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_MEDIUM;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
     GPIO_InitStruct.Alternate = GPIO_AF10_OTG1_FS;
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+    GPIO_InitStruct.Pin = GPIO_PIN_9;
+    GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
     /* Peripheral clock enable */
     __HAL_RCC_USB_OTG_FS_CLK_ENABLE();
 
     /* Peripheral interrupt init */
-    HAL_NVIC_SetPriority(OTG_FS_IRQn, 5, 0);
+    HAL_NVIC_SetPriority(OTG_FS_IRQn, 15, 0);
     HAL_NVIC_EnableIRQ(OTG_FS_IRQn);
   /* USER CODE BEGIN USB_OTG_FS_MspInit 1 */
 
@@ -109,8 +115,9 @@ void HAL_PCD_MspDeInit(PCD_HandleTypeDef* pcdHandle)
     /**USB_OTG_FS GPIO Configuration
     PA12     ------> USB_OTG_FS_DP
     PA11     ------> USB_OTG_FS_DM
+    PA9     ------> USB_OTG_FS_VBUS
     */
-    HAL_GPIO_DeInit(GPIOA, GPIO_PIN_12|GPIO_PIN_11);
+    HAL_GPIO_DeInit(GPIOA, GPIO_PIN_12|GPIO_PIN_11|GPIO_PIN_9);
 
     /* Peripheral interrupt Deinit*/
     HAL_NVIC_DisableIRQ(OTG_FS_IRQn);
@@ -330,7 +337,7 @@ USBD_StatusTypeDef USBD_LL_Init(USBD_HandleTypeDef *pdev)
   pdev->pData = &hpcd_USB_OTG_FS;
 
   hpcd_USB_OTG_FS.Instance = USB_OTG_FS;
-  hpcd_USB_OTG_FS.Init.dev_endpoints = 4;
+  hpcd_USB_OTG_FS.Init.dev_endpoints = 9;
   hpcd_USB_OTG_FS.Init.speed = PCD_SPEED_FULL;
   hpcd_USB_OTG_FS.Init.dma_enable = DISABLE;
   hpcd_USB_OTG_FS.Init.phy_itface = PCD_PHY_EMBEDDED;
@@ -338,7 +345,7 @@ USBD_StatusTypeDef USBD_LL_Init(USBD_HandleTypeDef *pdev)
   hpcd_USB_OTG_FS.Init.low_power_enable = DISABLE;
   hpcd_USB_OTG_FS.Init.lpm_enable = DISABLE;
   hpcd_USB_OTG_FS.Init.battery_charging_enable = DISABLE;
-  hpcd_USB_OTG_FS.Init.vbus_sensing_enable = DISABLE;
+  hpcd_USB_OTG_FS.Init.vbus_sensing_enable = ENABLE;
   hpcd_USB_OTG_FS.Init.use_dedicated_ep1 = DISABLE;
   if (HAL_PCD_Init(&hpcd_USB_OTG_FS) != HAL_OK)
   {
@@ -360,11 +367,6 @@ USBD_StatusTypeDef USBD_LL_Init(USBD_HandleTypeDef *pdev)
   HAL_PCD_RegisterIsoOutIncpltCallback(&hpcd_USB_OTG_FS, PCD_ISOOUTIncompleteCallback);
   HAL_PCD_RegisterIsoInIncpltCallback(&hpcd_USB_OTG_FS, PCD_ISOINIncompleteCallback);
 #endif /* USE_HAL_PCD_REGISTER_CALLBACKS */
-/*
-  HAL_PCDEx_SetRxFiFo(&hpcd_USB_OTG_FS, 0x80);
-  HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_FS, 0, 0x40);
-  HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_FS, 1, 0x80);
-*/
 #ifdef USE_USBD_AUDIO_TX
   HAL_PCDEx_SetRxFiFo(&hpcd_USB_OTG_FS, 0x80);
   HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_FS, 0, 0x20);
@@ -375,8 +377,12 @@ USBD_StatusTypeDef USBD_LL_Init(USBD_HandleTypeDef *pdev)
   HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_FS, 0, 0x40);
   HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_FS, 1, 0x60);
 #endif
-
   /* total 0x140 words available for rx and tx fifos */
+/*
+  HAL_PCDEx_SetRxFiFo(&hpcd_USB_OTG_FS, 0x80);
+  HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_FS, 0, 0x40);
+  HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_FS, 1, 0x80);
+*/
   }
   return USBD_OK;
 }
