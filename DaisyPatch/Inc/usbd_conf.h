@@ -36,6 +36,11 @@
 #include "stm32h7xx_hal.h"
 
 /* USER CODE BEGIN INCLUDE */
+#ifdef DEBUG
+#define DEBUG_LEVEL     3
+#else
+#define DEBUG_LEVEL     0
+#endif
 
 /* USER CODE END INCLUDE */
 
@@ -70,18 +75,18 @@
 /*---------- -----------*/
 #define USBD_MAX_STR_DESC_SIZ     512U
 /*---------- -----------*/
-#define USBD_DEBUG_LEVEL     0U
+#define USBD_DEBUG_LEVEL     DEBUG_LEVEL
 /*---------- -----------*/
 #define USBD_LPM_ENABLED     0U
 /*---------- -----------*/
-#define USBD_SELF_POWERED     1U
+#define USBD_SELF_POWERED     0U
 /*---------- -----------*/
 #define USBD_AUDIO_FREQ     48000U
 
 /****************************************/
 /* #define for FS and HS identification */
-#define DEVICE_FS 		0
-#define DEVICE_HS 		1
+#define DEVICE_FS 		1
+#define DEVICE_HS 		0
 
 /**
   * @}
@@ -111,26 +116,27 @@
 
 /* DEBUG macros */
 
+
 #if (USBD_DEBUG_LEVEL > 0)
-#define USBD_UsrLog(...)    printf(__VA_ARGS__);\
-                            printf("\n");
+#define USBD_UsrLog(...)    do { printf(__VA_ARGS__);   \
+                            printf("\n"); } while(0)
 #else
 #define USBD_UsrLog(...)
 #endif
 
 #if (USBD_DEBUG_LEVEL > 1)
 
-#define USBD_ErrLog(...)    printf("ERROR: ") ;\
+#define USBD_ErrLog(...)    do { printf("ERROR: ") ;\
                             printf(__VA_ARGS__);\
-                            printf("\n");
+                            printf("\n"); } while(0)
 #else
 #define USBD_ErrLog(...)
 #endif
 
 #if (USBD_DEBUG_LEVEL > 2)
-#define USBD_DbgLog(...)    printf("DEBUG : ") ;\
+#define USBD_DbgLog(...)    do { printf("DEBUG : ") ;   \
                             printf(__VA_ARGS__);\
-                            printf("\n");
+                            printf("\n"); } while(0)
 #else
 #define USBD_DbgLog(...)
 #endif
