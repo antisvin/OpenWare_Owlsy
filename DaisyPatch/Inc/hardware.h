@@ -52,8 +52,8 @@
 #define UART_MIDI_HANDLE huart1
 #define UART_MIDI_RX_BUFFER_SIZE 256
 
-#define USE_USBD_AUDIO
-#define USE_USBD_MIDI
+//#define USE_USBD_AUDIO
+//#define USE_USBD_MIDI
 //#define USE_USBD_AUDIO_TX  // microphone
 //#define USE_USBD_AUDIO_RX // speaker
 /* USB audio settings */
