@@ -58,7 +58,6 @@ void setup(){
   owl_setup();
 }
 
-extern uint16_t adc_values[NOF_ADC_VALUES];
 static int16_t enc_data[2];
 
 void loop(void){
@@ -73,10 +72,6 @@ void loop(void){
   enc_data[1] = int16_t(encoder.getValue());
   graphics.params.updateEncoders(enc_data, 1);
 
-/*
-  for(int i = 0; i < NOF_ADC_VALUES; ++i)
-    graphics.params.updateValue(i, 4095 - (uint16_t(getAnalogValue(i))));
-*/
   for(int i = NOF_ADC_VALUES; i < NOF_PARAMETERS; ++i) {
     graphics.params.updateValue(i, 0);
   }
