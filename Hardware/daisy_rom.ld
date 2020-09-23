@@ -21,10 +21,10 @@ RAM (rwx)         : ORIGIN = 0x30000000, LENGTH = 128K
 FASTHEAP (rwx)    : ORIGIN = 0x30020000, LENGTH = 128K
 BUFFERS (rwx)     : ORIGIN = 0x30040000, LENGTH = 32K
 /*RAM_D3 (rwx)      : ORIGIN = 0x38000000, LENGTH = 64K*/ /* Nothing at the moment. Buffers for card streams? */
-EXTRAM (rwx)      : ORIGIN = 0xc0000000, LENGTH = 63M /* 63 M */
+EXTRAM (rwx)      : ORIGIN = 0xc0000000, LENGTH = 63M
 PATCH (rwx)       : ORIGIN = 0xc3f00000, LENGTH = 512K /* Patch image - loaded from QSPI or dynamically */
 FLASH (rwx)       : ORIGIN = 0xc3f80000, LENGTH = 512K /* This is FW image, section name is just for compatibility */
-BOOTLOADER (rx)   : ORIGIN = 0x08000000, LENGTH = 32K  /* Bootloader on flash. We have an extra 96k flash */
+BOOTLOADER (rx)   : ORIGIN = 0x08000000, LENGTH = 128K  /* Bootloader on flash */
 BOOTROM (rx)      : ORIGIN = 0x90000000, LENGTH = 512K  /* QSPI flash - firmware part */
 STORAGE (rx)      : ORIGIN = 0x90080000, LENGTH = 7680K  /* QSPI flash - patch storage part. That's one hell of a lot of patches */
 }
