@@ -10,13 +10,13 @@ _Min_Stack_Size = 0x200; /* required amount of stack */
 /* Specify the memory areas */
 MEMORY
 {
-ITCMRAM (xrw)     : ORIGIN = 0x00000000, LENGTH = 64K
-DTCMRAM (xrw)     : ORIGIN = 0x20000000, LENGTH = 128K
+/* ITCMRAM (xrw)     : ORIGIN = 0x00000000, LENGTH = 64K */
+/* DTCMRAM (xrw)     : ORIGIN = 0x20000000, LENGTH = 128K */
 RAM (rwx)         : ORIGIN = 0x24000000, LENGTH = 512K
-PATCHRAM (rwx)    : ORIGIN = 0x30000000, LENGTH = 288K
-RAM_D3 (xrw)      : ORIGIN = 0x38000000, LENGTH = 64K
-EXTRAM (rwx)      : ORIGIN = 0xc0000000, LENGTH = 6400K /* 62 M + 512 K */
-PATCH (rwx)       : ORIGIN = 0xc3e80000, LENGTH = 1M /* Patch image - loaded from QSPI or dynamically */
+/* PATCHRAM (rwx)    : ORIGIN = 0x24000000, LENGTH = 512 */
+/* RAM_D3 (xrw)      : ORIGIN = 0x38000000, LENGTH = 64K */
+EXTRAM (rwx)      : ORIGIN = 0xc0000000, LENGTH = 63M
+PATCH (rwx)       : ORIGIN = 0xc3f00000, LENGTH = 512K /* Patch image - loaded from QSPI or dynamically */
 APPLICATION (rwx) : ORIGIN = 0xc3f80000, LENGTH = 512K /* This is FW image */
 FLASH (r)         : ORIGIN = 0x08000000, LENGTH = 128K  /* Bootloader on flash*/
 BOOTROM (rx)      : ORIGIN = 0x90000000, LENGTH = 512K  /* QSPI flash - firmware part */
@@ -254,13 +254,13 @@ SECTIONS
 		PROVIDE(__qspiflash_bss_end = _eqspiflash_bss);
 	} > QSPIFLASH
 */
-
+/*
   	.patchram (NOLOAD) :
 	{
     	PROVIDE (_PATCHRAM = .);
   	} >PATCHRAM
   	_PATCHRAM_END = ORIGIN(PATCHRAM) + LENGTH(PATCHRAM);
-
+*/
     .bootrom_storage (NOLOAD) :
     {
         PROVIDE (_BOOTROM_STORAGE_BEGIN = .);
