@@ -17,8 +17,8 @@ MEMORY
 /* ITCMRAM (rwx)     : ORIGIN = 0x00000000, LENGTH = 64K */
 /* DTCMRAM (rwx)     : ORIGIN = 0x20000000, LENGTH = 128K */
 PATCHRAM (rwx)    : ORIGIN = 0x24000000, LENGTH = 512K
-FASTHEAP (rwx)    : ORIGIN = 0x30000000, LENGTH = 128K
-RAM (rwx)         : ORIGIN = 0x30020000, LENGTH = 128K
+RAM (rwx)         : ORIGIN = 0x30000000, LENGTH = 128K
+FASTHEAP (rwx)    : ORIGIN = 0x30020000, LENGTH = 128K
 BUFFERS (rwx)     : ORIGIN = 0x30040000, LENGTH = 32K
 /*RAM_D3 (rwx)      : ORIGIN = 0x38000000, LENGTH = 64K*/ /* Nothing at the moment. Buffers for card streams? */
 EXTRAM (rwx)      : ORIGIN = 0xc0000000, LENGTH = 63M /* 63 M */
