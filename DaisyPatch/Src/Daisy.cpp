@@ -35,17 +35,14 @@ void setGateValue(uint8_t ch, int16_t value){
 }
 
 
-extern uint16_t adc_values[NOF_ADC_VALUES];
-
-/*
-void updateParameters(){
+void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t* adc_values, size_t adc_len){
 #ifdef USE_CACHE
   SCB_InvalidateDCache_by_Addr((uint32_t*)((uint32_t)(adc_values) & ~(uint32_t)0x1F), sizeof(adc_values));
 #endif
   for(int i = 0; i < NOF_ADC_VALUES; ++i)
     graphics.params.updateValue(i, 4095 - adc_values[i]);
 }
-*/
+
 
 void setup(){
   HAL_GPIO_WritePin(OLED_RST_GPIO_Port, OLED_RST_Pin, GPIO_PIN_RESET); // OLED off
@@ -66,10 +63,8 @@ static int16_t enc_data[2];
 
 void loop(void){
 #ifdef USE_CACHE
-  SCB_InvalidateDCache_by_Addr((uint32_t*)((uint32_t)(adc_values) & ~(uint32_t)0x1F), sizeof(adc_values));
   #ifdef USE_SCREEN
-  //SCB_CleanInvalidateDCache_by_Addr((uint32_t*)((uint32_t)(&graphics.params.parameters) & ~(uint32_t)0x1F), sizeof(graphics.params.parameters));
-  SCB_CleanInvalidateDCache_by_Addr((uint32_t*)((uint32_t)(&graphics.params.user) & ~(uint32_t)0x1F), sizeof(graphics.params.user));
+  SCB_CleanInvalidateDCache_by_Addr((uint32_t*)&graphics.params.user, sizeof(graphics.params.user));
   #endif
 #endif
 
@@ -78,10 +73,10 @@ void loop(void){
   enc_data[1] = int16_t(encoder.getValue());
   graphics.params.updateEncoders(enc_data, 1);
 
-
+/*
   for(int i = 0; i < NOF_ADC_VALUES; ++i)
     graphics.params.updateValue(i, 4095 - (uint16_t(getAnalogValue(i))));
-
+*/
   for(int i = NOF_ADC_VALUES; i < NOF_PARAMETERS; ++i) {
     graphics.params.updateValue(i, 0);
   }
