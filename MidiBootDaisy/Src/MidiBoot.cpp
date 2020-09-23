@@ -1,11 +1,8 @@
-#include "BootCommand.hpp"
 #include "FirmwareLoader.hpp"
 #include "MidiController.h"
 #include "MidiReader.h"
 #include "MidiStatus.h"
 #include "OpenWareMidiControl.h"
-#include "PatchRegistry.h"
-#include "FlashStorage.h"
 #include "device.h"
 #include "errorhandlers.h"
 #include "midi.h"
@@ -20,10 +17,6 @@ MidiController midi_tx;
 FirmwareLoader loader;
 ProgramManager program;
 
-
-// This is necessary to make PatchDefinition::~PatchDefinition happy during compilation
-// It's not expected to actually be used. 
-void operator delete(void* ptr) {  }
 
 MidiHandler::MidiHandler() {}
 ProgramManager::ProgramManager() {}
@@ -92,7 +85,7 @@ void eraseFromFlash(uint32_t sector) {
 }
 
 void saveToFlash(uint32_t address, void *data, uint32_t length) {
-  if (length > 384 * 1024) {
+  if (length > 512 * 1024) {
     error(RUNTIME_ERROR, "Firmware too big");
   }
   else if (qspi_init(QSPI_MODE_INDIRECT_POLLING) != MEMORY_OK) {

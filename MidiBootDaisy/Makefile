@@ -10,9 +10,8 @@ include $(OPENWARE)/Hardware/daisy.mk
 C_SRC = $(notdir $(wildcard Src/*.c))
 CPP_SRC = $(notdir $(wildcard Src/*.cpp))
 
-C_SRC += usbd_audio.c
-# C_SRC += usbd_midi.c
-# C_SRC += usbd_midi_if.c
+C_SRC += usbd_midi.c
+C_SRC += usbd_midi_if.c
 C_SRC += qspicontrol.c
 C_SRC += sdram_daisy.c
 C_SRC += sysex.c
@@ -29,7 +28,7 @@ endif
 #C_SRC += usbd_desc.c usbd_conf.c
 
 ifeq ($(PLATFORM),Daisy)
-  CPPFLAGS += -Iusbd-hs -DDAISY -DUSE_USBD_HS
+  CPPFLAGS += -Iusbd-hs -DDAISY -DUSE_USBD_FS
   vpath %.c usbd-hs
 endif
 
