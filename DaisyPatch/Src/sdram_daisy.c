@@ -64,7 +64,7 @@ void MPU_Config(void){
 
 #ifdef USE_CACHE
   MPU_InitStruct.BaseAddress = (uint32_t)&_BUFFERS_BEGIN;
-  MPU_InitStruct.Size = MPU_REGION_SIZE_128KB;
+  MPU_InitStruct.Size = MPU_REGION_SIZE_32KB;
   MPU_InitStruct.IsBufferable = MPU_ACCESS_NOT_BUFFERABLE;
   MPU_InitStruct.IsCacheable = MPU_ACCESS_NOT_CACHEABLE;
   MPU_InitStruct.IsShareable = MPU_ACCESS_SHAREABLE;
