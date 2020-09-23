@@ -12,8 +12,7 @@ LDSCRIPT = $(OPENWARE)/Hardware/daisy_flash.ld
 include $(OPENWARE)/Hardware/daisy.mk
 
 C_SRC += usbd_audio.c
-# C_SRC += usbd_midi.c
-# C_SRC += usbd_midi_if.c
+C_SRC += sdram_daisy.c
 C_SRC += ssd1309.c
 C_SRC += ak4556.c
 CPP_SRC += uart.cpp MidiStreamReader.cpp
