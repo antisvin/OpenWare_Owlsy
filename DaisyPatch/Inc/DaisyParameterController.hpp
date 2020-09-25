@@ -321,7 +321,12 @@ public:
     case STANDARD:
       // draw most recently changed parameter
       // drawParameter(selectedPid[selectedBlock], 44, screen);
-      drawParameter(selectedPid[0], 54, screen);
+      if (getOperationMode() == LOAD_MODE){
+        drawLoadProgress(getParameterValue(PARAMETER_A * 127 / 4095), screen);
+      }
+      else {
+        drawParameter(selectedPid[0], 54, screen);
+      }
       // use callback to draw title and message
       drawCallback(screen.getBuffer(), screen.getWidth(), screen.getHeight());
       break;
@@ -364,6 +369,15 @@ public:
       screen.invert(0, 25, 128, 10);
     else
       screen.drawRectangle(0, 25, 128, 10, WHITE);
+  }
+
+  void drawLoadProgress(uint8_t progress, ScreenBuffer &screen){
+    // progress should be 0 - 127
+    screen.drawRectangle(0, 30, 128, 20, WHITE);
+    screen.setCursor(28, 40);
+    screen.setTextSize(1);
+    screen.print("Loading patch");
+    screen.fillRectangle(0, 44, progress, 5, WHITE);
   }
 
   void drawParameter(int pid, int y, ScreenBuffer &screen) {
