@@ -19,7 +19,7 @@ public:
       block = createBlock(start_page, offset);
       blocks[count++] = block;
       offset += block.getBlockSize();
-    } while (!block.isFree() && count + 1 < max_blocks &&
+    } while (!block.isFree() && count + 1U < max_blocks &&
              start_page + offset < end_page);
     // fills at least one (possibly empty) block into list
   }

@@ -16,13 +16,12 @@ _Min_Stack_Size = 0x400; /* required amount of stack */
 /* Specify the memory areas */
 MEMORY
 {
-/* DTCMRAM (rwx)     : ORIGIN = 0x20000000, LENGTH = 128K */
-/* ITCMRAM (rwx)     : ORIGIN = 0x00000000, LENGTH = 64K */
-RAM (rwx)         : ORIGIN = 0x24000000, LENGTH = 64K
-PATCHRAM (rwx)    : ORIGIN = 0x24010000, LENGTH = 448K /* 512k total */
+DTCMRAM (rwx)     : ORIGIN = 0x20000000, LENGTH = 128K /* FW data in DTCMRAM */
+ITCMRAM (rwx)     : ORIGIN = 0x00000000, LENGTH = 64K
+PATCHRAM (rwx)    : ORIGIN = 0x24000000, LENGTH = 512K
 /* RAM (rwx)         : ORIGIN = 0x30000000, LENGTH = 128K */
-FASTHEAP (rwx)    : ORIGIN = 0x30020000, LENGTH = 128K
-BUFFERS (rwx)     : ORIGIN = 0x30040000, LENGTH = 32K
+/* FASTHEAP (rwx)    : ORIGIN = 0x30020000, LENGTH = 128K */
+BUFFERS (rwx)     : ORIGIN = 0x30040000, LENGTH = 32K /* This section would be used for DMA bufferst with caching disabled by MPU */
 RAM_D3 (rwx)      : ORIGIN = 0x38000000, LENGTH = 64K
 EXTRAM (rwx)      : ORIGIN = 0xc0000000, LENGTH = 64M
 /*BOOTLOADER (r)    : ORIGIN = 0x8000000, LENGTH = 64K    /* Bootloader on flash*/
@@ -40,6 +39,8 @@ STORAGE (rx)      : ORIGIN = 0x90000000, LENGTH = 8M
 
 SECTIONS
 {
+
+	/*
 	.isr_vector :
 	{
 		. = ALIGN(4);
@@ -47,6 +48,40 @@ SECTIONS
 		KEEP(*(.isr_vector))
 		. = ALIGN(4);
 	} > FLASH
+	*/
+
+	/*
+	 * ITCM memory used for faster code execution. Should be used by IRQ handlers and other time-critical
+	 * tasks. Some frequently used data can also go here if necessary to improve cache performance.
+	 */
+	_siitcm = LOADADDR(.isr_vector);
+	.isr_vector :
+	{
+		. = ALIGN(4);
+		_sitcm = .;
+    	PROVIDE ( _ISR_VECTOR = . );
+		KEEP(*(.isr_vector))
+	} > ITCMRAM AT > FLASH
+
+	.itcm : 
+	{
+		. = ALIGN(4);
+		*(.itcm)
+		*(.itcm*)
+		*/Owl.o (.text .text*)
+		*/Codec.o (.text .text*)
+		*/Daisy.o (.text .text*)
+		*/tasks.o (.text .text*)
+		*/usbd*.o (.text .text*)
+		*/ServiceCalls.o (.text .text*)
+		*/ProgramManager.o (.text .text*)
+		*/ScreenBuffer.o (.text .text*)
+		*/Graphics.o (.text .text*)
+		*/ssd1309.o (.text .text*)
+		*/stm32h7xx_hal_spi.o (.text .text*)
+		*/stm32h7xx_it.o (.text .text*)
+		_eitcm = .;
+	} > ITCMRAM /*AT > FLASH*/
 
 	.text :
 	{
@@ -55,8 +90,6 @@ SECTIONS
 
 		*(.text)
 		*(.text*)
-		*(.rodata)
-		*(.rodata*)
 		*(.glue_7)
 		*(.glue_7t)
 		KEEP(*(.init))
@@ -118,7 +151,7 @@ SECTIONS
 		_edata = .;
 
 		PROVIDE(__data_end__ = _edata);
-	} > RAM AT >FLASH
+	} > DTCMRAM AT >FLASH
 
 	_sidata = LOADADDR(.data);
 
@@ -135,7 +168,7 @@ SECTIONS
 		_ebss = .;
 
 		PROVIDE(__bss_end__ = _ebss);
-	} > RAM
+	} > DTCMRAM
 
 	/* User_heap_stack section, used to check that there is enough RAM left */
   	._user_heap_stack :
@@ -145,8 +178,8 @@ SECTIONS
     	. = . + _Min_Heap_Size;
 	    . = . + _Min_Stack_Size;
     	. = ALIGN(4);
-  	} > RAM
-  	_estack = ORIGIN(RAM)+LENGTH(RAM); /* end of firmware RAM */
+  	} > DTCMRAM
+  	_estack = ORIGIN(DTCMRAM)+LENGTH(DTCMRAM); /* end of firmware RAM */
 
 
 	PROVIDE(end = .); 
@@ -288,9 +321,14 @@ SECTIONS
   	_FLASH_STORAGE_END = ORIGIN(STORAGE) + LENGTH(STORAGE);
     _FLASH_STORAGE_SIZE = LENGTH(STORAGE);
 
-	.buffers (NOLOAD) :
+	.nocache (NOLOAD):
 	{
 		. = ALIGN(4);
+		_snocache = .;
+		_snocache = .;
+		*(.nocache)
+		*(.nocache*)		
+		_enocache = .;
 		PROVIDE ( _BUFFERS_BEGIN = .);
 	} > BUFFERS
 	_BUFFERS_END = ORIGIN(BUFFERS) + LENGTH(BUFFERS);

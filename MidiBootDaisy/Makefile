@@ -5,6 +5,8 @@ OPENWARE ?= $(BUILDROOT)/..
 OPENOCD ?= openocd -f $(OPENWARE)/Hardware/openocd_h7.cfg
 
 LDSCRIPT = STM32H750IBKx-boot.ld
+S_SRC = startup_stm32h750xx.s
+
 include $(OPENWARE)/Hardware/daisy.mk
 
 C_SRC = $(notdir $(wildcard Src/*.c))
@@ -74,3 +76,6 @@ upload:
 #	$(OPENOCD) -c "init" -c "halt" -c "flash protect 0 0 1 on" -c "flash info 0" -c "exit"
 
 deploy: upload lock
+
+dfu:
+	dfu-util -a 0 -s 0x08000000:leave -D Build/MidiBootDaisy.bin -d 0483:df11

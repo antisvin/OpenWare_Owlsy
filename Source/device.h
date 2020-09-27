@@ -136,12 +136,14 @@
 
 #define CCM                          __attribute__ ((section (".ccmdata")))
 
-#ifdef USE_CACHE
-#define NO_CACHE                     __attribute__ ((section (".buffers")))
-#define CACHE_ALIGNED                __attribute__ ((aligned(32)))
+#ifdef OWL_ARCH_H7
+  #define NO_CACHE                     __attribute__ ((section (".nocache")))
+  #define CACHE_ALIGNED                __attribute__ ((aligned(32)))
+  #define ITCM                         __attribute__ ((section (".itcm")))
 #else
-#define NO_CACHE
-#define CACHE_ALIGNED
+  #define NO_CACHE
+  #define CACHE_ALIGNED
+  #define ITCM
 #endif
 
 #define USE_IWDG                     // compile with support for IWDG watchdog */
