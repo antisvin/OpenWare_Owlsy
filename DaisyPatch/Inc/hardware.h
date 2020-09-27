@@ -13,7 +13,7 @@
 
 #define FLASH_TASK_STACK_SIZE        (1024/sizeof(portSTACK_TYPE))
 
-//#define MINIMAL_BUILD
+#define MINIMAL_BUILD
 
 // FW size limit would matter only if we use bootloader, otherwise linker scripts sets this limit
 //#define MAX_SYSEX_FIRMWARE_SIZE 128 * 1024
@@ -23,7 +23,7 @@
 
 #define USE_SCREEN
 #define SSD1309
-#define OLED_DMA
+//#define OLED_DMA
 // #define OLED_SOFT_CS
 #define OLED_SPI hspi1
 /* #define OLED_IT */
@@ -46,7 +46,7 @@
 //#define ENCODER_TIM1 htim4
 
 #define USE_EXTERNAL_RAM
-#define USE_CACHE
+//#define USE_CACHE
 
 #define USE_UART_MIDI
 #define UART_MIDI_HANDLE huart1

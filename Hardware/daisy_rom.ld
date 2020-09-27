@@ -14,18 +14,18 @@ _Min_Stack_Size = 0x4000; /* required amount of stack */
 /* Specify the memory areas */
 MEMORY
 {
-/* ITCMRAM (rwx)     : ORIGIN = 0x00000000, LENGTH = 64K */
+ITCMRAM (rwx)     : ORIGIN = 0x00000000, LENGTH = 64K
 /* DTCMRAM (rwx)     : ORIGIN = 0x20000000, LENGTH = 128K */
+DTCMRAM (rwx)     : ORIGIN = 0x20000000, LENGTH = 64K /* First half of DTCMRAM is used as FW RAM */
+/* Second half of DTCMRAM could be fast heap? */
 PATCHRAM (rwx)    : ORIGIN = 0x24000000, LENGTH = 512K
-RAM (rwx)         : ORIGIN = 0x30000000, LENGTH = 128K
-FASTHEAP (rwx)    : ORIGIN = 0x30020000, LENGTH = 128K
+RAM (rwx)         : ORIGIN = 0x30000000, LENGTH = 256K /* Firmware code, copied by bootloader */
 BUFFERS (rwx)     : ORIGIN = 0x30040000, LENGTH = 32K
-/*RAM_D3 (rwx)      : ORIGIN = 0x38000000, LENGTH = 64K*/ /* Nothing at the moment. Buffers for card streams? */
-EXTRAM (rwx)      : ORIGIN = 0xc0000000, LENGTH = 63M
-PATCH (rwx)       : ORIGIN = 0xc3f00000, LENGTH = 512K /* Patch image - loaded from QSPI or dynamically */
-FLASH (rwx)       : ORIGIN = 0xc3f80000, LENGTH = 512K /* This is FW image, section name is just for compatibility */
-BOOTLOADER (rx)   : ORIGIN = 0x08000000, LENGTH = 128K  /* Bootloader on flash */
-BOOTROM (rx)      : ORIGIN = 0x90000000, LENGTH = 512K  /* QSPI flash - firmware part */
+RAM_D3 (rwx)      : ORIGIN = 0x38000000, LENGTH = 64K /* Fast LOG table */
+FIRMWARE (rwx)    : ORIGIN = 0xc0000000, LENGTH = 512K /* Firmware image copied by bootloader */
+EXTRAM (rwx)      : ORIGIN = 0xc0080000, LENGTH = 6400K /* 63M + 512K */
+/* BOOTLOADER (rx)   : ORIGIN = 0x08000000, LENGTH = 128K */ /* Bootloader on flash */
+/* BOOTROM (rx)      : ORIGIN = 0x90000000, LENGTH = 512K */ /* QSPI flash - firmware part. This is used by bootloader only. */
 STORAGE (rx)      : ORIGIN = 0x90080000, LENGTH = 7680K  /* QSPI flash - patch storage part. That's one hell of a lot of patches */
 }
 /* Device flash is 128k and only used for bootloader
@@ -39,18 +39,36 @@ STORAGE (rx)      : ORIGIN = 0x90080000, LENGTH = 7680K  /* QSPI flash - patch s
 
 SECTIONS
 {
+	/*
+	 * ITCM memory used for faster code execution. Should be used by IRQ handlers and other time-critical
+	 * tasks. Some frequently used data can also go here if necessary to improve cache performance.
+	 */
+	_siitcm = LOADADDR(.isr_vector);
 	.isr_vector :
 	{
 		. = ALIGN(4);
     	PROVIDE ( _ISR_VECTOR = . );
 		KEEP(*(.isr_vector))
-		. = ALIGN(4);
-	} > FLASH
+	} > ITCMRAM AT > FIRMWARE
 
+	.itcm : 
+	{
+		. = ALIGN(4);
+		_sitcm = .;
+		*(.itcm)
+		*(.itcm*)
+		_eitcm = .;
+	} > ITCMRAM AT > FIRMWARE
+
+	/*
+	 * Code (text and most constant data) will be copied to RAM in advance by bootloader
+	 */
+
+	_sicode = LOADADDR(.text);
 	.text :
 	{
 		. = ALIGN(4);
-		_stext = .;
+		_scode = .;
 
 		*(.text)
 		*(.text*)
@@ -61,32 +79,36 @@ SECTIONS
 		KEEP(*(.init))
 		KEEP(*(.fini))
 		. = ALIGN(4);
-		_etext = .;
 
-	} > FLASH
+	} > FIRMWARE
 
-	/* Constant data goes into FLASH */
+	_sirodata = LOADADDR(.rodata);
   	.rodata :
   	{
     	. = ALIGN(4);
+		_srodata = .;
      	*(.rodata)         /* .rodata sections (constants, strings, etc.) */
     	*(.rodata*)        /* .rodata* sections (constants, strings, etc.) */
     	. = ALIGN(4);
-  	} > FLASH
+		_erodata = .;
+  	} > RAM AT > FIRMWARE
  
- 	.ARM.extab   : { *(.ARM.extab* .gnu.linkonce.armextab.*) } >FLASH
+ 	.ARM.extab : {
+		*(.ARM.extab* .gnu.linkonce.armextab.*)
+	} > FIRMWARE
+
   	.ARM : {
     	__exidx_start = .;
     	*(.ARM.exidx*)
     	__exidx_end = .;
-  	} >FLASH
+  	} > FIRMWARE
 
 	.preinit_array :
 	{
 		PROVIDE_HIDDEN(__preinit_array_start = .);
 		KEEP(*(.preinit_array*))
 		PROVIDE_HIDDEN(__preinit_array_end = .);
-	} > FLASH
+	} > FIRMWARE
 
 	.init_array :
 	{
@@ -94,7 +116,7 @@ SECTIONS
 		KEEP(*(SORT(.init_array.*)))
 		KEEP(*(.init_array*))
 		PROVIDE_HIDDEN(__init_array_end = .);
-	} > FLASH
+	} > FIRMWARE
 
 	.fini_array :
 	{
@@ -102,10 +124,15 @@ SECTIONS
 		KEEP(*(.fini_array*))
 		KEEP(*(SORT(.fini_array.*)))
 		PROVIDE_HIDDEN(__fini_array_end = .);
-	} > FLASH
+		_ecode = .;
+	} > FIRMWARE
+
+
+	/*
+	 * Data, BSS and stack will be stored in first half of DTCM section
+	 */
 
 	_sidata = LOADADDR(.data);
-
 	.data :
 	{
 		. = ALIGN(4);
@@ -118,7 +145,7 @@ SECTIONS
 		_edata = .;
 
 		PROVIDE(__data_end = _edata);
- 	} > RAM AT > FLASH
+ 	} > DTCMRAM AT > FIRMWARE
 
 	.bss :
 	{
@@ -133,7 +160,7 @@ SECTIONS
 		_ebss = .;
 
 		PROVIDE(__bss_end__ = _ebss);
-	} > RAM
+	} > DTCMRAM
 
 
 	/* User_heap_stack section, used to check that there is enough RAM left */
@@ -145,8 +172,8 @@ SECTIONS
     	. = . + _Min_Heap_Size;
 	    . = . + _Min_Stack_Size;
     	. = ALIGN(4);
-  	} > RAM
-  	_estack = ORIGIN(RAM)+LENGTH(RAM); /* end of firmware RAM */
+  	} > DTCMRAM
+  	_estack = ORIGIN(DTCMRAM) + LENGTH(DTCMRAM); /* end of firmware RAM */
 
 
 /*
@@ -271,14 +298,15 @@ SECTIONS
 	} > QSPIFLASH
 */
 
-/* This would be used if we'll want to write FW ROM without bootloader */
+/* This would be used if we'll want to write FW ROM without bootloader */	
+
 	.firmware_image (NOLOAD) :
 	{
 		. = ALIGN(4);
 	    PROVIDE (_FIRMWARE_STORAGE_BEGIN = .);
-  	} > BOOTROM
-  	_FIRMWARE_STORAGE_END = ORIGIN(BOOTROM) + LENGTH(BOOTROM);
-    _FIRMWARE_STORAGE_SIZE = LENGTH(BOOTROM);
+  	} > FIRMWARE
+  	_FIRMWARE_STORAGE_END = ORIGIN(FIRMWARE) + LENGTH(FIRMWARE);
+    _FIRMWARE_STORAGE_SIZE = LENGTH(FIRMWARE);
 
 	.patch_storage (NOLOAD) :
 	{
@@ -287,6 +315,37 @@ SECTIONS
   	} >STORAGE
   	_FLASH_STORAGE_END = ORIGIN(STORAGE) + LENGTH(STORAGE);
     _FLASH_STORAGE_SIZE = LENGTH(STORAGE);
+
+	/* Section for DMA buffers with caching disabled by MPU */
+	/* _sinocache = LOADADDR(.nocache); */
+	.nocache (NOLOAD) :
+	{
+		. = ALIGN(4);
+		_snocache = .;
+		*(.nocache)
+		*(.nocache*)		
+		_enocache = .;
+		PROVIDE ( _BUFFERS_BEGIN = .);
+	} > BUFFERS
+	_BUFFERS_END = ORIGIN(BUFFERS) + LENGTH(BUFFERS);
+	_BUFFERS_SIZE = LENGTH(BUFFERS);
+
+	/*
+	 * Fast log table. Note that this ram is slower than others, maybe we should use D2 if we
+	 * can make some space there.
+	 */
+	/*
+	_silogtable = LOADADDR(.log_table);
+	.log_table : 
+	{
+		. = ALIGN(4);
+		_slogtable = .;
+		*(.log_table)
+		*(.log_table*)		
+		_elogtable = .;
+		PROVIDE ( _LOG_BEGIN = .);
+	} > RAM_D3 AT > FIRMWARE
+	*/
 
 /*
 	.heap (NOLOAD) :

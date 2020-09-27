@@ -208,6 +208,8 @@ int main(void)
   }else if(testNoProgram()){
     error(RUNTIME_ERROR, "No valid firmware");
   }else{
+    // preload firmware
+
     // jump to application code
 
     /* Disable all interrupts */

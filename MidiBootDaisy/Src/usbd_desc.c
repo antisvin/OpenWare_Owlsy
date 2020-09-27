@@ -63,13 +63,13 @@
   * @{
   */
 
-#define USBD_VID                      0x1155
-#define USBD_LANGID_STRING            1033
-#define USBD_MANUFACTURER_STRING      "Electrosmith"
-#define USBD_PID_FS                   0xDADA
-#define USBD_PRODUCT_STRING_FS        "OWL-BOOT"
-#define USBD_CONFIGURATION_STRING_FS  "AUDIO Config"
-#define USBD_INTERFACE_STRING_FS      "AUDIO Interface"
+#define USBD_VID     0x0155
+#define USBD_LANGID_STRING     1033
+#define USBD_MANUFACTURER_STRING     "Electrosmith"
+#define USBD_PID_FS     0xDADA
+#define USBD_PRODUCT_STRING_FS     "OWL-BOOT"
+#define USBD_CONFIGURATION_STRING_FS     "AUDIO Config"
+#define USBD_INTERFACE_STRING_FS     "AUDIO Interface"
 
 /* USER CODE BEGIN PRIVATE_DEFINES */
 
