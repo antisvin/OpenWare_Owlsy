@@ -10,14 +10,13 @@ _Min_Stack_Size = 0x200; /* required amount of stack */
 /* Specify the memory areas */
 MEMORY
 {
-/* ITCMRAM (xrw)     : ORIGIN = 0x00000000, LENGTH = 64K */
+RAM (xrw)     : ORIGIN = 0x00000000, LENGTH = 64K /* ITCM RAM */
 /* DTCMRAM (xrw)     : ORIGIN = 0x20000000, LENGTH = 128K */
-RAM (rwx)         : ORIGIN = 0x24000000, LENGTH = 512K
+/* RAM (rwx)         : ORIGIN = 0x24000000, LENGTH = 512K */
 /* PATCHRAM (rwx)    : ORIGIN = 0x24000000, LENGTH = 512 */
 /* RAM_D3 (xrw)      : ORIGIN = 0x38000000, LENGTH = 64K */
-EXTRAM (rwx)      : ORIGIN = 0xc0000000, LENGTH = 63M
-PATCH (rwx)       : ORIGIN = 0xc3f00000, LENGTH = 512K /* Patch image - loaded from QSPI or dynamically */
-APPLICATION (rwx) : ORIGIN = 0xc3f80000, LENGTH = 512K /* This is FW image */
+APPLICATION (rwx) : ORIGIN = 0xc0000000, LENGTH = 512K
+EXTRAM (rwx)      : ORIGIN = 0xc0080000, LENGTH = 6400K /* 63M + 512K */
 FLASH (r)         : ORIGIN = 0x08000000, LENGTH = 128K  /* Bootloader on flash*/
 BOOTROM (rx)      : ORIGIN = 0x90000000, LENGTH = 512K  /* QSPI flash - firmware part */
 STORAGE (rx)      : ORIGIN = 0x90080000, LENGTH = 7680K  /* QSPI flash - patch storage part. That's one hell of a lot of patches */

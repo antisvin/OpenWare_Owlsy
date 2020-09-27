@@ -25,6 +25,7 @@
 #include "usbd_core.h"
 #include "usbd_desc.h"
 #include "usbd_midi.h"
+#include "usbd_midi_if.h" 
 
 /* USER CODE BEGIN Includes */
 
@@ -76,7 +77,7 @@ void MX_USB_DEVICE_Init(void)
   {
     Error_Handler();
   }
-  if (USBD_Midi_RegisterInterface(&hUsbDeviceFS, NULL) != USBD_OK)
+  if (USBD_Midi_RegisterInterface(&hUsbDeviceFS, &USBD_Midi_fops) != USBD_OK)
   {
     Error_Handler();
   }
@@ -86,7 +87,7 @@ void MX_USB_DEVICE_Init(void)
   }
 
   /* USER CODE BEGIN USB_DEVICE_Init_PostTreatment */
-  HAL_PWREx_EnableUSBVoltageDetector();
+//  HAL_PWREx_EnableUSBVoltageDetector();
 
   /* USER CODE END USB_DEVICE_Init_PostTreatment */
 }

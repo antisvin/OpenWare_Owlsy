@@ -69,7 +69,7 @@ ApplicationSettings settings;
 Codec codec;
 #endif
 #ifdef USE_ADC
-uint16_t adc_values[NOF_ADC_VALUES] CACHE_ALIGNED;
+uint16_t adc_values[NOF_ADC_VALUES] NO_CACHE;
 #endif
 #ifdef USE_DAC
 extern DAC_HandleTypeDef DAC_PERIPH;
