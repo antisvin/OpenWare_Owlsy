@@ -14,6 +14,7 @@
 #include "OpenWareMidiControl.h"
 #include "SoftwareEncoder.hpp"
 
+extern bool updateUi;
 
 static SoftwareEncoder encoder(
   ENC_A_GPIO_Port, ENC_A_Pin,
@@ -27,8 +28,8 @@ extern "C" void updateEncoderCounter(){
 
 void setGateValue(uint8_t ch, int16_t value){
   switch(ch){
-  case PUSHBUTTON:
-  case BUTTON_A:
+  //case PUSHBUTTON:
+  case BUTTON_C:
     HAL_GPIO_WritePin(GATE_OUT_GPIO_Port, GATE_OUT_Pin, value ? GPIO_PIN_SET :  GPIO_PIN_RESET);
     break;
   }
@@ -64,21 +65,19 @@ void setup(){
 static int16_t enc_data[2];
 
 void loop(void){
-#ifdef USE_CACHE
-  #ifdef USE_SCREEN
-  SCB_CleanInvalidateDCache_by_Addr((uint32_t*)&graphics.params.user, sizeof(graphics.params.user));
-  #endif
+  if (updateUi){
+#if defined USE_CACHE
+    SCB_CleanInvalidateDCache_by_Addr((uint32_t*)graphics.params.user, sizeof(graphics.params.user));
 #endif
+    encoder.debounce();
+    enc_data[0] = int16_t(encoder.isFallingEdge() | encoder.isLongPress() << 1);
+    enc_data[1] = int16_t(encoder.getValue());
+    graphics.params.updateEncoders(enc_data, 1);
 
-  encoder.debounce();
-  enc_data[0] = int16_t(encoder.isFallingEdge() | encoder.isLongPress() << 1);
-  enc_data[1] = int16_t(encoder.getValue());
-  graphics.params.updateEncoders(enc_data, 1);
-
-  for(int i = NOF_ADC_VALUES; i < NOF_PARAMETERS; ++i) {
-    graphics.params.updateValue(i, 0);
+    for(int i = NOF_ADC_VALUES; i < NOF_PARAMETERS; ++i) {
+      graphics.params.updateValue(i, 0);
+    }
   }
-
   
   owl_loop();
 }
