@@ -27,7 +27,7 @@ void defaultDrawCallback(uint8_t *pixels, uint16_t width, uint16_t height);
 template <uint8_t SIZE>
 class ParameterController {
 public:
-  char title[10] = "~:Owlsy:~";
+  const char title[10] = "  Owlsy";
 
   enum EncoderSensitivity {
     SENS_SUPER_FINE = 0,
@@ -48,6 +48,7 @@ public:
     PLAY,
     STATUS,
     PRESET,
+    DATA,
     SCOPE,
     EXIT,
     NOF_CONTROL_MODES, // Not an actual mode
@@ -59,7 +60,7 @@ public:
   int16_t user[SIZE] CACHE_ALIGNED;             // user set values (ie by encoder or MIDI)
   char names[SIZE][12];
   uint8_t selectedPid[NOF_ENCODERS];
-  uint8_t lastSelectedPid, lastChannel;
+  uint8_t lastSelectedPid, lastChannel, lastSelectedResource;
   // Use first param after ADC as default to avoid confusion from accidental turns
   bool saveSettings;
   uint8_t activeEncoder;
@@ -71,6 +72,7 @@ public:
     "  Play   >",
     "< Status >",
     "< Preset >",
+    "< Data   >",
 #ifdef USE_DIGITALBUS
     "< Bus    >",
 #endif
@@ -203,12 +205,38 @@ public:
       screen.print(mem);
       screen.print("k");
     }
+
+    // draw flash load
+    int flash_used = storage.getTotalUsedSize() / 1024;
+    int flash_total = storage.getTotalAllocatedSize() / 1024;
+    screen.print(64, offset + 8, "flash ");
+    screen.print(flash_used * 100 / flash_total);
+    screen.print("%");
+
+    screen.setCursor(64, offset + 17);
+    if (flash_used > 999) {
+      screen.print(flash_used / 1024);
+      screen.print("M/");
+    }
+    else {
+      screen.print(flash_used);
+      screen.print("k/");
+    }
+    if (flash_total > 999) {
+      screen.print(flash_total / 1024);
+      screen.print("M");
+    }
+    else {
+      screen.print(flash_total);
+      screen.print("k");
+    }
+
     // draw CPU load
-    screen.print(64, offset + 8, "cpu ");
+    screen.print(1, offset + 17, "cpu ");
     screen.print((int)((pv->cycles_per_block) / pv->audio_blocksize) / 83);
     screen.print("%");
     // draw firmware version
-    screen.print(1, offset + 16, getFirmwareVersion());
+    screen.print(1, offset + 26, getFirmwareVersion());
   }
 
 #ifdef USE_DIGITALBUS
@@ -259,6 +287,10 @@ public:
     case PRESET:
       drawTitle(controlModeNames[controlMode], screen);
       drawPresetNames(selectedPid[1], screen);
+      break;
+    case DATA:
+      drawTitle(controlModeNames[controlMode], screen);
+      drawResourceNames(selectedPid[1], screen);
       break;
 #ifdef USE_DIGITALBUS
     case BUS:
@@ -322,7 +354,8 @@ public:
       // draw most recently changed parameter
       // drawParameter(selectedPid[selectedBlock], 44, screen);
       if (getOperationMode() == LOAD_MODE){
-        drawLoadProgress(getParameterValue(PARAMETER_A * 127 / 4095), screen);
+        drawLoadProgress(user[0] * 127 / 4095, screen);
+        //drawLoadProgress(getParameterValue(PARAMETER_A * 127 / 4095), screen);
       }
       else {
         drawParameter(selectedPid[0], 54, screen);
@@ -371,12 +404,37 @@ public:
       screen.drawRectangle(0, 25, 128, 10, WHITE);
   }
 
+  void drawResourceNames(int selected, ScreenBuffer &screen) {
+    screen.setTextSize(1);
+    selected = min(uint8_t(selected), registry.getNumberOfResources() - 1);
+    if (selected > 0 && registry.getNumberOfResources() > 0) {
+      screen.setCursor(1, 24);
+      screen.print((int)selected - 1);
+      screen.print(".");
+      screen.print(registry.getResourceName(MAX_NUMBER_OF_PATCHES + selected));
+    };
+    screen.setCursor(1, 24 + 10);
+    screen.print((int)selected);
+    screen.print(".");
+    screen.print(registry.getResourceName(MAX_NUMBER_OF_PATCHES + 1 + selected));
+    if (selected + 1 < (int)registry.getNumberOfResources()) {
+      screen.setCursor(1, 24 + 20);
+      screen.print((int)selected + 1);
+      screen.print(".");
+      screen.print(registry.getResourceName(MAX_NUMBER_OF_PATCHES + 2 + selected));
+    }
+    if (activeEncoder == 0)
+      screen.invert(0, 25, 128, 10);
+    else
+      screen.drawRectangle(0, 25, 128, 10, WHITE);
+  }
+
   void drawLoadProgress(uint8_t progress, ScreenBuffer &screen){
     // progress should be 0 - 127
     screen.drawRectangle(0, 30, 128, 20, WHITE);
-    screen.setCursor(28, 40);
+    screen.setCursor(32, 40);
     screen.setTextSize(1);
-    screen.print("Loading patch");
+    screen.print("Uploading...");
     screen.fillRectangle(0, 44, progress, 5, WHITE);
   }
 
@@ -483,11 +541,12 @@ public:
 
   // called by MIDI cc and/or from patch
   void setValue(uint8_t pid, int16_t value){
-    user[pid] = value;
+    if (pid >= NOF_ADC_VALUES)
+      user[pid] = value;
     // reset encoder value if associated through selectedPid to avoid skipping
-    for(int i=0; i<NOF_ENCODERS; ++i)
-      if(selectedPid[i] == pid)
-        setEncoderValue(i, value);
+    //for(int i=0; i<NOF_ENCODERS; ++i)
+    //  if(selectedPid[i] == pid)
+    //    setEncoderValue(i, value);
     // TODO: store values set from patch somewhere and multiply with user[] value for outputs
     // graphics.params.updateOutput(i, getOutputValue(i));
   }
@@ -525,6 +584,13 @@ public:
         break;
     case PRESET:
       selectedPid[1] = max(1, min(registry.getNumberOfPatches()-1, value));
+      break;
+    case DATA:
+      selectedPid[1] = max(
+        0,
+        min(
+          registry.getNumberOfResources() > 0 ? registry.getNumberOfResources() - 1 : 0,
+          value));
       break;
     case SCOPE:
       selectedPid[1] = max(0, min(AUDIO_CHANNELS * 2 - 1, value));
@@ -613,6 +679,8 @@ public:
     case PRESET:
       selectedPid[1] = settings.program_index;
       break;
+    case DATA:
+      selectedPid[1] = lastSelectedResource;
     case SCOPE:
       selectedPid[1] = lastChannel;
     default:
@@ -647,6 +715,11 @@ public:
           activeEncoder = 1;
         }
         break;
+      case DATA:
+        if (activeEncoder == 1){
+          lastSelectedPid = selectedPid[1];
+        }
+        activeEncoder = !activeEncoder;
       default:
         break;
       }
