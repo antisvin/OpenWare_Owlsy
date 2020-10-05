@@ -13,6 +13,11 @@
 
 #define FLASH_TASK_STACK_SIZE        (1024/sizeof(portSTACK_TYPE))
 
+//#define PROGRAM_TASK_STACK_SIZE      (6*1024/sizeof(portSTACK_TYPE))
+//#define UTILITY_TASK_STACK_SIZE      (1024/sizeof(portSTACK_TYPE))
+//#define MANAGER_TASK_STACK_SIZE      (2048/sizeof(portSTACK_TYPE))
+
+
 #define MINIMAL_BUILD
 
 // FW size limit would matter only if we use bootloader, otherwise linker scripts sets this limit
@@ -46,7 +51,7 @@
 //#define ENCODER_TIM1 htim4
 
 #define USE_EXTERNAL_RAM
-//#define USE_CACHE
+#define USE_CACHE
 
 #define USE_UART_MIDI
 #define UART_MIDI_HANDLE huart1
