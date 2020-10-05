@@ -17,9 +17,10 @@ _Min_Stack_Size = 0x400; /* required amount of stack */
 MEMORY
 {
 DTCMRAM (rwx)     : ORIGIN = 0x20000000, LENGTH = 128K /* FW data in DTCMRAM */
+/* TODO: Place FASTHEAP on DTCMRAM? */
 ITCMRAM (rwx)     : ORIGIN = 0x00000000, LENGTH = 64K
 PATCHRAM (rwx)    : ORIGIN = 0x24000000, LENGTH = 512K
-/* RAM (rwx)         : ORIGIN = 0x30000000, LENGTH = 128K */
+RAM (rwx)         : ORIGIN = 0x30000000, LENGTH = 256K
 /* FASTHEAP (rwx)    : ORIGIN = 0x30020000, LENGTH = 128K */
 BUFFERS (rwx)     : ORIGIN = 0x30040000, LENGTH = 32K /* This section would be used for DMA bufferst with caching disabled by MPU */
 RAM_D3 (rwx)      : ORIGIN = 0x38000000, LENGTH = 64K
@@ -73,6 +74,7 @@ SECTIONS
 		*/Daisy.o (.text .text*)
 		*/tasks.o (.text .text*)
 		*/usbd*.o (.text .text*)
+		*/uart*.o (.text .text*)
 		*/ServiceCalls.o (.text .text*)
 		*/ProgramManager.o (.text .text*)
 		*/ScreenBuffer.o (.text .text*)
@@ -81,7 +83,7 @@ SECTIONS
 		*/stm32h7xx_hal_spi.o (.text .text*)
 		*/stm32h7xx_it.o (.text .text*)
 		_eitcm = .;
-	} > ITCMRAM /*AT > FLASH*/
+	} > ITCMRAM AT > FLASH
 
 	.text :
 	{
@@ -304,6 +306,12 @@ SECTIONS
 		PROVIDE(__qspiflash_bss_end = _eqspiflash_bss);
 	} > QSPIFLASH
 */
+	.ram (NOLOAD) :
+	{
+		. = ALIGN(4);
+		PROVIDE (_FFT_LUT_BEGIN = .);
+		KEEP(*(.fft_lut));
+	} > RAM
 
 	.firmware_storage (NOLOAD) :
 	{
@@ -324,12 +332,12 @@ SECTIONS
 	.nocache (NOLOAD):
 	{
 		. = ALIGN(4);
+		PROVIDE ( _BUFFERS_BEGIN = .);
 		_snocache = .;
 		_snocache = .;
 		*(.nocache)
 		*(.nocache*)		
 		_enocache = .;
-		PROVIDE ( _BUFFERS_BEGIN = .);
 	} > BUFFERS
 	_BUFFERS_END = ORIGIN(BUFFERS) + LENGTH(BUFFERS);
 	_BUFFERS_SIZE = LENGTH(BUFFERS);
