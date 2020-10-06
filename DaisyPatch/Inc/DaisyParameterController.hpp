@@ -49,6 +49,7 @@ public:
     STATUS,
     PRESET,
     DATA,
+    GATES,
     SCOPE,
     EXIT,
     NOF_CONTROL_MODES, // Not an actual mode
@@ -76,6 +77,7 @@ public:
 #ifdef USE_DIGITALBUS
     "< Bus    >",
 #endif
+    "< Gates  >",
     "< Scope  >",
     "< Exit    ",
   };
@@ -136,6 +138,41 @@ public:
       screen.fillCircle(84, offset + 15, 6, WHITE);
     if (encoderSensitivity >= SENS_SUPER_COARSE)
       screen.fillCircle(104, offset + 15, 6, WHITE);
+  }
+
+  void drawGates(uint8_t selected, ScreenBuffer &screen) {
+    screen.setTextSize(1);
+    int offset = 16;
+    screen.drawCircle(29, offset + 15, 12, WHITE);
+    if (getButtonValue(BUTTON_A)) {
+      screen.fillCircle(29, offset + 15, 9, WHITE);
+    }
+    else {
+      screen.drawCircle(29, offset + 15, 9, WHITE);
+    }
+    screen.print(14, offset + 38, "A:IN1");
+    
+    screen.drawCircle(63, offset + 15, 12, WHITE);
+    if (getButtonValue(BUTTON_B)) {
+      screen.fillCircle(63, offset + 15, 9, WHITE);
+    }
+    else {
+      screen.drawCircle(63, offset + 15, 9, WHITE);
+    }
+    screen.print(48, offset + 38, "B:IN2");
+
+    screen.drawCircle(97, offset + 15, 12, WHITE);
+    if (getButtonValue(BUTTON_C)) {
+      screen.fillCircle(97, offset + 15, 9, WHITE);
+    }
+    else {
+      screen.drawCircle(97, offset + 15, 9, WHITE);
+    }
+    screen.print(82, offset + 38, "C:OUT");
+
+    if (selected)
+      screen.drawRectangle(84, offset + 2, 27, 27, WHITE);
+    screen.drawRectangle(85, offset + 3, 25, 25, WHITE);
   }
 
   void drawScope(uint8_t selected, ScreenBuffer &screen) {
@@ -298,6 +335,10 @@ public:
       drawBusStats();
       break;
 #endif
+    case GATES:
+      drawTitle(controlModeNames[controlMode], screen);
+      drawGates(selectedPid[1], screen);
+      break;
     case SCOPE:
       drawTitle(controlModeNames[controlMode], screen);
       drawScope(selectedPid[1], screen);
@@ -592,10 +633,13 @@ public:
           registry.getNumberOfResources() > 0 ? registry.getNumberOfResources() - 1 : 0,
           value));
       break;
+    case GATES:
+      break;
     case SCOPE:
       selectedPid[1] = max(0, min(AUDIO_CHANNELS * 2 - 1, value));
       lastChannel = selectedPid[1];
       scope.setChannel(lastChannel);
+      break;
     default:
       break;
     }
@@ -675,12 +719,15 @@ public:
     switch (controlMode) {
     case PLAY:
     case STATUS:
+    case GATES:
       break;
     case PRESET:
       selectedPid[1] = settings.program_index;
       break;
     case DATA:
       selectedPid[1] = lastSelectedResource;
+      break;
+      break;
     case SCOPE:
       selectedPid[1] = lastChannel;
     default:
@@ -699,6 +746,12 @@ public:
       case PLAY:
       case SCOPE:
         activeEncoder = !activeEncoder;
+        break;
+      case GATES:
+        // Invert output gate on click
+        setButtonValue(BUTTON_C, !getButtonValue(BUTTON_C));
+        setGateValue(BUTTON_C, getButtonValue(BUTTON_C));
+        selectedPid[1] = 1;
         break;
       case STATUS:
         setErrorStatus(NO_ERROR);
@@ -736,6 +789,8 @@ public:
     }
     else {
       int16_t delta = value - encoders[activeEncoder];
+      if (controlMode == GATES)
+        selectedPid[1] = pressed & 0x01;
       if (activeEncoder == 0) {
         if (delta > 0 && controlMode + 1 < NOF_CONTROL_MODES) {
           setControlMode(controlMode + 1);
