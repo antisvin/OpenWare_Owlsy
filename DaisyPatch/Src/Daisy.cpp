@@ -26,8 +26,8 @@ extern "C" void updateEncoderCounter(){
   encoder.updateCounter();
 }
 
-void setGateValue(uint8_t ch, int16_t value){
-  switch(ch){
+void setGateValue(uint8_t bid, int16_t value){
+  switch(bid){
   //case PUSHBUTTON:
   case BUTTON_C:
     HAL_GPIO_WritePin(GATE_OUT_GPIO_Port, GATE_OUT_Pin, value ? GPIO_PIN_SET :  GPIO_PIN_RESET);

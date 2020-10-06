@@ -842,13 +842,13 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin : GATE_IN1_Pin */
   GPIO_InitStruct.Pin = GATE_IN1_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GATE_IN1_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : GATE_IN2_Pin */
   GPIO_InitStruct.Pin = GATE_IN2_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GATE_IN2_GPIO_Port, &GPIO_InitStruct);
 
