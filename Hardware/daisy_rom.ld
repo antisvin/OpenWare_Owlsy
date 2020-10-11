@@ -8,24 +8,27 @@ ENTRY(Reset_Handler)
 /* Highest address of the user mode stack */
 /* _estack = 0x20020000; */   /* end of RAM */
 /* Generate a link error if heap and stack don't fit into RAM */
-_Min_Heap_Size = 0x2000;      /* required amount of heap  */
-_Min_Stack_Size = 0x4000; /* required amount of stack */
+_Min_Heap_Size = 0x000;      /* required amount of heap  */
+_Min_Stack_Size = 0x2000; /* required amount of stack */
 
 /* Specify the memory areas */
 MEMORY
 {
-ITCMRAM (rwx)     : ORIGIN = 0x00000000, LENGTH = 64K
+ITCMRAM (rx)      : ORIGIN = 0x00000000, LENGTH = 64K
 /* DTCMRAM (rwx)     : ORIGIN = 0x20000000, LENGTH = 128K */
-DTCMRAM (rwx)     : ORIGIN = 0x20000000, LENGTH = 64K /* First half of DTCMRAM is used as FW RAM */
+DTCMRAM (rw)      : ORIGIN = 0x20000000, LENGTH = 64K /* First half of DTCMRAM is used as FW RAM */
 /* Second half of DTCMRAM could be fast heap? */
 PATCHRAM (rwx)    : ORIGIN = 0x24000000, LENGTH = 512K
 RAM (rwx)         : ORIGIN = 0x30000000, LENGTH = 256K /* Firmware code, copied by bootloader */
-BUFFERS (rwx)     : ORIGIN = 0x30040000, LENGTH = 32K
-RAM_D3 (rwx)      : ORIGIN = 0x38000000, LENGTH = 64K /* Fast LOG table */
-FIRMWARE (rwx)    : ORIGIN = 0xc0000000, LENGTH = 512K /* Firmware image copied by bootloader */
-EXTRAM (rwx)      : ORIGIN = 0xc0080000, LENGTH = 6400K /* 63M + 512K */
+/* CARDBUF (rwx)     : ORIGIN = 0x30030000, LENGTH = 64K *//* Buffer for card streaming */
+BUFFERS (rwx)     : ORIGIN = 0x30040000, LENGTH = 32K /* DMA buffer */
+RAM_D3 (rwx)      : ORIGIN = 0x38000000, LENGTH = 64K /* Fast LOG table? */
+/*FIRMWARE (rwx)    : ORIGIN = 0xc0000000, LENGTH = 512K */ /* Firmware image copied by bootloader */
+/* EXTRAM (rwx)      : ORIGIN = 0xc0080000, LENGTH = 6400K */ /* 63M + 512K */
+EXTRAM (rwx)      : ORIGIN = 0xc0000000, LENGTH = 64M /* 63M + 512K */
 /* BOOTLOADER (rx)   : ORIGIN = 0x08000000, LENGTH = 128K */ /* Bootloader on flash */
 /* BOOTROM (rx)      : ORIGIN = 0x90000000, LENGTH = 512K */ /* QSPI flash - firmware part. This is used by bootloader only. */
+FIRMWARE (r)      : ORIGIN = 0x90000000, LENGTH = 512K  /* QSPI flash - firmware storage part. It would be used as bootrom and storage for builtin LUTs */
 STORAGE (rx)      : ORIGIN = 0x90080000, LENGTH = 7680K  /* QSPI flash - patch storage part. That's one hell of a lot of patches */
 }
 /* Device flash is 128k and only used for bootloader
@@ -39,6 +42,12 @@ STORAGE (rx)      : ORIGIN = 0x90080000, LENGTH = 7680K  /* QSPI flash - patch s
 
 SECTIONS
 {
+	.header :
+	{
+		. = ALIGN(4);
+		KEEP(*(.firmware_header))
+	} > FIRMWARE
+
 	/*
 	 * ITCM memory used for faster code execution. Should be used by IRQ handlers and other time-critical
 	 * tasks. Some frequently used data can also go here if necessary to improve cache performance.
@@ -47,6 +56,7 @@ SECTIONS
 	.isr_vector :
 	{
 		. = ALIGN(4);
+		_sitcm = .;
     	PROVIDE ( _ISR_VECTOR = . );
 		KEEP(*(.isr_vector))
 	} > ITCMRAM AT > FIRMWARE
@@ -54,9 +64,21 @@ SECTIONS
 	.itcm : 
 	{
 		. = ALIGN(4);
-		_sitcm = .;
 		*(.itcm)
 		*(.itcm*)
+		*/Owl.o (.text .text*)
+		*/Codec.o (.text .text*)
+		*/Daisy.o (.text .text*)
+		/* * /tasks.o (.text .text*) */
+		*/usbd*.o (.text .text*)
+		*/uart*.o (.text .text*)
+		*/ServiceCalls.o (.text .text*)
+		*/ProgramManager.o (.text .text*)
+		*/ScreenBuffer.o (.text .text*)
+		*/Graphics.o (.text .text*)
+		*/ssd1309.o (.text .text*)
+		*/stm32h7xx_hal_spi.o (.text .text*)
+		/* * /stm32h7xx_it.o (.text .text*)		*/
 		_eitcm = .;
 	} > ITCMRAM AT > FIRMWARE
 
@@ -80,35 +102,32 @@ SECTIONS
 		KEEP(*(.fini))
 		. = ALIGN(4);
 
-	} > FIRMWARE
+	} > RAM AT > FIRMWARE
 
-	_sirodata = LOADADDR(.rodata);
   	.rodata :
   	{
     	. = ALIGN(4);
-		_srodata = .;
      	*(.rodata)         /* .rodata sections (constants, strings, etc.) */
     	*(.rodata*)        /* .rodata* sections (constants, strings, etc.) */
     	. = ALIGN(4);
-		_erodata = .;
   	} > RAM AT > FIRMWARE
  
  	.ARM.extab : {
 		*(.ARM.extab* .gnu.linkonce.armextab.*)
-	} > FIRMWARE
+	} > RAM AT > FIRMWARE
 
   	.ARM : {
     	__exidx_start = .;
     	*(.ARM.exidx*)
     	__exidx_end = .;
-  	} > FIRMWARE
+  	} > RAM AT > FIRMWARE
 
 	.preinit_array :
 	{
 		PROVIDE_HIDDEN(__preinit_array_start = .);
 		KEEP(*(.preinit_array*))
 		PROVIDE_HIDDEN(__preinit_array_end = .);
-	} > FIRMWARE
+	} > RAM AT > FIRMWARE
 
 	.init_array :
 	{
@@ -116,7 +135,7 @@ SECTIONS
 		KEEP(*(SORT(.init_array.*)))
 		KEEP(*(.init_array*))
 		PROVIDE_HIDDEN(__init_array_end = .);
-	} > FIRMWARE
+	} > RAM AT > FIRMWARE
 
 	.fini_array :
 	{
@@ -125,7 +144,7 @@ SECTIONS
 		KEEP(*(SORT(.fini_array.*)))
 		PROVIDE_HIDDEN(__fini_array_end = .);
 		_ecode = .;
-	} > FIRMWARE
+	} > RAM AT > FIRMWARE
 
 
 	/*
@@ -147,7 +166,7 @@ SECTIONS
 		PROVIDE(__data_end = _edata);
  	} > DTCMRAM AT > FIRMWARE
 
-	.bss :
+	.bss (NOLOAD):
 	{
 		. = ALIGN(4);
 		_sbss = .;

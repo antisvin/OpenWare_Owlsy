@@ -51,10 +51,15 @@ void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t*
 void setup(){
   HAL_GPIO_WritePin(OLED_RST_GPIO_Port, OLED_RST_Pin, GPIO_PIN_RESET); // OLED off
 
+  qspi_init(QSPI_MODE_MEMORY_MAPPED);
+  
+  /* This doesn't work with bootloader, need to find how to deinit it earlier*/
+  #if 0
   if (qspi_init(QSPI_MODE_MEMORY_MAPPED) != MEMORY_OK){
     // We can end here only if QSPI settings are misconfigured
     error(RUNTIME_ERROR, "Flash init error");
   }
+  #endif
 
   extern SPI_HandleTypeDef OLED_SPI;
   graphics.begin(&OLED_SPI);
@@ -72,7 +77,7 @@ void loop(void){
     encoder.debounce();
     enc_data[0] = int16_t(encoder.isFallingEdge() | encoder.isLongPress() << 1);
     enc_data[1] = int16_t(encoder.getValue());
-    graphics.params.updateEncoders(enc_data, 1);
+    graphics.params.updateEncoders(enc_data, 2);
 
     for(int i = NOF_ADC_VALUES; i < NOF_PARAMETERS; ++i) {
       graphics.params.updateValue(i, 0);

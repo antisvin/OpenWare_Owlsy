@@ -60,6 +60,7 @@ void SPI1_IRQHandler(void);
 void USART1_IRQHandler(void);
 void DMA1_Stream7_IRQHandler(void);
 void TIM6_DAC_IRQHandler(void);
+void TIM7_IRQHandler(void);
 void SAI1_IRQHandler(void);
 void SAI2_IRQHandler(void);
 void OTG_FS_IRQHandler(void);
