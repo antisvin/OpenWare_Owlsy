@@ -23,7 +23,7 @@ endif
 
 # Compilation Flags
 LDFLAGS += -Wl,--gc-sections
-LDSCRIPT ?= $(OPENWARE)/Hardware/daisy.ld
+LDSCRIPT ?= $(OPENWARE)/Hardware/daisy_flash.ld
 LDLIBS += -lc -lm
 # CPPFLAGS += -DEXTERNAL_SRAM -DARM_CORTEX
 # CPPFLAGS += -fpic -fpie
@@ -37,4 +37,4 @@ ARCH_FLAGS = -mcpu=cortex-m7 -mfloat-abi=hard -mfpu=fpv5-sp-d16 -mthumb
 ARCH_FLAGS += -fsingle-precision-constant
 DEF_FLAGS = -DSTM32H750xx -DARM_MATH_CM7
 DEF_FLAGS += -D__FPU_PRESENT=1
-S_SRC = startup_stm32h750xx.s
+S_SRC ?= bootrom_stm32h750xx.s

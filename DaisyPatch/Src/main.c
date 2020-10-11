@@ -27,6 +27,7 @@
 #include "device.h"
 #include "errorhandlers.h"
 #include "sdram.h"
+#include "qspicontrol.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -94,7 +95,7 @@ void StartDefaultTask(void const * argument);
 /* USER CODE BEGIN PFP */
 void setup(void);
 void loop(void);
-void MX_USB_HOST_Process(void);
+//void MX_USB_HOST_Process(void);
 void SDRAM_Initialization_Sequence(SDRAM_HandleTypeDef *hsdram);
 void initialise_monitor_handles(void);
 
@@ -119,6 +120,7 @@ int main(void)
     initialise_monitor_handles(); // remove when not semi-hosting
   printf("showtime\n");
 #endif
+  MPU_Config();
 
 #ifdef USE_CACHE
   /* USER CODE END 1 */
@@ -138,13 +140,13 @@ int main(void)
 #else
   HAL_Init();
 #endif
+
   /* USER CODE END Init */
 
   /* Configure the system clock */
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-  MPU_Config();
 
   /* USER CODE END SysInit */
 
@@ -889,7 +891,7 @@ void StartDefaultTask(void const * argument)
 
 /**
   * @brief  Period elapsed callback in non blocking mode
-  * @note   This function is called  when TIM6 interrupt took place, inside
+  * @note   This function is called  when TIM7 interrupt took place, inside
   * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
   * a global variable "uwTick" used as application time base.
   * @param  htim : TIM handle
@@ -900,7 +902,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   /* USER CODE BEGIN Callback 0 */
 
   /* USER CODE END Callback 0 */
-  if (htim->Instance == TIM6) {
+  if (htim->Instance == TIM7) {
     HAL_IncTick();
   }
   /* USER CODE BEGIN Callback 1 */

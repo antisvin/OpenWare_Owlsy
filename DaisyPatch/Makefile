@@ -7,7 +7,7 @@ OPENOCD ?= openocd -f $(OPENWARE)/Hardware/openocd_h7.cfg
 C_SRC = $(notdir $(wildcard Src/*.c))
 CPP_SRC = $(notdir $(wildcard Src/*.cpp))
 
-LDSCRIPT = $(OPENWARE)/Hardware/daisy_flash.ld
+LDSCRIPT = $(OPENWARE)/Hardware/daisy_rom.ld
 
 include $(OPENWARE)/Hardware/daisy.mk
 
