@@ -585,9 +585,9 @@ public:
     if (pid >= NOF_ADC_VALUES)
       user[pid] = value;
     // reset encoder value if associated through selectedPid to avoid skipping
-    //for(int i=0; i<NOF_ENCODERS; ++i)
-    //  if(selectedPid[i] == pid)
-    //    setEncoderValue(i, value);
+    for(int i=0; i<NOF_ENCODERS; ++i)
+      if(selectedPid[i] == pid)
+        setEncoderValue(i, value);
     // TODO: store values set from patch somewhere and multiply with user[] value for outputs
     // graphics.params.updateOutput(i, getOutputValue(i));
   }

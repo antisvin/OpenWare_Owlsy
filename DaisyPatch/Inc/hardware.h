@@ -91,6 +91,8 @@
 //#define QSPI_DEVICE_IS25LP080D
 #define QSPI_DEVICE_IS25LP064A
 
-//#define USE_IWDG
-//#define IWDG_PERIPH IWDG1
+#ifndef DEBUG
+#define USE_IWDG
+#define IWDG_PERIPH IWDG1
+#endif
 /* #define INIT_FMC */
