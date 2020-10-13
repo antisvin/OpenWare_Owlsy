@@ -1,3 +1,4 @@
+#include "FirmwareHeader.h"
 #include "FirmwareLoader.hpp"
 #include "MidiController.h"
 #include "MidiReader.h"
@@ -10,7 +11,6 @@
 
 extern char _FIRMWARE_STORAGE_BEGIN, _FIRMWARE_STORAGE_END, _FIRMWARE_STORAGE_SIZE;
 extern char _PATCH_STORAGE_BEGIN, _PATCH_STORAGE_END;
-extern char _BOOTROM_STORAGE_BEGIN, _BOOTROM_STORAGE_SIZE;
 
 static MidiReader midi_rx;
 MidiController midi_tx;
@@ -85,18 +85,16 @@ void eraseFromFlash(uint32_t sector) {
 }
 
 void saveToFlash(uint32_t address, void *data, uint32_t length) {
-  if (length > 512 * 1024) {
+  if (length > (uint32_t)&_FIRMWARE_STORAGE_SIZE) {
     error(RUNTIME_ERROR, "Firmware too big");
   }
   else if (qspi_init(QSPI_MODE_INDIRECT_POLLING) != MEMORY_OK) {
     error(RUNTIME_ERROR, "Flash write mode error");
   }
-  else if (qspi_erase((uint32_t)&_BOOTROM_STORAGE_BEGIN,
-                      (uint32_t)(&_BOOTROM_STORAGE_BEGIN + length)) != MEMORY_OK) {
+  else if (qspi_erase(address, address + length) != MEMORY_OK) {
     error(RUNTIME_ERROR, "Flash erase error");
   }
-  else if (qspi_write_block((uint32_t)&_BOOTROM_STORAGE_BEGIN,
-                            (uint8_t *)data, length) != MEMORY_OK) {
+  else if (qspi_write_block(address, (uint8_t *)data, length) != MEMORY_OK) {
     error(RUNTIME_ERROR, "Flash firmware write error");
   }
   else if (qspi_init(QSPI_MODE_MEMORY_MAPPED) != MEMORY_OK) {
@@ -120,12 +118,22 @@ void setErrorStatus(int8_t err) {
 }
 
 
-void loadFirmware(uint32_t address, uint8_t* data, uint32_t length) {
-  if (length > 512 * 1024) {
-    error(RUNTIME_ERROR, "Firmware too big");
+FirmwareHeader* getFirmwareHeader(void) {
+  return (FirmwareHeader*)&_FIRMWARE_STORAGE_BEGIN;
+}
+
+int loadFirmware(void) {
+  FirmwareHeader* header = getFirmwareHeader();
+  if (header->magic == FIRMWARE_HEADER) { // TODO: possibly check checksum here
+    uint32_t* start = &header->section_0_start;
+    for (int i = 0; i < FIRMWARE_RELOCATIONS_COUNT; i++) {
+      memcpy((void*)(*start), (void*)(*(start + 2)), *(start + 1) - *start);
+      start += 3;
+    }
+    return 1;
   }
   else {
-    memcpy((void*)address, (void*)data, length);
+    return 0;
   }
 }
 
@@ -172,9 +180,7 @@ void MidiHandler::handleFirmwareUploadCommand(uint8_t *data, uint16_t size) {
   int32_t ret = loader.handleFirmwareUpload(data, size);
   if (ret > 0) {
     setMessage("Firmware upload complete");
-    loadFirmware(
-      (uint32_t)&_FIRMWARE_STORAGE_BEGIN, (uint8_t*)&_BOOTROM_STORAGE_BEGIN,
-      (uint32_t)&_FIRMWARE_STORAGE_SIZE);  
+    loadFirmware();
     // firmware upload complete: wait for run or store
     // setLed(NONE); todo!
     led_off();
@@ -210,7 +216,7 @@ void MidiHandler::handleFirmwareFlashCommand(uint8_t *data, uint16_t size) {
     uint32_t checksum = loader.decodeInt(data);
     if (checksum == loader.getChecksum()) {
       led_on();
-      saveToFlash(_BOOTROM_STORAGE_BEGIN, loader.getData(), loader.getSize());
+      saveToFlash((uint32_t)&_FIRMWARE_STORAGE_BEGIN, loader.getData(), loader.getSize());
       loader.clear();
       led_off();
     } else {

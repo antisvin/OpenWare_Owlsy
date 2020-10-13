@@ -16,4 +16,14 @@
 #define QSPI_HANDLE hqspi
 #define QSPI_DEVICE_IS25LP064A
 
+/* Firmware header configuration */
+#define FIRMWARE_HEADER        0xBABECAFE
+#define FIRMWARE_RELOCATIONS_COUNT 5
+
+#ifndef DEBUG
 #define USE_IWDG
+#endif
+
+#define USE_ENCODER_PIN__
+#define ENC_CLICK_Pin GPIO_PIN_12
+#define ENC_CLICK_GPIO_Port GPIOB
