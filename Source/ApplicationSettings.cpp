@@ -7,7 +7,6 @@
 // #define APPLICATION_SETTINGS_ADDR ADDR_FLASH_SECTOR_1
 // #define APPLICATION_SETTINGS_SECTOR FLASH_Sector_1
 
-#define APPLICATION_SETTINGS_RESOURCE_INDEX 42
 
 void ApplicationSettings::init(){
   checksum = sizeof(*this) ^ 0xf0f0f0f0;
@@ -61,7 +60,7 @@ void ApplicationSettings::saveToFlash(){
   ResourceHeader* resource = (ResourceHeader*)buffer;
   resource->magic = 0XDADADEED;
   resource->size = sizeof(*this);
-  strcpy(resource->name, "Settings");  
+  strcpy(resource->name, RESOURCE_SETTINGS_NAME);
   memcpy(buffer+sizeof(ResourceHeader), this, sizeof(*this));
   registry.store(APPLICATION_SETTINGS_RESOURCE_INDEX, buffer, totalsize);
 }
