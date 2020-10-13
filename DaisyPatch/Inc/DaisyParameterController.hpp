@@ -244,7 +244,7 @@ public:
     }
 
     // draw flash load
-    int flash_used = storage.getTotalUsedSize() / 1024;
+    int flash_used = storage.getWrittenSize() / 1024;
     int flash_total = storage.getTotalAllocatedSize() / 1024;
     screen.print(64, offset + 8, "flash ");
     screen.print(flash_used * 100 / flash_total);
@@ -253,6 +253,8 @@ public:
     screen.setCursor(64, offset + 17);
     if (flash_used > 999) {
       screen.print(flash_used / 1024);
+      screen.print(".");
+      screen.print((int)((flash_used  % 1024) * 10 / 1024));
       screen.print("M/");
     }
     else {
@@ -261,6 +263,8 @@ public:
     }
     if (flash_total > 999) {
       screen.print(flash_total / 1024);
+      screen.print(".");
+      screen.print((int)((flash_total  % 1024) * 10 / 1024));
       screen.print("M");
     }
     else {
