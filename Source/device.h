@@ -42,8 +42,10 @@
 #define STORAGE_MAX_BLOCKS           64
 #endif
 
+#ifndef MINIMAL_BUILD
 #define USE_FFT_TABLES
 #define USE_FAST_POW
+#endif
 
 #define DEBUG_DWT
 /* #define DEBUG_STACK */
