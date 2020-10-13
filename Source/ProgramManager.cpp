@@ -547,6 +547,10 @@ void runManagerTask(void* p){
     if(ulNotifiedValue & START_PROGRAM_NOTIFICATION){ // start
       PatchDefinition* def = getPatchDefinition();
       if(audioTask == NULL && def != NULL){
+#ifdef USE_CACHE
+        SCB_InvalidateICache();
+        SCB_CleanInvalidateDCache();
+#endif
       	static StaticTask_t audioTaskBuffer;
 #if defined OWL_ARCH_F7
         extern char _PATCHRAM, _PATCHRAM_SIZE;
