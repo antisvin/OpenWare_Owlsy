@@ -1,5 +1,4 @@
 C_SRC += $(OPENWARE)/Source/crc32.c
-C_SRC += $(OPENWARE)/Source/eepromcontrol.c
 C_SRC += $(OPENWARE)/Source/errorhandlers.c
 C_SRC += $(OPENWARE)/Source/sysex.c
 C_SRC += $(OPENWARE)/Source/sramalloc.c

@@ -1,9 +1,9 @@
 # Debug / Release
 CONFIG ?= Release
 ifeq ($(CONFIG),Debug)
-  CPPFLAGS = -g3 -O -Wall -Wcpp -Wunused-function -DDEBUG # -DUSE_FULL_ASSERT
-  ASFLAGS  = -g3 -O
-  CFLAGS   = -g3 -O
+  CPPFLAGS = -g3 -Wall -Wcpp -Wunused-function -DDEBUG # -DUSE_FULL_ASSERT
+  ASFLAGS  = -g3
+  CFLAGS   = -g3
 endif
 ifeq ($(CONFIG),Release)
   CPPFLAGS = -O2
@@ -17,7 +17,7 @@ ifeq ($(CONFIG),Debug)
   LDFLAGS += -specs=rdimon.specs
 else
   CPPFLAGS += -nostdlib -nostartfiles -fno-builtin -ffreestanding
-  C_SRC += libnosys_gnu.c
+#  C_SRC += $(OPENWARE)/Libraries/syscalls/libnosys_gnu.c
   LDFLAGS += --specs=nano.specs
 endif
 
@@ -37,4 +37,4 @@ ARCH_FLAGS = -mcpu=cortex-m7 -mfloat-abi=hard -mfpu=fpv5-sp-d16 -mthumb
 ARCH_FLAGS += -fsingle-precision-constant
 DEF_FLAGS = -DSTM32H750xx -DARM_MATH_CM7
 DEF_FLAGS += -D__FPU_PRESENT=1
-S_SRC ?= bootrom_stm32h750xx.s
+S_SRC ?= $(BUILDROOT)/Src/bootrom_stm32h750xx.s
