@@ -17,6 +17,7 @@ public:
   unsigned int getNumberOfPatches();
   unsigned int getNumberOfResources();
   bool hasPatches();
+  unsigned int getNumberOfResources();
   void registerPatch(PatchDefinition* def);
   void setDynamicPatchDefinition(PatchDefinition* def){
     dynamicPatchDefinition = def;
@@ -28,6 +29,11 @@ public:
   void store(uint8_t index, uint8_t* data, size_t size);
   void setDeleted(uint8_t index);
   StorageBlock* getPatchBlock(uint8_t index);
+  StorageBlock* getPatchBlock(const char* name);
+  StorageBlock* getResourceBlock(uint8_t index);
+  StorageBlock* getResourceBlock(const char* name);
+  void* getResourceData(uint8_t index);
+  void* getResourceData(const char* name);
   bool store(uint8_t index, uint8_t* data, size_t size);  
 private:
   bool isPresetBlock(StorageBlock block);

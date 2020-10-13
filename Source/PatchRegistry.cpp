@@ -6,6 +6,10 @@
 #include "DynamicPatchDefinition.hpp"
 #include "message.h"
 
+#ifdef MINIMAL_BUILD
+#include "ProgramManager.h"
+#endif
+
 // #define REGISTER_PATCH(T, STR, UNUSED, UNUSED2) registerPatch(STR, Register<T>::construct)
 
 #ifndef max
@@ -34,9 +38,10 @@ void PatchRegistry::init() {
       if(id > 0 && id <= MAX_NUMBER_OF_PATCHES){
         patchblocks[id-1] = block;
         patchCount = max(patchCount, id);
-      }else if(id > MAX_NUMBER_OF_PATCHES && id <= MAX_NUMBER_OF_PATCHES+MAX_NUMBER_OF_RESOURCES){
-        resourceblocks[id-1-MAX_NUMBER_OF_PATCHES] = block;
-        resourceCount = max(resourceCount, id - MAX_NUMBER_OF_PATCHES);
+      }else if(id > MAX_NUMBER_OF_PATCHES && 
+	       id <= MAX_NUMBER_OF_PATCHES+MAX_NUMBER_OF_RESOURCES){
+          resourceblocks[id-1-MAX_NUMBER_OF_PATCHES] = block;
+          resourceCount = max(resourceCount, id - MAX_NUMBER_OF_PATCHES + 1);
       }
     }
   }
@@ -128,9 +133,7 @@ bool PatchRegistry::store(uint8_t index, uint8_t* data, size_t size){
     *magic = (*magic&0xffffff00) | (index&0xff);
     StorageBlock block = storage.append(data, size);
     if(block.verify()){
-#ifndef BOOTLOADER_MODE
       debugMessage("Resource stored to\nflash"); // Do we want to show this to users?
-#endif
       index = index - 1 - MAX_NUMBER_OF_PATCHES;
       if(resourceblocks[index].verify())
         resourceblocks[index].setDeleted();
