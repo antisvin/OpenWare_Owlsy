@@ -37,12 +37,13 @@
 #define OWLBOOT_MAGIC_NUMBER        0xDADAB007
 #define OWLBOOT_LOOP_NUMBER         0xDADADEAD
 #define OWLBOOT_MAGIC_ADDRESS       ((uint32_t*)0x2000FFF0)
-#define OWLBOOT_COMMAND_NUMBER      (0xD0D0B008)
-#define OWLBOOT_COMMAND_ADDRESS     ((uint32_t*)0x3800FFE0)
 
 #ifndef STORAGE_MAX_BLOCKS
 #define STORAGE_MAX_BLOCKS           64
 #endif
+
+#define USE_FFT_TABLES
+#define USE_FAST_POW
 
 #define DEBUG_DWT
 /* #define DEBUG_STACK */
@@ -73,6 +74,8 @@
 
 #define MAX_NUMBER_OF_PATCHES        40
 #define MAX_NUMBER_OF_RESOURCES      12
+#define APPLICATION_SETTINGS_RESOURCE_INDEX (MAX_NUMBER_OF_PATCHES + 1)
+
 
 #define CODEC_BLOCKSIZE              64
 #define CODEC_BUFFER_SIZE            (2*AUDIO_CHANNELS*CODEC_BLOCKSIZE)
@@ -136,14 +139,23 @@
 
 #define CCM                          __attribute__ ((section (".ccmdata")))
 
+/* The "__" prefix would be used by UI controller to prevent user from deleting system resources */
+#define RESOURCE_SETTINGS_NAME       "__SETTINGS__"
+#define RESOURCE_FFT_LUT_NAME        "__FFT_LUT__"
+#define RESOURCE_LOG_LUT_NAME        "__LOG_LUT__"
+#define RESOURCE_POW_LUT_NAME        "__POW_LUT__"
+#define FFT_LUT_SIZE                 120104U
+
 #ifdef OWL_ARCH_H7
   #define NO_CACHE                     __attribute__ ((section (".nocache")))
   #define CACHE_ALIGNED                __attribute__ ((aligned(32)))
   #define ITCM                         __attribute__ ((section (".itcm")))
+  #define TABLE                        __attribute__ ((section (".tables")))
 #else
   #define NO_CACHE
   #define CACHE_ALIGNED
   #define ITCM
+  #define TABLE
 #endif
 
 #define USE_IWDG                     // compile with support for IWDG watchdog */
