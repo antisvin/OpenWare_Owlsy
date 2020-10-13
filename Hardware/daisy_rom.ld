@@ -146,6 +146,17 @@ SECTIONS
 		_ecode = .;
 	} > RAM AT > FIRMWARE
 
+	/*
+	 * Tables section won't be relocated from flash
+	 */
+
+	.tables :
+	{
+		. = ALIGN(4);
+		*(.tables)
+		*(.tables*)
+	} > FIRMWARE
+
 
 	/*
 	 * Data, BSS and stack will be stored in first half of DTCM section
