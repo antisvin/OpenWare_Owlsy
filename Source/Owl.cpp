@@ -521,8 +521,11 @@ uint8_t getPortMode(uint8_t index){
 }
 #endif
 
-static TickType_t xLastWakeTime;
-static TickType_t xFrequency;
+#ifdef USE_SCREEN
+bool updateUi;
+static TickType_t xNextWakeTime;
+static const TickType_t xFrequency = 20 / portTICK_PERIOD_MS; // 20mS = 50Hz refresh rate
+#endif
 
 void owl_setup(){
 #ifdef USE_IWDG
@@ -540,6 +543,19 @@ void owl_setup(){
   storage.init();
   registry.init();
   settings.init(); // settings need the registry to be initialised first
+  
+  // Backwards compatibility with old settings name/location
+  ResourceHeader* res = registry.getResource(42);
+  if (res != NULL && strcmp(res->name, "Settings") == 0) {
+    // Copy old settings and delete previous resource
+    uint8_t* data = (uint8_t*)res + sizeof(ResourceHeader);
+    memcpy((void*)&settings, data, sizeof(settings));
+    settings.saveToFlash();
+    registry.getResourceBlock(42)->setDeleted();
+    registry.init();
+    debugMessage("Settings migrated");
+  }
+
 #ifdef USE_CODEC
   codec.init();
   codec.set(0);
@@ -557,6 +573,12 @@ void owl_setup(){
   setAnalogValue(PARAMETER_G, 0);
 #endif
 
+#ifdef USE_SCREEN
+  xNextWakeTime = xTaskGetTickCount() - 20;
+  // This should trigger display rendering immediately. First frame may end up a few MS out of
+  // sync, but that's probably not noticeable.
+#endif
+
 #if defined USE_ADC && !defined OWL_WAVETABLE
   extern ADC_HandleTypeDef ADC_PERIPH;
   HAL_StatusTypeDef ret = HAL_ADC_Start_DMA(&ADC_PERIPH, (uint32_t*)adc_values, NOF_ADC_VALUES);
@@ -567,9 +589,6 @@ void owl_setup(){
   midi_rx.init();
   midiSetInputChannel(settings.midi_input_channel);
   midiSetOutputChannel(settings.midi_output_channel);
-
-  xLastWakeTime = xTaskGetTickCount();
-  xFrequency = 20 / portTICK_PERIOD_MS; // 20mS = 50Hz refresh rate
 
 #ifdef USE_DIGITALBUS
   bus_setup();
@@ -849,12 +868,12 @@ __weak void loop(void){
       uint16_t mode;
       switch(portMode[i]){
       case PORT_UNI_OUTPUT:
-	mode = PCR_Range_DAC_0_P10|PCR_Mode_DAC;
-	break;
+        mode = PCR_Range_DAC_0_P10|PCR_Mode_DAC;
+        break;
       case PORT_UNI_INPUT:
       default:
-	mode = PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT;
-	break;
+        mode = PCR_Range_ADC_0_P10|PCR_Mode_ADC_SgEn_PosIn|PCR_ADCSamples_16|PCR_ADCref_INT;
+        break;
       }
       MAX11300_setPortMode(i+1, mode);
     }
@@ -919,19 +938,22 @@ void owl_loop(){
   busstatus = bus_status();
 #endif
 #ifdef USE_SCREEN
-  graphics.draw();
-  graphics.display();
+  // This should work the same with and without DMA
+  if (xTaskGetTickCount() >= xNextWakeTime){
+    xNextWakeTime = xTaskGetTickCount() + xFrequency;
+    updateUi = true;
+    graphics.draw();
+    graphics.display();
+  }
+  else if (updateUi) {
+    updateUi = false;
+  }
 #endif /* USE_SCREEN */
-#ifdef OLED_DMA
-  // When using OLED_DMA this must delay for a minimum amount to allow screen to update
-  vTaskDelay(xFrequency);
-#else
-  vTaskDelayUntil(&xLastWakeTime, xFrequency);
-#endif
   midi_tx.transmit();
 #ifdef USE_IWDG
   IWDG_PERIPH->KR = 0xaaaa; // reset the watchdog timer (if enabled)
 #endif
+  vTaskDelay(1);
 }
 
 extern "C"{
