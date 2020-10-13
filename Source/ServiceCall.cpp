@@ -2,18 +2,14 @@
 #include "device.h"
 #include "ServiceCall.h"
 #include "ApplicationSettings.h"
+#include "BitState.hpp"
 #include "OpenWareMidiControl.h"
 #include "Owl.h"
-
-#ifndef MINIMAL_BUILD
-#define USE_FFT_TABLES
-#define USE_FAST_POW
-#endif
 
 #ifdef USE_FFT_TABLES
 #include "arm_const_structs.h"
 #endif /* USE_FFT_TABLES */
-#ifdef USE_FAST_POW
+#if defined(USE_FAST_POW)
 #include "FastLogTable.h"
 #include "FastPowTable.h"
 #endif /* USE_FAST_POW */
@@ -24,7 +20,7 @@
 #include "MidiReceiver.h"
 #endif /* USE_MIDI_CALLBACK */
 
-#ifdef USE_FFT_TABLES
+#if defined(USE_FFT_TABLES)
 int SERVICE_ARM_CFFT_INIT_F32(arm_cfft_instance_f32* instance, int len){
   switch(len) { 
   case 16:
@@ -59,7 +55,7 @@ int SERVICE_ARM_CFFT_INIT_F32(arm_cfft_instance_f32* instance, int len){
   }
   return OWL_SERVICE_OK;
 }
-#endif /* USE_FFT_TABLES */
+#endif /* USE_FFT_TABLES && !MINIMAL_BUILD*/
 
 static int handleVersion(void** params, int len){
   int ret = OWL_SERVICE_INVALID_ARGS;
@@ -84,11 +80,11 @@ static int handleRFFT(void** params, int len){
 
 static int handleCFFT(void** params, int len){
   int ret = OWL_SERVICE_INVALID_ARGS;
-    if(len == 2){
-      arm_cfft_instance_f32* instance = (arm_cfft_instance_f32*)params[0];
-      int fftlen = *(int*)params[1];
-      ret = SERVICE_ARM_CFFT_INIT_F32(instance, fftlen);
-    }
+  if(len == 2){
+    arm_cfft_instance_f32* instance = (arm_cfft_instance_f32*)params[0];
+    int fftlen = *(int*)params[1];
+    ret = SERVICE_ARM_CFFT_INIT_F32(instance, fftlen);
+  }
   return ret;
 }
 #endif
@@ -127,11 +123,27 @@ static int handleGetArray(void** params, int len){
     void** array = (void**)params[index++];
     int* size = (int*)params[index++];
     if(strncmp(SYSTEM_TABLE_LOG, p, 3) == 0){
+      #ifndef MINIMAL_BUILD
       *array = (void*)fast_log_table;
       *size = fast_log_table_size;
+      #else
+      void* data = registry.getResourceData(RESOURCE_LOG_LUT_NAME);
+      if (data != NULL){
+        *array = data;
+        *size = fast_log_table_size;
+      }
+      #endif /* !MINIMAL_BUILD */
     }else if(strncmp(SYSTEM_TABLE_POW, p, 3) == 0){
+      #ifndef MINIMAL_BUILD
       *array = (void*)fast_pow_table;
       *size = fast_pow_table_size;
+      #else
+      void* data = registry.getResourceData(RESOURCE_POW_LUT_NAME);
+      if (data != NULL){
+        *array = data;
+        *size = fast_pow_table_size;
+      }
+      #endif /* !MINIMAL_BUILD */
     }else{
       *array = NULL;
       *size = 0;
