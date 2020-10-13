@@ -6,6 +6,10 @@
 #include "DynamicPatchDefinition.hpp"
 #include "message.h"
 
+#ifdef MINIMAL_BUILD
+#include "ProgramManager.h"
+#endif
+
 // #define REGISTER_PATCH(T, STR, UNUSED, UNUSED2) registerPatch(STR, Register<T>::construct)
 
 #ifndef max
@@ -16,6 +20,7 @@ static PatchDefinition emptyPatch("---", 0, 0);
 
 void PatchRegistry::init() {
   patchCount = 0;
+  resourceCount = 0;
   // FactoryPatchDefinition::init();
   // PatchDefinition* def;
   // for(int i=0; i<MAX_USER_PATCHES; ++i){
@@ -36,6 +41,7 @@ void PatchRegistry::init() {
       }else if(id > MAX_NUMBER_OF_PATCHES && 
 	       id <= MAX_NUMBER_OF_PATCHES+MAX_NUMBER_OF_RESOURCES){
           resourceblocks[id-1-MAX_NUMBER_OF_PATCHES] = block;
+          resourceCount = max(resourceCount, id - MAX_NUMBER_OF_PATCHES + 1);
       }
     }
   }
@@ -53,7 +59,7 @@ ResourceHeader* PatchRegistry::getResource(const char* name){
     if(resourceblocks[i].verify()){
       ResourceHeader* hdr = (ResourceHeader*)resourceblocks[i].getData();
       if(strcmp(name, hdr->name) == 0)
-	return hdr;
+        return hdr;
     }
   }
   return NULL;
@@ -66,6 +72,53 @@ StorageBlock* PatchRegistry::getPatchBlock(uint8_t index){
   else {
     return NULL;
   }
+}
+
+StorageBlock* PatchRegistry::getPatchBlock(const char* name){
+  for(int i=0; i < MAX_NUMBER_OF_PATCHES; ++i){
+    if(patchblocks[i].verify()){
+      ResourceHeader* hdr = (ResourceHeader*)patchblocks[i].getData();
+      if(strcmp(name, hdr->name) == 0)
+        return &patchblocks[i];
+    }
+  }
+  return NULL;
+}
+
+StorageBlock* PatchRegistry::getResourceBlock(uint8_t index){
+  if (index < MAX_NUMBER_OF_RESOURCES) {
+    return &resourceblocks[index];
+  }
+  else {
+    return NULL;
+  }
+}
+
+StorageBlock* PatchRegistry::getResourceBlock(const char* name){
+  for(int i=0; i < MAX_NUMBER_OF_RESOURCES; ++i){
+    if(resourceblocks[i].verify()){
+      ResourceHeader* hdr = (ResourceHeader*)resourceblocks[i].getData();
+      if(strcmp(name, hdr->name) == 0)
+        return &resourceblocks[i];
+    }
+  }
+  return NULL;
+}
+
+void* PatchRegistry::getResourceData(uint8_t index) {
+  ResourceHeader* res = getResource(index);
+  if (res != NULL)
+    return (void*)((uint8_t*)res + sizeof(ResourceHeader));
+  else
+    return NULL;
+}
+
+void* PatchRegistry::getResourceData(const char* name) {
+  ResourceHeader* res = getResource(name);
+  if (res != NULL)
+    return (void*)((uint8_t*)res + sizeof(ResourceHeader));
+  else
+    return NULL;
 }
 
 bool PatchRegistry::store(uint8_t index, uint8_t* data, size_t size){
@@ -107,13 +160,12 @@ bool PatchRegistry::store(uint8_t index, uint8_t* data, size_t size){
     *magic = (*magic&0xffffff00) | (index&0xff);
     StorageBlock block = storage.append(data, size);
     if(block.verify()){
-#ifndef BOOTLOADER_MODE
       debugMessage("Resource stored to\nflash"); // Do we want to show this to users?
-#endif
       index = index - 1 - MAX_NUMBER_OF_PATCHES;
       if(resourceblocks[index].verify())
         resourceblocks[index].setDeleted();
       resourceblocks[index] = block;
+      resourceCount = max(resourceCount, index + 1);
     }else{
       error(FLASH_ERROR, "failed to verify resource");
       return false;
@@ -144,6 +196,10 @@ unsigned int PatchRegistry::getNumberOfPatches(){
   // return nofPatches+1;
   // return MAX_NUMBER_OF_PATCHES+1;
   return patchCount+1;
+}
+
+unsigned int PatchRegistry::getNumberOfResources(){
+  return resourceCount;
 }
 
 PatchDefinition* PatchRegistry::getPatchDefinition(unsigned int index){
