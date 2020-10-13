@@ -7,7 +7,7 @@
 #ifdef USE_UART_MIDI
 
 extern UART_HandleTypeDef UART_MIDI_HANDLE;
-static SerialBuffer<UART_MIDI_RX_BUFFER_SIZE> bus_rx_buf; // This should be tagged with NO_CACHE, but that corrupts audio buffers on daisy. WTF!
+static SerialBuffer<UART_MIDI_RX_BUFFER_SIZE> bus_rx_buf NO_CACHE;
 
 #define min(a,b) ((a)<(b)?(a):(b))
 
