@@ -26,6 +26,8 @@
 #include "device.h"
 #include "errorhandlers.h"
 #include "qspicontrol.h"
+#include "FirmwareHeader.h"
+#include "sdram.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -52,9 +54,6 @@ SDRAM_HandleTypeDef hsdram1;
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
-extern char _FIRMWARE_STORAGE_BEGIN, _FIRMWARE_STORAGE_END, _FIRMWARE_STORAGE_SIZE;
-extern char _PATCH_STORAGE_BEGIN, _PATCH_STORAGE_END;
-extern char _BOOTROM_STORAGE_BEGIN, _BOOTROM_STORAGE_SIZE;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -66,11 +65,12 @@ static void MX_IWDG1_Init(void);
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
 
-void setup();
+void setup(void);
 void SDRAM_Initialization_Sequence(SDRAM_HandleTypeDef *hsdram);
 void loop(void);
 void setMessage(const char* msg);
-void loadFirmware(uint32_t address, uint8_t* data, uint32_t length);
+struct FirmwareHeader* getFirmwareHeader(void);
+int loadFirmware(void);
 
 typedef  void (*pFunction)(void);
 
@@ -82,7 +82,11 @@ static int testButton(){
 #ifdef USE_BOOT1_PIN
   return !(BOOT1_GPIO_Port->IDR & BOOT1_Pin);
 #else
+  #ifdef USE_ENCODER_PIN
+  return !(ENC_CLICK_GPIO_Port->IDR & ENC_CLICK_Pin);
+  #else
   return 0;
+  #endif
 #endif
 }
 
@@ -90,10 +94,7 @@ static int testNoProgram(){
   // NOTE: this must run only if QSPI flash is:
   // a. initialized successfully
   // b. is in memory-mapped mode
-  // Otherwise we'll end in hard fault handler
-  return ((*(__IO uint32_t*)APPLICATION_ADDRESS) & 0xFFFF0000 ) != 0x20010000;
-//  return ((*(__IO uint32_t*)APPLICATION_ADDRESS) & 0x2FFE0000 ) != 0x24000000;
-  /* Check Vector Table: Test if valid stack pointer is programmed at APPLICATION_ADDRESS */
+  return (*(__IO uint32_t*)APPLICATION_ADDRESS) != FIRMWARE_HEADER;
 }
 
 static int testWatchdogReset(){
@@ -134,10 +135,10 @@ int main(void)
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
+  MX_IWDG1_Init();
   MX_GPIO_Init();
   MX_FMC_Init();
   MX_QUADSPI_Init();
-  MX_IWDG1_Init();
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
 
@@ -148,10 +149,6 @@ int main(void)
     error(RUNTIME_ERROR, "Flash init error");
   }
   else {
-    loadFirmware(
-      (uint32_t)&_FIRMWARE_STORAGE_BEGIN, (uint8_t*)&_BOOTROM_STORAGE_BEGIN,
-      (uint32_t)&_FIRMWARE_STORAGE_SIZE);
-
     if(testMagic()){
       setMessage("Bootloader starting");
     }
@@ -164,22 +161,21 @@ int main(void)
     else if(testNoProgram()){
       error(RUNTIME_ERROR, "No valid firmware");
     }
-    else {
+    else if (loadFirmware()){
       // jump to application code
 
       /* Disable all interrupts */
       RCC->CIER = 0x00000000;
 
+      /* Disable SysTick - seems to be required if application will use TIM* as time base */
+      SysTick->CTRL = 0;
+
       /* Jump to user application */
-      uint32_t JumpAddress = *(__IO uint32_t*) (APPLICATION_ADDRESS + 4);
+      struct FirmwareHeader* header = getFirmwareHeader();
+      uint32_t JumpAddress = *(__IO uint32_t*) (header->section_0_start + 4);
       pFunction jumpToApplication = (pFunction) JumpAddress;
       /* Initialize user application's Stack Pointer */
-      __set_MSP(*(__IO uint32_t*) APPLICATION_ADDRESS);
-
-      /* Call the DeInit function to reset the driver */
-//      if (HAL_QSPI_DeInit(&hqspi) != HAL_OK) {
-//        error(RUNTIME_ERROR, "Flash deinit error");
-//      }
+      __set_MSP(*(__IO uint32_t*) header->section_0_start);
 
       jumpToApplication();
       for(;;);
@@ -434,6 +430,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(USER_LED_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : ENC_CLICK_Pin */
+  GPIO_InitStruct.Pin = ENC_CLICK_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(ENC_CLICK_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PB14 PB15 */
   GPIO_InitStruct.Pin = GPIO_PIN_14|GPIO_PIN_15;

@@ -10,15 +10,12 @@ _Min_Stack_Size = 0x200; /* required amount of stack */
 /* Specify the memory areas */
 MEMORY
 {
-RAM (xrw)     : ORIGIN = 0x00000000, LENGTH = 64K /* ITCM RAM */
+/* ITCMRAM (xrw)     : ORIGIN = 0x00000000, LENGTH = 64K */
 /* DTCMRAM (xrw)     : ORIGIN = 0x20000000, LENGTH = 128K */
-/* RAM (rwx)         : ORIGIN = 0x24000000, LENGTH = 512K */
-/* PATCHRAM (rwx)    : ORIGIN = 0x24000000, LENGTH = 512 */
-/* RAM_D3 (xrw)      : ORIGIN = 0x38000000, LENGTH = 64K */
-APPLICATION (rwx) : ORIGIN = 0xc0000000, LENGTH = 512K
-EXTRAM (rwx)      : ORIGIN = 0xc0080000, LENGTH = 6400K /* 63M + 512K */
-FLASH (r)         : ORIGIN = 0x08000000, LENGTH = 128K  /* Bootloader on flash*/
-BOOTROM (rx)      : ORIGIN = 0x90000000, LENGTH = 512K  /* QSPI flash - firmware part */
+RAM (rwx)         : ORIGIN = 0x24000000, LENGTH = 512K
+EXTRAM (rwx)      : ORIGIN = 0xc0000000, LENGTH = 64M
+FLASH (r)         : ORIGIN = 0x08000000, LENGTH = 128K  /* Bootloader on flash - we only need 32k or so, but don't have other use for it*/
+APPLICATION (rx)  : ORIGIN = 0x90000000, LENGTH = 512K  /* QSPI flash - firmware part */
 STORAGE (rx)      : ORIGIN = 0x90080000, LENGTH = 7680K  /* QSPI flash - patch storage part. That's one hell of a lot of patches */
 }
 /* Device flash is 128k and only used for bootloader
@@ -30,6 +27,7 @@ SECTIONS
 	.isr_vector :
 	{
 		. = ALIGN(4);
+    	PROVIDE ( _ISR_VECTOR = . );
 		KEEP(*(.isr_vector))
 		. = ALIGN(4);
 	} > FLASH
@@ -260,13 +258,14 @@ SECTIONS
   	} >PATCHRAM
   	_PATCHRAM_END = ORIGIN(PATCHRAM) + LENGTH(PATCHRAM);
 */
+/*
     .bootrom_storage (NOLOAD) :
     {
         PROVIDE (_BOOTROM_STORAGE_BEGIN = .);
   	} >BOOTROM
     _BOOTROM_STORAGE_END = ORIGIN(BOOTROM) + LENGTH(BOOTROM);
     _BOOTROM_STORAGE_SIZE = LENGTH(BOOTROM);
-
+*/
     .firmware_storage (NOLOAD) :
     {
     . = ALIGN(4);
