@@ -262,8 +262,11 @@ __weak void pinChanged(uint16_t pin){
   }
 }
 
-static TickType_t xLastWakeTime;
-static TickType_t xFrequency;
+#ifdef USE_SCREEN
+bool updateUi;
+static TickType_t xNextWakeTime;
+static const TickType_t xFrequency = 20 / portTICK_PERIOD_MS; // 20mS = 50Hz refresh rate
+#endif
 
 void Owl::setup(void){
 #ifdef USE_IWDG
@@ -297,6 +300,12 @@ void Owl::setup(void){
   HAL_DAC_Start(&DAC_PERIPH, DAC_CHANNEL_2);
   setAnalogValue(PARAMETER_F, 0);
   setAnalogValue(PARAMETER_G, 0);
+#endif
+
+#ifdef USE_SCREEN
+  xNextWakeTime = xTaskGetTickCount() - 20;
+  // This should trigger display rendering immediately. First frame may end up a few MS out of
+  // sync, but that's probably not noticeable.
 #endif
 
 #if defined USE_ADC && !defined OWL_WAVETABLE
@@ -504,15 +513,17 @@ void Owl::loop(){
   busstatus = bus_status();
 #endif
 #ifdef USE_SCREEN
-  graphics.draw();
-  graphics.display();
+  // This should work the same with and without DMA
+  if (xTaskGetTickCount() >= xNextWakeTime){
+    xNextWakeTime = xTaskGetTickCount() + xFrequency;
+    updateUi = true;
+    graphics.draw();
+    graphics.display();
+  }
+  else if (updateUi) {
+    updateUi = false;
+  }
 #endif /* USE_SCREEN */
-#ifdef OLED_DMA
-  // When using OLED_DMA this must delay for a minimum amount to allow screen to update
-  vTaskDelay(xFrequency);
-#else
-  vTaskDelayUntil(&xLastWakeTime, xFrequency);
-#endif
   midi_tx.transmit();
 #ifdef USE_IWDG
   IWDG_PERIPH->KR = 0xaaaa; // reset the watchdog timer (if enabled)
