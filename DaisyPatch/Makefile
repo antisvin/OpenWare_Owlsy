@@ -4,43 +4,42 @@ OPENWARE ?= $(BUILDROOT)/..
 
 OPENOCD ?= openocd -f $(OPENWARE)/Hardware/openocd_h7.cfg
 
-C_SRC = $(notdir $(wildcard Src/*.c))
-CPP_SRC = $(notdir $(wildcard Src/*.cpp))
-
 LDSCRIPT = $(OPENWARE)/Hardware/daisy_rom.ld
 
 include $(OPENWARE)/Hardware/daisy.mk
 
-C_SRC += usbd_audio.c
-C_SRC += sdram_daisy.c
-C_SRC += ssd1309.c
-C_SRC += ak4556.c
-CPP_SRC += uart.cpp MidiStreamReader.cpp
-CPP_SRC += ScreenBuffer.cpp ScreenBufferMono.cpp Graphics.cpp
+C_SRC = $(wildcard Src/*.c)
+CPP_SRC = $(wildcard Src/*.cpp)
+C_SRC += $(OPENWARE)/Source/usbd_audio.c
+C_SRC += $(OPENWARE)/Source/sdram_daisy.c
+C_SRC += $(OPENWARE)/Source/ssd1309.c
+C_SRC += $(OPENWARE)/Source/ak4556.c
+CPP_SRC += $(OPENWARE)/Source/uart.cpp
+CPP_SRC += $(OPENWARE)/Source/MidiStreamReader.cpp
+CPP_SRC += $(OPENWARE)/Source/ScreenBuffer.cpp
+CPP_SRC += $(OPENWARE)/Source/ScreenBufferMono.cpp
+CPP_SRC += $(OPENWARE)/Source/Graphics.cpp
 
 ifndef PLATFORM
-PLATFORM = Daisy
+	PLATFORM = Daisy
 endif
 
 ifeq ($(PLATFORM),Daisy)
-  CPPFLAGS += -DDAISY
+	CPPFLAGS += -DDAISY
 #  vpath %.c usbd-hs
 endif
 
 include $(OPENWARE)/Hardware/sources.mk
 
-OBJS = $(C_SRC:%.c=Build/%.o)
-OBJS += $(CPP_SRC:%.cpp=Build/%.o)
-OBJS += $(S_SRC:%.s=Build/%.o)
-
-OBJS += $(OBJS_DAC)
-OBJS += $(OBJS_SDRAM)
-OBJS += $(OBJS_SAI)
-OBJS += $(OBJS_DSP)
-OBJS += $(OBJS_OS)
-OBJS += $(OBJS_USBD)
-OBJS += $(OBJS_UART)
-OBJS += $(OBJS_IWDG)
+C_SRC += $(C_SRC_DAC)
+C_SRC += $(C_SRC_SDRAM)
+C_SRC += $(C_SRC_SAI)
+C_SRC += $(C_SRC_DSP)
+C_SRC += $(C_SRC_OS)
+C_SRC += $(C_SRC_USBD)
+C_SRC += $(C_SRC_UART)
+C_SRC += $(C_SRC_IWDG)
+C_SRC += $(C_SRC_QSPI)
 
 include $(OPENWARE)/Hardware/h7.mk
 

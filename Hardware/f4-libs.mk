@@ -15,6 +15,7 @@ C_SRC += $(DRIVERS)/Src/stm32f4xx_hal_tim_ex.c
 C_SRC += $(DRIVERS)/Src/stm32f4xx_hal_tim.c
 C_SRC += $(DRIVERS)/Src/stm32f4xx_hal_cortex.c
 C_SRC += $(DRIVERS)/Src/stm32f4xx_hal_spi.c
+C_SRC += $(OPENWARE)/Source/eepromcontrol.c
 # C_SRC += $(DRIVERS)/Src/stm32f4xx_hal_rng.c
 # C_SRC += $(DRIVERS)/Src/stm32f4xx_hal_qspi.c
 # C_SRC += $(DRIVERS)/Src/stm32f4xx_hal_dma2d.c

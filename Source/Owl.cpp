@@ -395,7 +395,7 @@ int getGainSelectionValue(){
   return adc_values[MODE_BUTTON_GAIN]*128*4/4096;
 }
 int getPatchSelectionValue(){
-  return adc_values[MODE_BUTTON_PATCH]*(patch_registry.getNumberOfPatches()-1)*4/4095;
+  return adc_values[MODE_BUTTON_PATCH]*(registry.getNumberOfPatches()-1)*4/4095;
 }
 
 void owl_mode_button(void){
@@ -427,7 +427,7 @@ void owl_mode_button(void){
       int value = getPatchSelectionValue();
       if(abs(patchselect - value) > 1){
 	patchselect = value;
-	value = max(1, min((int)patch_registry.getNumberOfPatches()-1, value/4 + 1));
+	value = max(1, min((int)registry.getNumberOfPatches()-1, value/4 + 1));
 	if(program.getProgramIndex() != value){
 	  program.loadProgram(value);
 	  program.resetProgram(false);
