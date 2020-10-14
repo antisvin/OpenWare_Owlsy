@@ -43,6 +43,8 @@ C_SRC += $(C_SRC_QSPI)
 
 include $(OPENWARE)/Hardware/h7.mk
 
+.PHONY: upload dfu
+
 upload:
 	$(OPENOCD) -c "program Build/DaisyPatch.elf verify reset exit"
 
