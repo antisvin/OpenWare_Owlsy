@@ -1,4 +1,5 @@
 PROJECT = MidiBootDaisy
+PLATFORM ?= Daisy
 BUILDROOT = .
 OPENWARE ?= $(BUILDROOT)/..
 
@@ -9,42 +10,32 @@ S_SRC = startup_stm32h750xx.s
 
 include $(OPENWARE)/Hardware/daisy.mk
 
-C_SRC = $(notdir $(wildcard Src/*.c))
-CPP_SRC = $(notdir $(wildcard Src/*.cpp))
-
-C_SRC += usbd_midi.c
-C_SRC += usbd_midi_if.c
-C_SRC += qspicontrol.c
-C_SRC += sdram_daisy.c
-C_SRC += sysex.c
-C_SRC += crc32.c
-#C_SRC += eepromcontrol.c
-C_SRC += message.c
-CPP_SRC += MidiWriter.cpp
+C_SRC = $(wildcard Src/*.c)
+CPP_SRC = $(wildcard Src/*.cpp)
+C_SRC += $(OPENWARE)/Source/usbd_midi.c
+C_SRC += $(OPENWARE)/Source/usbd_midi_if.c
+#C_SRC += $(OPENWARE)/Source/qspicontrol.c
+C_SRC += $(OPENWARE)/Source/sdram_daisy.c
+C_SRC += $(OPENWARE)/Source/sysex.c
+C_SRC += $(OPENWARE)/Source/crc32.c
+C_SRC += $(OPENWARE)/Source/message.c
+CPP_SRC += $(OPENWARE)/Source/MidiWriter.cpp
+CPP_SRC += $(OPENWARE)/Source/MidiController.cpp
 # S_SRC = startup_openboot.s
 
-ifndef PLATFORM
-PLATFORM = Daisy
-endif
-
-#C_SRC += usbd_desc.c usbd_conf.c
 
 ifeq ($(PLATFORM),Daisy)
-  CPPFLAGS += -Iusbd-hs -DDAISY -DUSE_USBD_FS
-  vpath %.c usbd-hs
+	CPPFLAGS += -Iusbd-hs -DDAISY -DUSE_USBD_FS
+	vpath %.c usbd-hs
 endif
 
 # CPP_SRC += MidiReader.cpp
-CPP_SRC += MidiController.cpp
 
-OBJS = $(C_SRC:%.c=Build/%.o)
-OBJS += $(CPP_SRC:%.cpp=Build/%.o)
-OBJS += $(S_SRC:%.s=Build/%.o)
-
-OBJS += $(OBJS_SDRAM)
-OBJS += $(OBJS_USBD)
-OBJS += $(OBJS_UART)
-OBJS += $(OBJS_IWDG)
+C_SRC += $(C_SRC_SDRAM)
+C_SRC += $(C_SRC_USBD)
+C_SRC += $(C_SRC_UART)
+C_SRC += $(C_SRC_IWDG)
+C_SRC += $(C_SRC_QSPI)
 
 include $(OPENWARE)/Hardware/h7.mk
 
