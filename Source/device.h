@@ -104,6 +104,10 @@
 #define DAC_PERIPH hdac
 #endif
 
+#ifndef LOAD_INDICATOR_PARAMETER
+#define LOAD_INDICATOR_PARAMETER     PARAMETER_A
+#endif
+
 #ifndef PROGRAM_TASK_STACK_SIZE
 #define PROGRAM_TASK_STACK_SIZE      (4*1024/sizeof(portSTACK_TYPE))
 #endif
