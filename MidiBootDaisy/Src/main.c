@@ -165,10 +165,14 @@ int main(void)
       // jump to application code
 
       /* Disable all interrupts */
+      __disable_irq();
+      HAL_NVIC_DisableIRQ(OTG_FS_IRQn);
       RCC->CIER = 0x00000000;
 
-      /* Disable SysTick - seems to be required if application will use TIM* as time base */
+      /* Disable and reset SysTick */
       SysTick->CTRL = 0;
+      SysTick->LOAD = 0;
+      SysTick->VAL = 0;
 
       /* Jump to user application */
       struct FirmwareHeader* header = getFirmwareHeader();
