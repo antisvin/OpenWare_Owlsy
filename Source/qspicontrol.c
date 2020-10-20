@@ -2,15 +2,6 @@
 #include "device.h"
 #include "qspicontrol.h"
 
-#ifdef QSPI_DEVICE_IS25LP064A
-#include "Flash_IS25LP064A.h"
-#elif defined(QSPI_DEVICE_IS25LP080D)
-#include "Flash_IS25LP080D.h"
-#else
-#error "Unknown QSPI flash device"
-#endif
-
-
 
 // TODO: Add handling for alternate device types,
 //		This will be a thing much sooner than anticipated
@@ -194,16 +185,40 @@ int qspi_write_block(uint32_t address, uint8_t *data, uint32_t size) {
 }
 
 int qspi_erase(uint32_t start_adr, uint32_t end_adr) {
-  uint32_t block_addr;
-  uint32_t block_size = QSPI_SECTOR_SIZE; // 4kB blocks for now.
-  // 64kB chunks for now.
-  start_adr = start_adr - (start_adr % block_size);
-  while (end_adr > start_adr) {
-    block_addr = start_adr & 0x0FFFFFFF;
-    if (qspi_erase_sector(block_addr) != MEMORY_OK) {
-      return MEMORY_ERROR;
+  uint32_t erase_addr;
+  uint32_t remaining_size;
+
+  // Align start/end addresses to 4k page
+  start_adr &= 0xFFFFF000;
+  if (end_adr & 0xFFF) {
+    end_adr &= 0xFFFFF000;
+    end_adr += 0x1000;
+  }
+
+  erase_addr = start_adr & 0x0FFFFFFF;
+  remaining_size = end_adr - start_adr;
+  // Start with 64k blocks, then use 4k blocks if necessary
+  while (remaining_size) {
+    // Block erase
+    if (remaining_size >= QSPI_BLOCK_SIZE) {
+      if (qspi_erase_block(erase_addr) != MEMORY_OK) {
+        return MEMORY_ERROR;
+      }
+      else {
+        remaining_size -= QSPI_BLOCK_SIZE;
+        erase_addr += QSPI_BLOCK_SIZE;
+      }
     }
-    start_adr += block_size;
+    // Sector erase
+    else if (remaining_size) {
+      if (qspi_erase_sector(erase_addr) != MEMORY_OK) {
+        return MEMORY_ERROR;
+      }
+      else {
+        remaining_size -= QSPI_SECTOR_SIZE;
+        erase_addr += QSPI_SECTOR_SIZE;
+      }
+    }
   }
   return MEMORY_OK;
 }
@@ -240,6 +255,37 @@ int qspi_erase_sector(uint32_t addr) {
       MEMORY_OK) {
     return MEMORY_ERROR;
   }
+  return MEMORY_OK;
+}
+
+int qspi_erase_block(uint32_t addr) {
+  QSPI_CommandTypeDef s_command;
+  s_command.InstructionMode = QSPI_INSTRUCTION_1_LINE;
+  s_command.Instruction = BLOCK_ERASE_CMD;
+  s_command.AddressMode = QSPI_ADDRESS_1_LINE;
+  s_command.AddressSize = QSPI_ADDRESS_24_BITS;
+  s_command.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
+  s_command.DataMode = QSPI_DATA_NONE;
+  s_command.DummyCycles = 0;
+  s_command.NbData = 0;
+  s_command.DdrMode = QSPI_DDR_MODE_DISABLE;
+  s_command.DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY;
+  s_command.SIOOMode = QSPI_SIOO_INST_EVERY_CMD;
+  s_command.Address = addr;
+  if (write_enable(&QSPI_HANDLE) != MEMORY_OK) {
+    return MEMORY_ERROR;
+  }
+  if (HAL_QSPI_Command(&QSPI_HANDLE, &s_command, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) !=
+      MEMORY_OK) {
+    return MEMORY_ERROR;
+  }
+  if (autopolling_mem_ready(&QSPI_HANDLE, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) !=
+      MEMORY_OK) {
+    return MEMORY_ERROR;
+  }
+#ifdef USE_IWDG
+  IWDG1->KR = 0xaaaa; // reset the watchdog timer
+#endif
   return MEMORY_OK;
 }
 
