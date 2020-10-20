@@ -545,7 +545,7 @@ void runManagerTask(void* p){
           (StackType_t*)PROGRAMSTACK, 
           &audioTaskBuffer);
       }
-      if(audioTask == NULL)
+      if(audioTask == NULL && registry.hasPatches())
         error(PROGRAM_ERROR, "Failed to start program task");
     }
   }
