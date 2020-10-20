@@ -166,13 +166,19 @@ int main(void)
 
       /* Disable all interrupts */
       __disable_irq();
-      HAL_NVIC_DisableIRQ(OTG_FS_IRQn);
+
       RCC->CIER = 0x00000000;
 
       /* Disable and reset SysTick */
       SysTick->CTRL = 0;
       SysTick->LOAD = 0;
       SysTick->VAL = 0;
+
+      /* Clear Interrupt Enable Register & Interrupt Pending Register */
+      for (int i = 0;i < 5; i++) {
+    	  NVIC->ICER[i]=0xFFFFFFFF;
+	      NVIC->ICPR[i]=0xFFFFFFFF;
+      }	      
 
       /* Jump to user application */
       struct FirmwareHeader* header = getFirmwareHeader();

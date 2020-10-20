@@ -61,17 +61,19 @@ void eraseFromFlash(uint32_t sector) {
     error(RUNTIME_ERROR, "Flash write mode error");
   }
 
-  if (sector == FIRMWARE_SECTOR) {
-    led_on();
+  led_on();
+  if (sector == 0xff) {
     if (qspi_erase((uint32_t)&_PATCH_STORAGE_BEGIN,
                    (uint32_t)&_PATCH_STORAGE_END) != MEMORY_OK) {
-      error(RUNTIME_ERROR, "Flash erase error");
+      error(RUNTIME_ERROR, "Storage erase error");
     } else {
       setMessage("Erased patch storage");
       led_off();
     }
   } else {
-    if (qspi_erase_sector(sector) != MEMORY_OK) {
+    if (qspi_erase(
+        (uint32_t)&_FIRMWARE_STORAGE_BEGIN,
+        (uint32_t)&_FIRMWARE_STORAGE_END) != MEMORY_OK) {
       error(RUNTIME_ERROR, "Flash erase error");
     } else {
       setMessage("Erased flash sector");
@@ -79,6 +81,9 @@ void eraseFromFlash(uint32_t sector) {
     }
   }
 
+#ifdef USE_IWDG
+      IWDG1->KR = 0xaaaa; // reset the watchdog timer
+#endif  
   if (qspi_init(QSPI_MODE_MEMORY_MAPPED) != MEMORY_OK) {
     error(RUNTIME_ERROR, "Flash read mode error");
   }
@@ -93,6 +98,16 @@ void saveToFlash(uint32_t address, void *data, uint32_t length) {
   }
   else if (qspi_erase(address, address + length) != MEMORY_OK) {
     error(RUNTIME_ERROR, "Flash erase error");
+    // Write data in chunks in order to reset IWDG
+    /*
+
+    for (uint32_t written = 0; written < length; written += 128 * 1024){
+      if (qspi_erase(address, address + length) != MEMORY_OK) {
+        error(RUNTIME_ERROR, "Flash erase error");
+        break;
+      }
+    }
+    */
   }
   else if (qspi_write_block(address, (uint8_t *)data, length) != MEMORY_OK) {
     error(RUNTIME_ERROR, "Flash firmware write error");
@@ -187,7 +202,7 @@ void MidiHandler::handleFirmwareUploadCommand(uint8_t *data, uint16_t size) {
   }
   else if (ret == 0) {
     setMessage("Firmware upload in progress");
-    led_toggle();
+    led_off();
     // toggleLed(); todo!
   }
   else {
@@ -197,7 +212,6 @@ void MidiHandler::handleFirmwareUploadCommand(uint8_t *data, uint16_t size) {
 }
 
 void MidiHandler::handleFlashEraseCommand(uint8_t *data, uint16_t size) {
-  /* TODO: this code makes no sense for QSPI, sector size is small and chip is large */
   led_on();
   if (size == 5) {
     uint32_t sector = loader.decodeInt(data);
