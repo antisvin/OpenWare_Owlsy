@@ -1,6 +1,14 @@
 #ifndef __QSPI_CONTROL_H__
 #define __QSPI_CONTROL_H__
 
+#ifdef QSPI_DEVICE_IS25LP064A
+#include "Flash_IS25LP064A.h"
+#elif defined(QSPI_DEVICE_IS25LP080D)
+#include "Flash_IS25LP080D.h"
+#else
+#error "Unknown QSPI flash device"
+#endif
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -22,7 +30,7 @@ extern "C" {
 /**
   Driver for QSPI peripheral to interface with external flash memory.
   Currently supported QSPI Devices:
-  * IS25LP080D
+  * IS25LP080D, IS25LP064A
 */
 
 /**
@@ -84,12 +92,20 @@ int qspi_erase(uint32_t start_adr, uint32_t end_adr);
 
 /**
   Erases a single sector of the chip.
-  TODO: Document the size of this function.
+  Sector size is 4k
   @param addr Address of sector to erase
   @retval MEMORY_OK or MEMORY_ERROR
  */
 int qspi_erase_sector(uint32_t addr);
 
+
+/**
+  Erases a single block of the chip.
+  Block size is 64k
+  @param addr Address of sector to erase
+  @retval MEMORY_OK or MEMORY_ERROR
+ */
+int qspi_erase_block(uint32_t addr);
 
 /**
   Copy QSPI data to another location in memory
