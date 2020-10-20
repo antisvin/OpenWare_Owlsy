@@ -15,9 +15,7 @@ extern char _FLASH_STORAGE_BEGIN, _FLASH_STORAGE_END;
  * This is only intended to be used for storing patches on Daisy QSPI flash.
  */
 
-#define QSPI_PAGE_SIZE 256
-#define QSPI_SECTOR_SIZE 4096
-#define QSPI_ALIGNMENT QSPI_PAGE_SIZE
+#define QSPI_ALIGNMENT 4
 /*
  * Writes will be performed in 256 byte pages. Whole storage could be aligned to 4k sector
  * to enable erasure for individual patches. But using flash modification would better distrubet
