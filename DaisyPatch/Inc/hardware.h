@@ -21,7 +21,7 @@
 //#define MINIMAL_BUILD
 
 // FW size limit would matter only if we use bootloader, otherwise linker scripts sets this limit
-//#define MAX_SYSEX_FIRMWARE_SIZE 128 * 1024
+#define MAX_SYSEX_FIRMWARE_SIZE 512 * 1024
 // Program size is limited by patch RAM section size
 //#define MAX_SYSEX_PROGRAM_SIZE 448 * 1024
 //#define MAX_SYSEX_PROGRAM_SIZE 256 * 1024
@@ -50,6 +50,10 @@
 #define NOF_ENCODERS                 2 // Second encoder is virtual - toggled by software mode
 //#define ENCODER_TIM1 htim4
 
+#define LOAD_INDICATOR_PARAMETER     PARAMETER_DH
+// We don't want to display this, because there's an explicit menu
+// Also, parameters A-D are used by ADC, so we can't set values for them
+
 #define USE_EXTERNAL_RAM
 #define USE_CACHE
 
@@ -64,7 +68,6 @@
 /* USB audio settings */
 #define AUDIO_BITS_PER_SAMPLE       16
 #define AUDIO_BYTES_PER_SAMPLE      (AUDIO_BITS_PER_SAMPLE/8)
-#define USB_AUDIO_CHANNELS          4
 /* #define AUDIO_INT32_TO_SAMPLE(x)    (__REV16((x)>>8)) */
 /* #define AUDIO_SAMPLE_TO_INT32(x)    ((int32_t)(__REV16(x))<<8) */
 #define AUDIO_INT32_TO_SAMPLE(x)    ((x)>>8)
@@ -79,20 +82,12 @@
 #define AUDIO_BITS_PER_SAMPLE       16
 #define AUDIO_BYTES_PER_SAMPLE      (AUDIO_BITS_PER_SAMPLE/8)
 #define AUDIO_CHANNELS              4
-#define USB_AUDIO_CHANNELS          4
-
-/*
-#define USE_UART_MIDI
-#define UART_MIDI_HANDLE huart1
-#define UART_MIDI_RX_BUFFER_SIZE 256
-*/
+#define USB_AUDIO_CHANNELS          0
 
 #define QSPI_HANDLE hqspi
 //#define QSPI_DEVICE_IS25LP080D
 #define QSPI_DEVICE_IS25LP064A
 
-#ifndef DEBUG
 #define USE_IWDG
 #define IWDG_PERIPH IWDG1
-#endif
 /* #define INIT_FMC */

@@ -151,8 +151,8 @@ int main(void)
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
-  MX_GPIO_Init();
   MX_DMA_Init();
+  MX_GPIO_Init();
   MX_FMC_Init();
   MX_IWDG1_Init();
   MX_ADC1_Init();
@@ -166,6 +166,8 @@ int main(void)
 
   //HAL_NVIC_SetPriority(EXTI2_IRQn, 3, 0);
   //HAL_NVIC_EnableIRQ(EXTI2_IRQn);
+  //HAL_NVIC_EnableIRQ(OTG_FS_IRQn);
+
 
   SDRAM_Initialization_Sequence(&hsdram1);
 
@@ -887,27 +889,6 @@ void StartDefaultTask(void const * argument)
     loop();
   }
   /* USER CODE END 5 */
-}
-
-/**
-  * @brief  Period elapsed callback in non blocking mode
-  * @note   This function is called  when TIM7 interrupt took place, inside
-  * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
-  * a global variable "uwTick" used as application time base.
-  * @param  htim : TIM handle
-  * @retval None
-  */
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
-{
-  /* USER CODE BEGIN Callback 0 */
-
-  /* USER CODE END Callback 0 */
-  if (htim->Instance == TIM7) {
-    HAL_IncTick();
-  }
-  /* USER CODE BEGIN Callback 1 */
-
-  /* USER CODE END Callback 1 */
 }
 
 /**
