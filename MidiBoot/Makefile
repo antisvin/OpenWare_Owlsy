@@ -14,7 +14,6 @@ C_SRC += $(OPENWARE)/Source/usbd_midi_if.c
 C_SRC += $(OPENWARE)/Source/sdram.c
 C_SRC += $(OPENWARE)/Source/sysex.c
 C_SRC += $(OPENWARE)/Source/crc32.c
-C_SRC += $(OPENWARE)/Source/eepromcontrol.c
 C_SRC += $(OPENWARE)/Source/message.c
 CPP_SRC += $(OPENWARE)/Source/MidiWriter.cpp
 # S_SRC = startup_openboot.s
