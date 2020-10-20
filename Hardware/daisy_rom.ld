@@ -69,7 +69,6 @@ SECTIONS
 		*/Owl.o (.text .text*)
 		*/Codec.o (.text .text*)
 		*/Daisy.o (.text .text*)
-		/* * /tasks.o (.text .text*) */
 		*/usbd*.o (.text .text*)
 		*/uart*.o (.text .text*)
 		*/ServiceCalls.o (.text .text*)
@@ -77,8 +76,8 @@ SECTIONS
 		*/ScreenBuffer.o (.text .text*)
 		*/Graphics.o (.text .text*)
 		*/ssd1309.o (.text .text*)
+		*/stm32h7xx_it.o (.text .text*)
 		*/stm32h7xx_hal_spi.o (.text .text*)
-		/* * /stm32h7xx_it.o (.text .text*)		*/
 		_eitcm = .;
 	} > ITCMRAM AT > FIRMWARE
 
@@ -351,11 +350,11 @@ SECTIONS
 	.nocache (NOLOAD) :
 	{
 		. = ALIGN(4);
+		PROVIDE ( _BUFFERS_BEGIN = .);
 		_snocache = .;
 		*(.nocache)
 		*(.nocache*)		
 		_enocache = .;
-		PROVIDE ( _BUFFERS_BEGIN = .);
 	} > BUFFERS
 	_BUFFERS_END = ORIGIN(BUFFERS) + LENGTH(BUFFERS);
 	_BUFFERS_SIZE = LENGTH(BUFFERS);
