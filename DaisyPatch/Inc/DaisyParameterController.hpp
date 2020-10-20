@@ -45,9 +45,9 @@ public:
   };
 
   enum ControlMode {
-    PLAY,
+    SETUP,
     STATUS,
-    PRESET,
+    PATCH,
     DATA,
     GATES,
     SCOPE,
@@ -70,9 +70,9 @@ public:
 
   ControlMode controlMode;
   const char controlModeNames[NOF_CONTROL_MODES][12] = {
-    "  Play   >",
+    "  Setup  >",
     "< Status >",
-    "< Preset >",
+    "< Patch >",
     "< Data   >",
 #ifdef USE_DIGITALBUS
     "< Bus    >",
@@ -105,7 +105,7 @@ public:
     selectedPid[0] = PARAMETER_A;
     selectedPid[1] = 0;
     displayMode = STANDARD;
-    controlMode = PLAY;
+    controlMode = SETUP;
     activeEncoder = 1;
   }
 
@@ -115,7 +115,7 @@ public:
     draw(screen);
   }
 
-  void drawPlay(ScreenBuffer &screen) {
+  void drawSetup(ScreenBuffer &screen) {
     int offset = 16;
     screen.setTextSize(1);
     if (activeEncoder == 1) {
@@ -316,18 +316,18 @@ public:
 
   void drawControlMode(ScreenBuffer &screen) {
     switch (controlMode) {
-    case PLAY:
+    case SETUP:
       drawTitle(controlModeNames[controlMode], screen);
-      drawPlay(screen);
+      drawSetup(screen);
       break;
     case STATUS:
       drawTitle(controlModeNames[controlMode], screen);
       drawStatus(screen);
       drawMessage(46, screen);
       break;
-    case PRESET:
+    case PATCH:
       drawTitle(controlModeNames[controlMode], screen);
-      drawPresetNames(selectedPid[1], screen);
+      drawPatchNames(selectedPid[1], screen);
       break;
     case DATA:
       drawTitle(controlModeNames[controlMode], screen);
@@ -399,8 +399,7 @@ public:
       // draw most recently changed parameter
       // drawParameter(selectedPid[selectedBlock], 44, screen);
       if (getOperationMode() == LOAD_MODE){
-        drawLoadProgress(user[0] * 127 / 4095, screen);
-        //drawLoadProgress(getParameterValue(PARAMETER_A * 127 / 4095), screen);
+        drawLoadProgress(user[LOAD_INDICATOR_PARAMETER] * 127 / 4095, screen);
       }
       else {
         drawParameter(selectedPid[0], 54, screen);
@@ -424,7 +423,7 @@ public:
     drawParameters(screen);
   }  
 
-  void drawPresetNames(int selected, ScreenBuffer &screen) {
+  void drawPatchNames(int selected, ScreenBuffer &screen) {
     screen.setTextSize(1);
     selected = min(uint8_t(selected), registry.getNumberOfPatches() - 1);
     if (selected > 1) {
@@ -454,17 +453,17 @@ public:
     selected = min(uint8_t(selected), registry.getNumberOfResources() - 1);
     if (selected > 0 && registry.getNumberOfResources() > 0) {
       screen.setCursor(1, 24);
-      screen.print((int)selected - 1);
+      screen.print((int)selected - 1 + MAX_NUMBER_OF_PATCHES);
       screen.print(".");
       screen.print(registry.getResourceName(MAX_NUMBER_OF_PATCHES + selected));
     };
     screen.setCursor(1, 24 + 10);
-    screen.print((int)selected);
+    screen.print((int)selected + MAX_NUMBER_OF_PATCHES);
     screen.print(".");
     screen.print(registry.getResourceName(MAX_NUMBER_OF_PATCHES + 1 + selected));
     if (selected + 1 < (int)registry.getNumberOfResources()) {
       screen.setCursor(1, 24 + 20);
-      screen.print((int)selected + 1);
+      screen.print((int)selected + 1 + MAX_NUMBER_OF_PATCHES);
       screen.print(".");
       screen.print(registry.getResourceName(MAX_NUMBER_OF_PATCHES + 2 + selected));
     }
@@ -541,7 +540,7 @@ public:
     }
   }
 
-  int16_t getEncoderValue(uint8_t eid) {
+  int16_t getEncoderValue(uint8_t eid) const {
     return (encoders[eid] - offsets[eid]) << encoderSensitivity;
   }
 
@@ -583,7 +582,6 @@ public:
       drawCallback = (void (*)(uint8_t *, uint16_t, uint16_t))callback;
   }
 
-
   // called by MIDI cc and/or from patch
   void setValue(uint8_t pid, int16_t value){
     if (pid >= NOF_ADC_VALUES)
@@ -615,7 +613,7 @@ public:
 
   void setControlModeValue(uint8_t value){
     switch(controlMode){
-    case PLAY:
+    case SETUP:
         value = max((uint8_t)SENS_SUPER_FINE, min((uint8_t)SENS_SUPER_COARSE, value));
         if (value > (uint8_t)encoderSensitivity){
           encoderSensitivity = (EncoderSensitivity)((uint8_t)encoderSensitivity + ENC_MULTIPLIER / 2);
@@ -627,7 +625,7 @@ public:
         }
         selectedPid[1] = value;
         break;
-    case PRESET:
+    case PATCH:
       selectedPid[1] = max(1, min(registry.getNumberOfPatches()-1, value));
       break;
     case DATA:
@@ -669,13 +667,13 @@ public:
       else if (isPress) {
         // Go to control mode
         displayMode = CONTROL;
-        controlMode = PLAY;
+        controlMode = SETUP;
         activeEncoder = 0;
         selectedPid[1] = encoderSensitivity;
       }
       else {
         if(encoders[0] != value){
-          encoders[0] = min(4095, max(0, value));
+          encoders[0] = value; //min(4095, max(0, value));
           // We must update encoder value before calculating user value, otherwise
           // previous value would be displayed
           user[selectedPid[0]] = getEncoderValue(0);
@@ -710,7 +708,7 @@ public:
     }
   }
 
-  void encoderChanged(uint8_t encoder, int32_t delta) {}
+  void encoderChanged(uint8_t encoder, int32_t delta) const {}
 
   void selectGlobalParameter(int8_t pid) {
     lastSelectedPid = pid;
@@ -721,11 +719,11 @@ public:
   void setControlMode(uint8_t value) {
     controlMode = (ControlMode)value;
     switch (controlMode) {
-    case PLAY:
+    case SETUP:
     case STATUS:
     case GATES:
       break;
-    case PRESET:
+    case PATCH:
       selectedPid[1] = settings.program_index;
       break;
     case DATA:
@@ -747,7 +745,7 @@ public:
     else if (pressed & 0x01) {
       // Short press
       switch (controlMode) {
-      case PLAY:
+      case SETUP:
       case SCOPE:
         activeEncoder = !activeEncoder;
         break;
@@ -760,8 +758,8 @@ public:
       case STATUS:
         setErrorStatus(NO_ERROR);
         break;
-      case PRESET:
-        // load preset
+      case PATCH:
+        // load patch
         if (activeEncoder == 1){
           settings.program_index = selectedPid[1];
           program.loadProgram(settings.program_index);
@@ -786,10 +784,8 @@ public:
       activeEncoder = 1;
       selectedPid[0] = lastSelectedPid;
       selectedPid[1] = parameters[lastSelectedPid];
-#ifndef DEBUG
       if (saveSettings)
         settings.saveToFlash();
-#endif
     }
     else {
       int16_t delta = value - encoders[activeEncoder];
