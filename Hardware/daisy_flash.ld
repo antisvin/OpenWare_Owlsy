@@ -27,9 +27,8 @@ RAM_D3 (rwx)      : ORIGIN = 0x38000000, LENGTH = 64K
 EXTRAM (rwx)      : ORIGIN = 0xc0000000, LENGTH = 64M
 /*BOOTLOADER (r)    : ORIGIN = 0x8000000, LENGTH = 64K    /* Bootloader on flash*/
 FLASH (rx)        : ORIGIN = 0x08000000, LENGTH = 128K /* Firmware minus settings and flash */
-STORAGE (rx)      : ORIGIN = 0x90000000, LENGTH = 8M
-/* FLASH (rx)        : ORIGIN = 0x90000000, LENGTH = 512K  /* QSPI flash - firmware part */
-/* STORAGE (rx)      : ORIGIN = 0x90080000, LENGTH = 7680K  /* QSPI flash - patch storage part. That's one hell of a lot of patches */
+FIRMWARE (r)      : ORIGIN = 0x90000000, LENGTH = 512K  /* QSPI flash - firmware storage part. It would be used as bootrom and storage for builtin LUTs */
+STORAGE (rx)      : ORIGIN = 0x90080000, LENGTH = 7680K  /* QSPI flash - patch storage part. That's one hell of a lot of patches */
 }
 /* Device flash is 128k, we split it between bootloader and settings
  QSPI flash is 8M, split it between FW and patches
@@ -62,28 +61,15 @@ SECTIONS
 		_sitcm = .;
     	PROVIDE ( _ISR_VECTOR = . );
 		KEEP(*(.isr_vector))
-	} > ITCMRAM AT > FLASH
+	} > /*ITCMRAM AT >*/ FLASH
 
 	.itcm : 
 	{
 		. = ALIGN(4);
 		*(.itcm)
 		*(.itcm*)
-		*/Owl.o (.text .text*)
-		*/Codec.o (.text .text*)
-		*/Daisy.o (.text .text*)
-		*/tasks.o (.text .text*)
-		*/usbd*.o (.text .text*)
-		*/uart*.o (.text .text*)
-		*/ServiceCalls.o (.text .text*)
-		*/ProgramManager.o (.text .text*)
-		*/ScreenBuffer.o (.text .text*)
-		*/Graphics.o (.text .text*)
-		*/ssd1309.o (.text .text*)
-		*/stm32h7xx_hal_spi.o (.text .text*)
-		*/stm32h7xx_it.o (.text .text*)
 		_eitcm = .;
-	} > ITCMRAM AT > FLASH
+	} > /*ITCMRAM AT >*/ FLASH
 
 	.text :
 	{
@@ -141,6 +127,18 @@ SECTIONS
 		PROVIDE(__fini_array_end = .);
 	} > FLASH
 
+	/*
+	 * Tables section won't be relocated from flash
+	 */
+
+	.tables :
+	{
+		. = ALIGN(4);
+		*(.tables)
+		*(.tables*)
+	} > FLASH
+
+	_sidata = LOADADDR(.data);
 	.data :
 	{
 		. = ALIGN(4);
@@ -154,8 +152,6 @@ SECTIONS
 
 		PROVIDE(__data_end__ = _edata);
 	} > DTCMRAM AT >FLASH
-
-	_sidata = LOADADDR(.data);
 
 	.bss (NOLOAD):
 	{
@@ -306,12 +302,15 @@ SECTIONS
 		PROVIDE(__qspiflash_bss_end = _eqspiflash_bss);
 	} > QSPIFLASH
 */
+
+/*
 	.ram (NOLOAD) :
 	{
 		. = ALIGN(4);
 		PROVIDE (_FFT_LUT_BEGIN = .);
 		KEEP(*(.fft_lut));
 	} > RAM
+*/
 
 	.firmware_storage (NOLOAD) :
 	{
@@ -341,15 +340,6 @@ SECTIONS
 	} > BUFFERS
 	_BUFFERS_END = ORIGIN(BUFFERS) + LENGTH(BUFFERS);
 	_BUFFERS_SIZE = LENGTH(BUFFERS);
-
-  	.extdata (NOLOAD) :
-  	{
-            /* *(.extdata) */
-            /* . = ALIGN(8); */
-            PROVIDE ( _EXTRAM = . );
-        } >EXTRAM
-        _EXTRAM_END = ORIGIN(EXTRAM) + LENGTH(EXTRAM);
-        _EXTRAM_SIZE = LENGTH(EXTRAM);
 
 /*
 	.heap (NOLOAD) :
