@@ -202,6 +202,10 @@ unsigned int PatchRegistry::getNumberOfResources(){
   return resourceCount;
 }
 
+bool PatchRegistry::hasPatches(){
+  return patchCount > 0 || dynamicPatchDefinition != NULL;
+}
+
 PatchDefinition* PatchRegistry::getPatchDefinition(unsigned int index){
   PatchDefinition *def = NULL;
   if(index == 0)
