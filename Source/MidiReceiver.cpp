@@ -18,7 +18,7 @@ static MidiReader mididevice;
 static MidiStreamReader midiuart(4); // use cable number 4 for serial midi
 #endif /* USE_UART_MIDI */
 
-static SerialBuffer<MIDI_INPUT_BUFFER_SIZE, MidiMessage> midi_rx_buffer;
+static SerialBuffer<MIDI_INPUT_BUFFER_SIZE, MidiMessage> midi_rx_buffer NO_CACHE;
 
 void MidiReceiver::init(){
 #ifdef USE_UART_MIDI
