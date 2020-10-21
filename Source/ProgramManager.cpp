@@ -344,10 +344,19 @@ void updateProgramVector(ProgramVector* pv){
     // todo: add remaining program space
     { NULL, 0 }
   };  
-#elif defined OWL_ARCH_F7 || defined OWL_ARCH_H7
+#elif defined OWL_ARCH_F7
   extern char _EXTRAM, _EXTRAM_SIZE;
   static MemorySegment heapSegments[] = {
     { (uint8_t*)&_EXTRAM, (uint32_t)(&_EXTRAM_SIZE) },
+    { NULL, 0 }
+  };
+#elif defined OWL_ARCH_H7
+  extern char _EXTRAM, _EXTRAM_SIZE;
+  extern char _DTCMHEAP_BEGIN, _DTCMHEAP_SIZE;
+  static MemorySegment heapSegments[] = {
+    { (uint8_t*)&_DTCMHEAP_BEGIN, (uint32_t)(&_DTCMHEAP_SIZE) },
+    { (uint8_t*)&_EXTRAM, (uint32_t)(&_EXTRAM_SIZE) },
+    // todo: add remaining program space
     { NULL, 0 }
   };
 #else
