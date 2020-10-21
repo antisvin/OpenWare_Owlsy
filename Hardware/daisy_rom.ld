@@ -16,7 +16,8 @@ MEMORY
 {
 ITCMRAM (rx)      : ORIGIN = 0x00000000, LENGTH = 64K
 /* DTCMRAM (rwx)     : ORIGIN = 0x20000000, LENGTH = 128K */
-DTCMRAM (rw)      : ORIGIN = 0x20000000, LENGTH = 64K /* First half of DTCMRAM is used as FW RAM */
+DTCMRAM (rw)      : ORIGIN = 0x20000000, LENGTH = 64K /* First half of DTCM is used as FW RAM */
+DTCMHEAP (rw)     : ORIGIN = 0x20010000, LENGTH = 64K /* Second half of DTCM is used as fast heap for patches */
 /* Second half of DTCMRAM could be fast heap? */
 PATCHRAM (rwx)    : ORIGIN = 0x24000000, LENGTH = 512K
 RAM (rwx)         : ORIGIN = 0x30000000, LENGTH = 256K /* Firmware code, copied by bootloader */
@@ -204,6 +205,19 @@ SECTIONS
   	} > DTCMRAM
   	_estack = ORIGIN(DTCMRAM) + LENGTH(DTCMRAM); /* end of firmware RAM */
 
+
+	.dtcmheap (NOLOAD):
+	{
+		. = ALIGN(4);
+		_DTCMHEAP_BEGIN = .;
+
+		PROVIDE(__bss_start__ = _sbss);
+		*(.dtcmheap)
+		*(.dtcmheap*)
+
+	} > DTCMHEAP
+	_DTCMHEAP_SIZE = LENGTH(DTCMHEAP);
+	_DTCMHEAP_END = ORIGIN(DTCMHEAP) + LENGTH(DTCMHEAP);
 
 /*
 	.dtcmram_bss (NOLOAD) :
