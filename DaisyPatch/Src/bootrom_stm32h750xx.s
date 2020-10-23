@@ -147,13 +147,21 @@ Default_Handler:
 Infinite_Loop:
   b  Infinite_Loop
   .size  Default_Handler, .-Default_Handler
-
+/*
     .section .firmware_header,"a",%progbits
   .type firmwareHeader, %object
   .size firmwareHeader, .-firmwareHeader
+   */
+/*
+.global firmware_header_size
 
 firmwareHeader:
-  .word 0xBABECAFE /* <- That's where I wanna be instead of hacking this damned bootloader */
+  .word 0xBABECAFE
+  .word firmware_header_size
+  .word firmare_version_header
+  .word hardware_id_header
+  .word _ISR_VECTOR
+  .word firmware_options_header
   .word _sitcm
   .word _eitcm
   .word _siitcm
@@ -163,13 +171,8 @@ firmwareHeader:
   .word _scode
   .word _ecode
   .word _sicode
-  .word 0
-  .word 0
-  .word 0
-  .word 0
-  .word 0
-  .word 0
-
+  .word 0xDEADC0DE
+ */
 
 
 /******************************************************************************
