@@ -27,6 +27,9 @@
 //#define MAX_SYSEX_PROGRAM_SIZE 448 * 1024
 //#define MAX_SYSEX_PROGRAM_SIZE 256 * 1024
 
+#define MAX_NUMBER_OF_PATCHES       60
+#define MAX_NUMBER_OF_RESOURCES     60
+
 #define USE_SCREEN
 #define SSD1309
 //#define OLED_DMA
