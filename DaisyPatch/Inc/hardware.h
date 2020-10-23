@@ -11,6 +11,7 @@
   #error Invalid configuration
 #endif
 
+#define USE_FIRMWARE_HEADER
 #define FLASH_TASK_STACK_SIZE        (1024/sizeof(portSTACK_TYPE))
 
 //#define PROGRAM_TASK_STACK_SIZE      (6*1024/sizeof(portSTACK_TYPE))
@@ -50,9 +51,8 @@
 #define NOF_ENCODERS                 2 // Second encoder is virtual - toggled by software mode
 //#define ENCODER_TIM1 htim4
 
-#define LOAD_INDICATOR_PARAMETER     PARAMETER_DH
-// We don't want to display this, because there's an explicit menu
-// Also, parameters A-D are used by ADC, so we can't set values for them
+#define LOAD_INDICATOR_PARAMETER     PARAMETER_BD
+// Parameters A-D are used by ADC, so we can't set values for them
 
 #define USE_EXTERNAL_RAM
 #define USE_CACHE
