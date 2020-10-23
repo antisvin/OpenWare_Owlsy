@@ -98,16 +98,6 @@ void saveToFlash(uint32_t address, void *data, uint32_t length) {
   }
   else if (qspi_erase(address, address + length) != MEMORY_OK) {
     error(RUNTIME_ERROR, "Flash erase error");
-    // Write data in chunks in order to reset IWDG
-    /*
-
-    for (uint32_t written = 0; written < length; written += 128 * 1024){
-      if (qspi_erase(address, address + length) != MEMORY_OK) {
-        error(RUNTIME_ERROR, "Flash erase error");
-        break;
-      }
-    }
-    */
   }
   else if (qspi_write_block(address, (uint8_t *)data, length) != MEMORY_OK) {
     error(RUNTIME_ERROR, "Flash firmware write error");
@@ -141,7 +131,7 @@ int loadFirmware(void) {
   FirmwareHeader* header = getFirmwareHeader();
   if (header->magic == FIRMWARE_HEADER) { // TODO: possibly check checksum here
     uint32_t* start = &header->section_0_start;
-    for (int i = 0; i < FIRMWARE_RELOCATIONS_COUNT; i++) {
+    for (uint32_t i = 0; i < (header->options >> OPT_NUM_RELOCATIONS_OFFSET) & OPT_NUM_RELOCATIONS_MASK; i++) {
       memcpy((void*)(*start), (void*)(*(start + 2)), *(start + 1) - *start);
       start += 3;
     }
@@ -162,6 +152,18 @@ const char *getErrorMessage() { return errormessage; }
 bool midi_error(const char *str) {
   error(PROGRAM_ERROR, str);
   return false;
+}
+
+bool updateChecksum(uint32_t address, uint32_t checksum){
+  bool success = false;
+  if (qspi_init(QSPI_MODE_INDIRECT_POLLING) != MEMORY_OK)
+    return false;
+  else if (qspi_write_block(address, (uint8_t*)&checksum, 4) == MEMORY_OK) {
+    success = true;
+  }
+  if (qspi_init(QSPI_MODE_MEMORY_MAPPED) != MEMORY_OK)
+    success = false;
+  return success;
 }
 
 void setup() {
@@ -195,7 +197,6 @@ void MidiHandler::handleFirmwareUploadCommand(uint8_t *data, uint16_t size) {
   int32_t ret = loader.handleFirmwareUpload(data, size);
   if (ret > 0) {
     setMessage("Firmware upload complete");
-    loadFirmware();
     // firmware upload complete: wait for run or store
     // setLed(NONE); todo!
     led_off();
@@ -230,9 +231,25 @@ void MidiHandler::handleFirmwareFlashCommand(uint8_t *data, uint16_t size) {
     uint32_t checksum = loader.decodeInt(data);
     if (checksum == loader.getChecksum()) {
       led_on();
-      saveToFlash((uint32_t)&_FIRMWARE_STORAGE_BEGIN, loader.getData(), loader.getSize());
-      loader.clear();
-      led_off();
+      FirmwareHeader* header = (FirmwareHeader*)loader.getData();
+      if (header->magic == HEADER_MAGIC && header->checksum == HEADER_CHECKSUM_PLACEHOLDER){
+        header->checksum = 0xFFFFFFFF; // Not an actual checksum yet
+        checksum = crc32((void*)header, header->header_size - 4, 0);
+        saveToFlash((uint32_t)&_FIRMWARE_STORAGE_BEGIN, loader.getData(), loader.getSize());
+        loader.clear();
+
+        // Now that data is stored, we can update the checksum field to confirm it's successful
+        uint32_t checksum_address = (uint32_t)&(getFirmwareHeader()->checksum);
+        if (updateChecksum(checksum_address, checksum)){
+          led_off();
+        }
+        else {
+          error(PROGRAM_ERROR, "Error storing checksum");
+        }
+      }
+      else {
+        error(PROGRAM_ERROR, "Invalid firmware header");
+      }
     } else {
       error(PROGRAM_ERROR, "Invalid FLASH checksum");
     }

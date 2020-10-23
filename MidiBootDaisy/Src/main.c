@@ -28,6 +28,7 @@
 #include "qspicontrol.h"
 #include "FirmwareHeader.h"
 #include "sdram.h"
+#include "crc32.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -94,11 +95,17 @@ static int testNoProgram(){
   // NOTE: this must run only if QSPI flash is:
   // a. initialized successfully
   // b. is in memory-mapped mode
-  return (*(__IO uint32_t*)APPLICATION_ADDRESS) != FIRMWARE_HEADER;
+  return (*(__IO uint32_t*)APPLICATION_ADDRESS) != HEADER_MAGIC;
 }
 
 static int testWatchdogReset(){
   return __HAL_RCC_GET_FLAG(RCC_FLAG_IWDG1RST) != RESET;
+}
+
+static int testFirmwareHeader(){
+  struct FirmwareHeader* header = getFirmwareHeader();
+  uint32_t header_crc = crc32((void*)header, header->header_size - 4, 0);
+  return header->checksum != header_crc;
 }
 
 /* USER CODE END PFP */
@@ -135,7 +142,6 @@ int main(void)
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
-  MX_IWDG1_Init();
   MX_GPIO_Init();
   MX_FMC_Init();
   MX_QUADSPI_Init();
@@ -161,6 +167,9 @@ int main(void)
     else if(testNoProgram()){
       error(RUNTIME_ERROR, "No valid firmware");
     }
+    else if(testFirmwareHeader()){
+      error(RUNTIME_ERROR, "Invalid firmware header");
+    }
     else if (loadFirmware()){
       // jump to application code
 
@@ -182,15 +191,22 @@ int main(void)
 
       /* Jump to user application */
       struct FirmwareHeader* header = getFirmwareHeader();
-      uint32_t JumpAddress = *(__IO uint32_t*) (header->section_0_start + 4);
+
+      // Enable IWDG if firmware has option bit set
+      if ((header->options >> OPT_IWDG_OFFSET) & OPT_IWDG_MASK)
+        MX_IWDG1_Init();
+
+      uint32_t JumpAddress = *(__IO uint32_t*) (header->isr_vector_address + 4);
       pFunction jumpToApplication = (pFunction) JumpAddress;
       /* Initialize user application's Stack Pointer */
-      __set_MSP(*(__IO uint32_t*) header->section_0_start);
+      __set_MSP(*(__IO uint32_t*) header->isr_vector_address);
 
       jumpToApplication();
       for(;;);
     }
   }
+  MX_IWDG1_Init();
+
   /* Clear reset flags */
   __HAL_RCC_CLEAR_RESET_FLAGS();
 

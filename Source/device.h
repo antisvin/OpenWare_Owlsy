@@ -3,7 +3,11 @@
 
 #include "hardware.h"
 
-#define FIRMWARE_VERSION "v21.1"
+#define FIRMWARE_VERSION_MAJOR       21
+#define FIRMWARE_VERSION_MINOR       0
+#define _FW_STR(x)                   #x
+#define _FW_TO_STR(x)                _FW_STR(x)
+#define FIRMWARE_VERSION             "v" _FW_TO_STR(FIRMWARE_VERSION_MAJOR) "." _FW_TO_STR(FIRMWARE_VERSION_MINOR)
 
 #ifndef AUDIO_OUTPUT_GAIN
 #define AUDIO_OUTPUT_GAIN            112
