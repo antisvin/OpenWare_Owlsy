@@ -771,7 +771,6 @@ public:
       case GATES:
         // Invert output gate on click
         setButtonValue(BUTTON_C, !getButtonValue(BUTTON_C));
-        setGateValue(BUTTON_C, getButtonValue(BUTTON_C));
         selectedPid[1] = 1;
         break;
       case STATUS:

@@ -15,6 +15,7 @@
 #include "SoftwareEncoder.hpp"
 
 extern bool updateUi;
+extern uint16_t button_values;
 
 static SoftwareEncoder encoder(
   ENC_A_GPIO_Port, ENC_A_Pin,
@@ -27,11 +28,12 @@ extern "C" void updateEncoderCounter(){
 }
 
 void setGateValue(uint8_t bid, int16_t value){
-  switch(bid){
-  //case PUSHBUTTON:
-  case BUTTON_C:
+  if (bid == BUTTON_C) {
     HAL_GPIO_WritePin(GATE_OUT_GPIO_Port, GATE_OUT_Pin, value ? GPIO_PIN_SET :  GPIO_PIN_RESET);
-    break;
+    // We have to update button values here, because currently it's not propagated from program vector. A bug?
+    setButtonValue(BUTTON_C, value);
+    //button_values &= ~((!value) << BUTTON_C);
+    //button_values |= (bool(value) << BUTTON_C);
   }
 }
 
