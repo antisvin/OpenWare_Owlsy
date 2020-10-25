@@ -59,7 +59,7 @@ public:
   int16_t encoders[NOF_ENCODERS]; // last seen encoder values
   int16_t offsets[NOF_ENCODERS];  // last seen encoder values
   int16_t user[SIZE] CACHE_ALIGNED;             // user set values (ie by encoder or MIDI)
-  char names[SIZE][12];
+  char names[SIZE][16];
   uint8_t selectedPid[NOF_ENCODERS];
   uint8_t lastSelectedPid, lastChannel, lastSelectedResource;
   // Use first param after ADC as default to avoid confusion from accidental turns
@@ -92,8 +92,15 @@ public:
     saveSettings = false;
     drawCallback = defaultDrawCallback;
     for (int i = 0; i < SIZE; ++i) {
-      strcpy(names[i], "Parameter ");
-      names[i][9] = 'A' + i;
+      strcpy(names[i], "Param  ");
+      if (i < 8){
+        names[i][6] = 'A' + i;
+      }
+      else {
+        names[i][6] = 'A' - 1 + i / 8;
+        names[i][7] = 'A' + i % 8;
+      }
+
       parameters[i] = 0;
       user[i] = 0;
     }
@@ -359,14 +366,26 @@ public:
 
   void drawGlobalParameterNames(ScreenBuffer &screen) {
     screen.setTextSize(1);
+    // Footer
+    screen.setCursor(66, 24 + 20);
+    screen.print("Shift");
+    screen.setCursor(98, 24 + 20);
+    screen.print("Value");
+    // First row
     if (selectedPid[0] > 0)
       screen.print(1, 24, names[selectedPid[0] - 1]);
+    // Second row
     screen.print(1, 24 + 10, names[selectedPid[0]]);
+    // Third row
     if (selectedPid[0] < SIZE - 1)
       screen.print(1, 24 + 20, names[selectedPid[0] + 1]);
-    screen.invert(0, 25, 64, 10);
+    // Offset and param value
     screen.setCursor(66, 24 + 10);
+    screen.print(user[selectedPid[0]]);
+    screen.setCursor(100, 24 + 10);
     screen.print(parameters[selectedPid[0]]);
+    // Frame around value
+    screen.invert(0, 25, 98, 10);
   }
 
   void drawParameterNames(ScreenBuffer &screen) {
