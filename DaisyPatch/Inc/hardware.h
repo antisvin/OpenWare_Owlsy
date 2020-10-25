@@ -29,6 +29,7 @@
 
 #define MAX_NUMBER_OF_PATCHES       60
 #define MAX_NUMBER_OF_RESOURCES     60
+#define STORAGE_MAX_BLOCKS          256
 
 #define USE_SCREEN
 #define SSD1309
@@ -47,7 +48,7 @@
 #define ADC_C 2
 #define ADC_D 3
 #define NOF_ADC_VALUES               4
-#define NOF_PARAMETERS               20
+#define NOF_PARAMETERS               40
 // Buttons are encoder short/long click, 2 x gate in, 1 x gate out
 #define NOF_BUTTONS                  (4 + 2 + 1)
 //#define USE_ENCODERS

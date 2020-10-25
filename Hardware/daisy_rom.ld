@@ -43,7 +43,7 @@ STORAGE (rx)      : ORIGIN = 0x90080000, LENGTH = 7680K  /* QSPI flash - patch s
 
 SECTIONS
 {
-	.header :
+	.firmware_header :
 	{
 		. = ALIGN(4);
 		KEEP(*(.firmware_header))
@@ -76,6 +76,7 @@ SECTIONS
 		*/ProgramManager.o (.text .text*)
 		*/ScreenBuffer.o (.text .text*)
 		*/Graphics.o (.text .text*)
+		*/Midi*.o (.text .text*)
 		*/ssd1309.o (.text .text*)
 		*/stm32h7xx_it.o (.text .text*)
 		*/stm32h7xx_hal_spi.o (.text .text*)
