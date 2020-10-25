@@ -21,8 +21,9 @@ static const uint32_t num_relocations = 3U;
 static const uint32_t num_relocations = 0U;
 #endif
 
-__attribute__ ((section (".firmware_header")))  
-const struct FirmwareHeader firmware_header {
+__attribute__ ((section (".firmware_header")))
+__attribute__ ((used))
+static const struct FirmwareHeader firmware_header {
     HEADER_MAGIC,
     sizeof(FirmwareHeader),
     (FIRMWARE_VERSION_MAJOR << 24) | (FIRMWARE_VERSION_MINOR << 16),
