@@ -335,7 +335,7 @@ void updateProgramVector(ProgramVector* pv){
   pv->encoderChangedCallback = NULL;
 #endif
 #ifdef PROGRAM_VECTOR_V13
-#ifdef USE_EXTERNAL_RAM
+#if defined(USE_EXTERNAL_RAM) && !defined(OWL_ARCH_H7)
   extern char _EXTRAM, _EXTRAM_SIZE;
   extern char _CCMRAM, _CCMRAM_SIZE;
   static MemorySegment heapSegments[] = {

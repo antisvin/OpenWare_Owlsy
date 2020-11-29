@@ -17,6 +17,8 @@
 extern bool updateUi;
 extern uint16_t button_values;
 
+Graphics graphics;
+
 static SoftwareEncoder encoder(
   ENC_A_GPIO_Port, ENC_A_Pin,
   ENC_B_GPIO_Port, ENC_B_Pin, 
@@ -66,7 +68,7 @@ void setup(){
   extern SPI_HandleTypeDef OLED_SPI;
   graphics.begin(&OLED_SPI);
 
-  owl_setup();
+  owl.setup();
 }
 
 static int16_t enc_data[2];
@@ -87,5 +89,5 @@ void loop(void){
     }
   }
   
-  owl_loop();
+  owl.loop();
 }
