@@ -15,7 +15,6 @@ public:
   const char* getResourceName(unsigned int index);
   PatchDefinition* getPatchDefinition(unsigned int index);
   unsigned int getNumberOfPatches();
-  bool hasPatches();
   unsigned int getNumberOfResources();
   bool hasPatches();
   void registerPatch(PatchDefinition* def);

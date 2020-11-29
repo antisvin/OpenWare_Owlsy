@@ -130,23 +130,6 @@ void MidiController::sendPatchParameterName(PatchParameterId pid, const char* na
   sendSysEx(buf, sizeof(buf));
 }
 
-void MidiController::sendPatchNames(){
-  for(uint8_t i=0; i<registry.getNumberOfPatches(); ++i)
-    sendPatchName(i, registry.getPatchName(i));
-  sendPc(program.getProgramIndex());
-}
-
-void MidiController::sendPatchName(uint8_t index, const char* name){
-  if(name != NULL){
-    uint8_t size = strnlen(name, 24);
-    uint8_t buf[size+2];
-    buf[0] = SYSEX_PRESET_NAME_COMMAND;
-    buf[1] = index;
-    memcpy(buf+2, name, size);
-    sendSysEx(buf, sizeof(buf));
-  }
-}
-
 void MidiController::sendDeviceInfo(){
   sendFirmwareVersion();
   sendProgramMessage();
@@ -176,13 +159,13 @@ void MidiController::sendDeviceStats(){
 #ifdef DEBUG_STORAGE
   p = &buf[1];
   p = stpcpy(p, (const char*)"Storage used ");
-  p = stpcpy(p, msg_itoa(patch_storage.getTotalUsedSize(), 10));
+  p = stpcpy(p, msg_itoa(storage.getTotalUsedSize(), 10));
   p = stpcpy(p, (const char*)" deleted ");
-  p = stpcpy(p, msg_itoa(patch_storage.getDeletedSize(), 10));
+  p = stpcpy(p, msg_itoa(storage.getDeletedSize(), 10));
   p = stpcpy(p, (const char*)" free ");
-  p = stpcpy(p, msg_itoa(patch_storage.getFreeSize(), 10));
+  p = stpcpy(p, msg_itoa(storage.getFreeSize(), 10));
   p = stpcpy(p, (const char*)" total ");
-  p = stpcpy(p, msg_itoa(patch_storage.getTotalAllocatedSize(), 10));
+  p = stpcpy(p, msg_itoa(storage.getTotalAllocatedSize(), 10));
   sendSysEx((uint8_t*)buf, p-buf);
 #endif /* DEBUG_STORAGE */
 }

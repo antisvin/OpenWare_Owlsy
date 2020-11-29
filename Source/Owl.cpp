@@ -363,11 +363,7 @@ void Owl::setup(void){
   setAnalogValue(PARAMETER_G, 0);
 #endif
 
-#ifdef USE_SCREEN
-  xNextWakeTime = xTaskGetTickCount() - 20;
-  // This should trigger display rendering immediately. First frame may end up a few MS out of
-  // sync, but that's probably not noticeable.
-#endif
+
 
 #if defined USE_ADC && !defined OWL_WAVETABLE
   extern ADC_HandleTypeDef ADC_PERIPH;
@@ -379,9 +375,6 @@ void Owl::setup(void){
   midi_rx.init();
   midiSetInputChannel(settings.midi_input_channel);
   midiSetOutputChannel(settings.midi_output_channel);
-
-  xLastWakeTime = xTaskGetTickCount();
-  xFrequency = MAIN_LOOP_SLEEP_MS / portTICK_PERIOD_MS; // 20mS = 50Hz refresh rate
 
 #ifdef USE_DIGITALBUS
   bus_setup();
@@ -676,7 +669,11 @@ void device_reset(){
   HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, 0);
 #endif
   /* Disable all interrupts */
+#ifdef OWL_ARCH_H7
+  RCC->CIER = 0x00000000;
+#else
   RCC->CIR = 0x00000000;
+#endif
   NVIC_SystemReset();
   /* Shouldn't get here */
   while(1);
