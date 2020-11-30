@@ -18,6 +18,7 @@
 //#define UTILITY_TASK_STACK_SIZE      (1024/sizeof(portSTACK_TYPE))
 //#define MANAGER_TASK_STACK_SIZE      (2048/sizeof(portSTACK_TYPE))
 
+#define MAIN_LOOP_SLEEP_MS          20
 
 //#define MINIMAL_BUILD
 
@@ -86,7 +87,8 @@
 #define AUDIO_BITS_PER_SAMPLE       16
 #define AUDIO_BYTES_PER_SAMPLE      (AUDIO_BITS_PER_SAMPLE/8)
 #define AUDIO_CHANNELS              4
-#define USB_AUDIO_CHANNELS          0
+#define USB_AUDIO_CHANNELS          4
+
 
 #define QSPI_HANDLE hqspi
 //#define QSPI_DEVICE_IS25LP080D

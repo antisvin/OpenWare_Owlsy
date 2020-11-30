@@ -314,7 +314,7 @@ __weak void pinChanged(uint16_t pin){
 #ifdef USE_SCREEN
 bool updateUi;
 static TickType_t xNextWakeTime;
-static const TickType_t xFrequency = 20 / portTICK_PERIOD_MS; // 20mS = 50Hz refresh rate
+static const TickType_t xFrequency = MAIN_LOOP_SLEEP_MS / portTICK_PERIOD_MS; // 20mS = 50Hz refresh rate
 #endif
 
 void Owl::setup(void){
@@ -334,18 +334,6 @@ void Owl::setup(void){
   registry.init();
   settings.init(); // settings need the registry to be initialised first
   
-  // Backwards compatibility with old settings name/location
-  ResourceHeader* res = registry.getResource(42);
-  if (res != NULL && strcmp(res->name, "Settings") == 0) {
-    // Copy old settings and delete previous resource
-    uint8_t* data = (uint8_t*)res + sizeof(ResourceHeader);
-    memcpy((void*)&settings, data, sizeof(settings));
-    settings.saveToFlash();
-    registry.getResourceBlock(42)->setDeleted();
-    registry.init();
-    debugMessage("Settings migrated");
-  }
-
 #ifdef USE_CODEC
   codec.init();
   codec.set(0);
@@ -363,7 +351,9 @@ void Owl::setup(void){
   setAnalogValue(PARAMETER_G, 0);
 #endif
 
-
+#ifdef USE_SCREEN
+  xNextWakeTime = xTaskGetTickCount();
+#endif
 
 #if defined USE_ADC && !defined OWL_WAVETABLE
   extern ADC_HandleTypeDef ADC_PERIPH;
@@ -594,8 +584,11 @@ void Owl::loop(){
 #ifdef USE_IWDG
   IWDG_PERIPH->KR = 0xaaaa; // reset the watchdog timer (if enabled)
 #endif
+
   if(backgroundTask != NULL)
     backgroundTask->loop();
+  else
+    vTaskDelay(1);  
 }
 
 void Owl::setBackgroundTask(BackgroundTask* bt){
