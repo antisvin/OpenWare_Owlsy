@@ -187,7 +187,7 @@ int main(void)
       for (int i = 0;i < 5; i++) {
     	  NVIC->ICER[i]=0xFFFFFFFF;
 	      NVIC->ICPR[i]=0xFFFFFFFF;
-      }	      
+      }
 
       /* Jump to user application */
       struct FirmwareHeader* header = getFirmwareHeader();

@@ -265,7 +265,7 @@ __weak void pinChanged(uint16_t pin){
 #ifdef USE_SCREEN
 bool updateUi;
 static TickType_t xNextWakeTime;
-static const TickType_t xFrequency = 20 / portTICK_PERIOD_MS; // 20mS = 50Hz refresh rate
+static const TickType_t xFrequency = MAIN_LOOP_SLEEP_MS / portTICK_PERIOD_MS; // 20mS = 50Hz refresh rate
 #endif
 
 void Owl::setup(void){
@@ -302,7 +302,9 @@ void Owl::setup(void){
   setAnalogValue(PARAMETER_G, 0);
 #endif
 
-
+#ifdef USE_SCREEN
+  xNextWakeTime = xTaskGetTickCount();
+#endif
 
 #if defined USE_ADC && !defined OWL_WAVETABLE
   extern ADC_HandleTypeDef ADC_PERIPH;
@@ -521,8 +523,11 @@ void Owl::loop(){
 #ifdef USE_IWDG
   IWDG_PERIPH->KR = 0xaaaa; // reset the watchdog timer (if enabled)
 #endif
+
   if(backgroundTask != NULL)
     backgroundTask->loop();
+  else
+    vTaskDelay(1);  
 }
 
 void Owl::setBackgroundTask(BackgroundTask* bt){

@@ -73,7 +73,7 @@ void setup(){
 
 static int16_t enc_data[2];
 
-void loop(void){
+void loop(){
   updateEncoderCounter();
   if (updateUi){
 #if defined USE_CACHE
