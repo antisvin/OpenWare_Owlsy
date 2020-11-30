@@ -69,7 +69,7 @@
 #define USE_USBD_MIDI
 #define USE_USBD_AUDIO
 #define USE_USBD_AUDIO_TX  // microphone
-#define USE_USBD_AUDIO_RX // speaker
+//#define USE_USBD_AUDIO_RX // speaker
 /* USB audio settings */
 #define AUDIO_BITS_PER_SAMPLE       16
 #define AUDIO_BYTES_PER_SAMPLE      (AUDIO_BITS_PER_SAMPLE/8)
@@ -87,8 +87,6 @@
 #define AUDIO_BITS_PER_SAMPLE       16
 #define AUDIO_BYTES_PER_SAMPLE      (AUDIO_BITS_PER_SAMPLE/8)
 #define AUDIO_CHANNELS              4
-#define USB_AUDIO_CHANNELS          4
-
 
 #define QSPI_HANDLE hqspi
 //#define QSPI_DEVICE_IS25LP080D

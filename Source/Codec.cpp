@@ -73,19 +73,27 @@ typedef int8_t audio_t;
 #endif
 
 static void update_rx_read_index(){
-#if defined USE_CS4271 || defined USE_PCM3168A
+#if defined USE_CS4271 || defined USE_PCM3168A || defined USE_AK4556
   extern DMA_HandleTypeDef HDMA_RX1;
   // NDTR: the number of remaining data units in the current DMA Stream transfer.
+  #ifdef DUAL_CODEC
+  size_t pos = audio_rx_buffer.getCapacity() - __HAL_DMA_GET_COUNTER(&HDMA_RX1) - __HAL_DMA_GET_COUNTER(&HDMA_RX1);
+  #else
   size_t pos = audio_rx_buffer.getCapacity() - __HAL_DMA_GET_COUNTER(&HDMA_RX1);
+  #endif
   audio_rx_buffer.setReadIndex(pos);
 #endif
 }
 
 static void update_tx_write_index(){
-#if defined USE_CS4271 || defined USE_PCM3168A
+#if defined USE_CS4271 || defined USE_PCM3168A || defined USE_AK4556
   extern DMA_HandleTypeDef HDMA_TX1;
   // NDTR: the number of remaining data units in the current DMA Stream transfer.
+  #ifdef DUAL_CODEC
+  size_t pos = audio_tx_buffer.getCapacity() - __HAL_DMA_GET_COUNTER(&HDMA_TX1) - __HAL_DMA_GET_COUNTER(&HDMA_TX2);
+  #else
   size_t pos = audio_tx_buffer.getCapacity() - __HAL_DMA_GET_COUNTER(&HDMA_TX1);
+  #endif
   audio_tx_buffer.setWriteIndex(pos);
 #endif
 }
