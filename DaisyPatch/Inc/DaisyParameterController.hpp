@@ -55,6 +55,9 @@ public:
     NOF_CONTROL_MODES, // Not an actual mode
   };
 
+  float cpu_used;
+  static constexpr float cpu_smooth_lambda = 0.98;
+
   int16_t parameters[SIZE];
   int16_t encoders[NOF_ENCODERS]; // last seen encoder values
   int16_t offsets[NOF_ENCODERS];  // last seen encoder values
@@ -281,7 +284,9 @@ public:
 
     // draw CPU load
     screen.print(1, offset + 17, "cpu ");
-    screen.print((int)((pv->cycles_per_block) / pv->audio_blocksize) / 83);
+    float new_cpu_used = (pv->cycles_per_block) / pv->audio_blocksize / 100;
+    cpu_used = cpu_used * cpu_smooth_lambda + new_cpu_used - new_cpu_used * cpu_smooth_lambda;
+    screen.print((int)cpu_used);
     screen.print("%");
     // draw firmware version
     screen.print(1, offset + 26, getFirmwareVersion());
