@@ -41,7 +41,7 @@ extern "C" {
 #endif
 }
 
-#if defined(USE_CS4271) || defined (USE_AK4556)
+#if defined(USE_CS4271) || defined(USE_AK4556)
   #define HSAI_RX1 hsai_BlockB1
   #define HSAI_TX1 hsai_BlockA1
   #define HDMA_RX1 hdma_sai1_b
@@ -76,12 +76,13 @@ static void update_rx_read_index(){
 #if defined USE_CS4271 || defined USE_PCM3168A || defined USE_AK4556
   extern DMA_HandleTypeDef HDMA_RX1;
   // NDTR: the number of remaining data units in the current DMA Stream transfer.
-  #ifdef DUAL_CODEC
-  size_t pos = audio_rx_buffer.getCapacity() - __HAL_DMA_GET_COUNTER(&HDMA_RX1) - __HAL_DMA_GET_COUNTER(&HDMA_RX1);
-  #else
+  #ifndef DUAL_CODEC
   size_t pos = audio_rx_buffer.getCapacity() - __HAL_DMA_GET_COUNTER(&HDMA_RX1);
-  #endif
   audio_rx_buffer.setReadIndex(pos);
+  #else
+  size_t pos = audio_rx1_buffer.getCapacity() - __HAL_DMA_GET_COUNTER(&HDMA_RX1);
+  audio_rx1_buffer.setReadIndex(pos);  
+  #endif
 #endif
 }
 
@@ -89,12 +90,15 @@ static void update_tx_write_index(){
 #if defined USE_CS4271 || defined USE_PCM3168A || defined USE_AK4556
   extern DMA_HandleTypeDef HDMA_TX1;
   // NDTR: the number of remaining data units in the current DMA Stream transfer.
-  #ifdef DUAL_CODEC
-  size_t pos = audio_tx_buffer.getCapacity() - __HAL_DMA_GET_COUNTER(&HDMA_TX1) - __HAL_DMA_GET_COUNTER(&HDMA_TX2);
-  #else
+  #ifndef DUAL_CODEC
   size_t pos = audio_tx_buffer.getCapacity() - __HAL_DMA_GET_COUNTER(&HDMA_TX1);
+  audio_tx_buffer.setWriteIndex(pos);  
+  #else
+  // Assuming that both SAI codecs are in sync
+  size_t pos = audio_tx1_buffer.getCapacity() - __HAL_DMA_GET_COUNTER(&HDMA_TX1);
+  audio_tx1_buffer.setWriteIndex(pos);
+  audio_tx2_buffer.setWriteIndex(pos);
   #endif
-  audio_tx_buffer.setWriteIndex(pos);
 #endif
 }
 
@@ -102,11 +106,20 @@ void usbd_audio_tx_start_callback(uint16_t rate, uint8_t channels){
 #if defined USE_USBD_AUDIO_TX && USBD_AUDIO_TX_CHANNELS > 0
   // set read head at half a ringbuffer distance from write head
   update_tx_write_index();
+  #ifndef DUAL_CODEC
   size_t pos = audio_tx_buffer.getWriteIndex();
   size_t len = audio_tx_buffer.getCapacity();
   pos = (pos + len/2) % len;
   pos = (pos/AUDIO_CHANNELS)*AUDIO_CHANNELS; // round down to nearest frame
   audio_tx_buffer.setReadIndex(pos);
+  #else
+  size_t pos = audio_tx1_buffer.getWriteIndex();
+  size_t len = audio_tx1_buffer.getCapacity();
+  pos = (pos + len/2) % len;
+  pos = (pos * 2 / AUDIO_CHANNELS) * (AUDIO_CHANNELS / 2); // round down to nearest half-frame
+  audio_tx1_buffer.setReadIndex(pos);
+  audio_tx2_buffer.setReadIndex(pos);
+  #endif
 #if DEBUG
   printf("start tx %d %d %d\n", rate, channels, pos);
 #endif
@@ -121,6 +134,7 @@ void usbd_audio_tx_stop_callback(){
 
 void usbd_audio_rx_start_callback(uint16_t rate, uint8_t channels){
 #if defined USE_USBD_AUDIO_RX && USBD_AUDIO_RX_CHANNELS > 0
+  #ifndef DUAL_CODEC
   audio_rx_buffer.setAll(0);
   update_rx_read_index();
   size_t pos = audio_rx_buffer.getWriteIndex();
@@ -128,6 +142,17 @@ void usbd_audio_rx_start_callback(uint16_t rate, uint8_t channels){
   pos = (pos + len/2) % len;
   pos = (pos/AUDIO_CHANNELS)*AUDIO_CHANNELS; // round down to nearest frame
   audio_rx_buffer.setWriteIndex(pos);
+  #else
+  audio_rx1_buffer.setAll(0);
+  audio_rx2_buffer.setAll(0);
+  update_rx_read_index();
+  size_t pos = audio_rx1_buffer.getWriteIndex();
+  size_t len = audio_rx1_buffer.getCapacity();
+  pos = (pos + len/2) % len;
+  pos = (pos * 2 / AUDIO_CHANNELS) * (AUDIO_CHANNELS / 2); // round down to nearest frame
+  audio_rx1_buffer.setWriteIndex(pos);
+  audio_rx2_buffer.setWriteIndex(pos);
+  #endif
   program.exitProgram(true);
   owl.setOperationMode(STREAM_MODE);
 #if DEBUG
@@ -138,7 +163,12 @@ void usbd_audio_rx_start_callback(uint16_t rate, uint8_t channels){
 
 void usbd_audio_rx_stop_callback(){
 #if defined USE_USBD_AUDIO_RX && USBD_AUDIO_RX_CHANNELS > 0
+  #ifndef DUAL_CODEC
   audio_rx_buffer.setAll(0);
+  #else
+  audio_rx1_buffer.setAll(0);
+  audio_rx2_buffer.setAll(0);
+  #endif
   program.loadProgram(program.getProgramIndex());
   program.startProgram(true);
   owl.setOperationMode(RUN_MODE);
@@ -155,7 +185,11 @@ size_t usbd_audio_rx_callback(uint8_t* data, size_t len){
   update_rx_read_index();
   audio_t* src = (audio_t*)data;
   size_t blocksize = len / (USBD_AUDIO_RX_CHANNELS*AUDIO_BYTES_PER_SAMPLE);
+  #ifndef DUAL_CODEC
   size_t available = audio_rx_buffer.getWriteCapacity()/AUDIO_CHANNELS;
+  #else
+  size_t available = audio_rx1_buffer.getWriteCapacity() * 2 /AUDIO_CHANNELS;
+  #endif
   if(available < blocksize){
     usbd_audio_rx_flow += blocksize-available;
     // skip some frames start and end of this block
@@ -164,13 +198,27 @@ size_t usbd_audio_rx_callback(uint8_t* data, size_t len){
     len = blocksize*USBD_AUDIO_RX_CHANNELS*AUDIO_BYTES_PER_SAMPLE;
   }
   while(blocksize--){
+    #ifndef DUAL_CODEC
       int32_t* dst = audio_rx_buffer.getWriteHead();
       size_t ch = USBD_AUDIO_RX_CHANNELS;
       while(ch--)
-  	*dst++ = AUDIO_SAMPLE_TO_INT32(*src++);
+        *dst++ = AUDIO_SAMPLE_TO_INT32(*src++);
       // should we leave in place or zero out any remaining channels?
       memset(dst, 0, (AUDIO_CHANNELS-USBD_AUDIO_RX_CHANNELS)*sizeof(int32_t));
       audio_rx_buffer.incrementWriteHead(AUDIO_CHANNELS);
+    #else
+      int32_t* dst1 = audio_rx1_buffer.getWriteHead();
+      int32_t* dst2 = audio_rx2_buffer.getWriteHead();
+      size_t ch = USBD_AUDIO_RX_CHANNELS / 2;
+      while(ch--){
+        *dst1++ = AUDIO_SAMPLE_TO_INT32(*src++);
+        *dst2++ = AUDIO_SAMPLE_TO_INT32(*src++);
+      }
+      // should we leave in place or zero out any remaining channels?
+      memset(dst, 0, (AUDIO_CHANNELS-USBD_AUDIO_RX_CHANNELS)*sizeof(int32_t));
+      audio_rx1_buffer.incrementWriteHead(AUDIO_CHANNELS / 2);
+      audio_rx2_buffer.incrementWriteHead(AUDIO_CHANNELS / 2);
+    #endif
   }
   // available = audio_rx_buffer.getWriteCapacity()*AUDIO_BYTES_PER_SAMPLE*USBD_AUDIO_RX_CHANNELS/AUDIO_CHANNELS;
   // if(available < AUDIO_RX_PACKET_SIZE)
@@ -185,7 +233,12 @@ void usbd_audio_tx_callback(uint8_t* data, size_t len){
 #if defined USE_USBD_AUDIO_TX && USBD_AUDIO_TX_CHANNELS > 0
   update_tx_write_index();
   size_t blocksize = len / (USBD_AUDIO_TX_CHANNELS*AUDIO_BYTES_PER_SAMPLE);
+  #ifndef DUAL_CODEC
   size_t available = audio_tx_buffer.getReadCapacity()/AUDIO_CHANNELS;
+  #else
+  // Bufferrs are in sync, so we can use just first one and double its size
+  size_t available = audio_tx1_buffer.getReadCapacity()*2/AUDIO_CHANNELS;
+  #endif
   if(available < blocksize){
     usbd_audio_tx_flow += blocksize-available;
     blocksize = available;
@@ -193,11 +246,23 @@ void usbd_audio_tx_callback(uint8_t* data, size_t len){
   }
   audio_t* dst = (audio_t*)data;
   while(blocksize--){
+    #ifndef DUAL_CODEC
     int32_t* src = audio_tx_buffer.getReadHead();
-    size_t ch = USBD_AUDIO_TX_CHANNELS;
+    size_t ch = USBD_AUDIO_TX_CHANNELS / 2;
     while(ch--)
       *dst++ = AUDIO_INT32_TO_SAMPLE(*src++); // shift, round, dither, clip, truncate, bitswap
     audio_tx_buffer.incrementReadHead(AUDIO_CHANNELS);
+    #else
+    int32_t* src1 = audio_tx1_buffer.getReadHead();
+    int32_t* src2 = audio_tx2_buffer.getReadHead();
+    size_t ch = USBD_AUDIO_TX_CHANNELS / 2;
+    while(ch--){
+      *dst++ = AUDIO_INT32_TO_SAMPLE(*src1++); // shift, round, dither, clip, truncate, bitswap
+      *dst++ = AUDIO_INT32_TO_SAMPLE(*src2++); // shift, round, dither, clip, truncate, bitswap
+    }
+    audio_tx1_buffer.incrementReadHead(AUDIO_CHANNELS / 2);
+    audio_tx2_buffer.incrementReadHead(AUDIO_CHANNELS / 2);
+    #endif
   }
   usbd_audio_write(data, len);
 #endif
