@@ -41,7 +41,7 @@ void PatchRegistry::init() {
       }else if(id > MAX_NUMBER_OF_PATCHES && 
 	       id <= MAX_NUMBER_OF_PATCHES+MAX_NUMBER_OF_RESOURCES){
           resourceblocks[id-1-MAX_NUMBER_OF_PATCHES] = block;
-          resourceCount = max(resourceCount, id - MAX_NUMBER_OF_PATCHES + 1);
+          resourceCount = max(resourceCount, id - MAX_NUMBER_OF_PATCHES);
       }
     }
   }
@@ -197,6 +197,7 @@ const char* PatchRegistry::getResourceName(unsigned int index){
   return hdr->name;
 }
 
+template<class Storage, class StorageBlock>
 const char* PatchRegistry::getPatchName(unsigned int index){
   PatchDefinition* def = getPatchDefinition(index);
   if(def == NULL)
@@ -204,6 +205,7 @@ const char* PatchRegistry::getPatchName(unsigned int index){
   return def->getName();
 }
 
+template<class Storage, class StorageBlock>
 unsigned int PatchRegistry::getNumberOfPatches(){
   // +1 for the current / dynamic patch in slot 0
   // return nofPatches+1;

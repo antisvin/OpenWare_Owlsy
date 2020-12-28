@@ -68,7 +68,10 @@ public:
   // Use first param after ADC as default to avoid confusion from accidental turns
   bool saveSettings;
   uint8_t activeEncoder;
-  
+
+  bool resourceDelete;
+  bool resourceDeletePressed; // This is used to ensure that we don't delete current resourse on menu enter
+
   EncoderSensitivity encoderSensitivity = SENS_STANDARD;
 
   ControlMode controlMode;
@@ -93,6 +96,7 @@ public:
   
   void reset() {
     saveSettings = false;
+    resourceDelete = false;
     drawCallback = defaultDrawCallback;
     for (int i = 0; i < SIZE; ++i) {
       strcpy(names[i], "Param  ");
@@ -474,27 +478,41 @@ public:
 
   void drawResourceNames(int selected, ScreenBuffer &screen) {
     screen.setTextSize(1);
-    selected = min(uint8_t(selected), registry.getNumberOfResources() - 1);
+    if (resourceDelete)
+      selected = min(selected, registry.getNumberOfResources());
+    else
+      selected = min(selected, registry.getNumberOfResources() - 1);
+    if (resourceDelete && selected == 0)
+      screen.print(18, 24, "Delete:");
     if (selected > 0 && registry.getNumberOfResources() > 0) {
       screen.setCursor(1, 24);
-      screen.print((int)selected - 1 + MAX_NUMBER_OF_PATCHES);
+      screen.print((int)selected + MAX_NUMBER_OF_PATCHES);
       screen.print(".");
       screen.print(registry.getResourceName(MAX_NUMBER_OF_PATCHES + selected));
     };
-    screen.setCursor(1, 24 + 10);
-    screen.print((int)selected + MAX_NUMBER_OF_PATCHES);
-    screen.print(".");
-    screen.print(registry.getResourceName(MAX_NUMBER_OF_PATCHES + 1 + selected));
+    if (selected < (int)registry.getNumberOfResources()) {
+      screen.setCursor(1, 24 + 10);
+      screen.print((int)selected + 1 + MAX_NUMBER_OF_PATCHES);
+      screen.print(".");
+      screen.print(registry.getResourceName(MAX_NUMBER_OF_PATCHES + 1 + selected));
+    }
+    else if (resourceDelete){
+      screen.print(18, 24 + 10, "Exit");
+    }
     if (selected + 1 < (int)registry.getNumberOfResources()) {
       screen.setCursor(1, 24 + 20);
-      screen.print((int)selected + 1 + MAX_NUMBER_OF_PATCHES);
+      screen.print((int)selected + 2 + MAX_NUMBER_OF_PATCHES);
       screen.print(".");
       screen.print(registry.getResourceName(MAX_NUMBER_OF_PATCHES + 2 + selected));
     }
-    if (activeEncoder == 0)
-      screen.invert(0, 25, 128, 10);
-    else
+    else if (resourceDelete && selected < (int)registry.getNumberOfResources()){
+      screen.print(18, 24 + 20, "Exit");
+    }
+
+    if (resourceDelete)
       screen.drawRectangle(0, 25, 128, 10, WHITE);
+    else
+      screen.invert(0, 25, 128, 10);
   }
 
   void drawLoadProgress(uint8_t progress, ScreenBuffer &screen){
@@ -653,11 +671,10 @@ public:
       selectedPid[1] = max(1, min(registry.getNumberOfPatches()-1, value));
       break;
     case DATA:
-      selectedPid[1] = max(
-        0,
-        min(
-          registry.getNumberOfResources() > 0 ? registry.getNumberOfResources() - 1 : 0,
-          value));
+      if (resourceDelete)
+        selectedPid[1] = max(0, min(registry.getNumberOfResources(), value));
+      else
+        selectedPid[1] = max(0, min(registry.getNumberOfResources() - 1, value));
       break;
     case GATES:
       break;
@@ -752,7 +769,7 @@ public:
       break;
     case DATA:
       selectedPid[1] = lastSelectedResource;
-      break;
+      resourceDelete = false;
       break;
     case SCOPE:
       selectedPid[1] = lastChannel;
@@ -794,10 +811,37 @@ public:
         }
         break;
       case DATA:
-        if (activeEncoder == 1){
-          lastSelectedPid = selectedPid[1];
+        if (resourceDelete) {
+          if (selectedPid[1] == registry.getNumberOfResources()){
+            // Exit on last menu item (exit link after resources list)
+            resourceDelete = false;
+            resourceDeletePressed = false;
+            controlMode = EXIT;
+            activeEncoder = 0;
+          }
+          else if (!resourceDeletePressed) {
+            // Delete resource unless it's protected by "__" prefix
+            resourceDeletePressed = true;
+            debugMessage("sel", selectedPid[1] + MAX_NUMBER_OF_PATCHES + 1);
+            ResourceHeader* res = registry.getResource(selectedPid[1] + MAX_NUMBER_OF_PATCHES + 1);
+            if (res != NULL) {
+              if(res->name[0] == '_' && res->name[1] == '_'){
+                debugMessage("Resource protected");
+              }
+              else {
+                program.exitProgram(false);
+                registry.setDeleted(selectedPid[1] + MAX_NUMBER_OF_PATCHES + 1);
+                program.startProgram(false);
+              }
+            }
+          }
         }
-        activeEncoder = !activeEncoder;
+        else {
+          resourceDelete = true;
+          resourceDeletePressed = true;
+          activeEncoder = 1;
+        }
+        break;
       default:
         break;
       }
@@ -827,6 +871,9 @@ public:
         }
         else if(delta < 0 && selectedPid[1] > 0) {
           setControlModeValue(selectedPid[1] - 1);
+        }
+        if (controlMode == DATA && resourceDeletePressed) {
+          resourceDeletePressed = false;
         }
       }
       encoders[0] = value;
