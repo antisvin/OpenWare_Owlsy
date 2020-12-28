@@ -29,7 +29,8 @@ public:
   StorageBlock* getResourceBlock(const char* name);
   void* getResourceData(uint8_t index);
   void* getResourceData(const char* name);
-  bool store(uint8_t index, uint8_t* data, size_t size);  
+  bool store(uint8_t index, uint8_t* data, size_t size);
+  void setDeleted(uint8_t index);
 private:
   bool isPresetBlock(StorageBlock block);
   StorageBlock patchblocks[MAX_NUMBER_OF_PATCHES];

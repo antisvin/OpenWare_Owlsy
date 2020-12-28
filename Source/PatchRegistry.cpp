@@ -41,7 +41,7 @@ void PatchRegistry::init() {
       }else if(id > MAX_NUMBER_OF_PATCHES && 
 	       id <= MAX_NUMBER_OF_PATCHES+MAX_NUMBER_OF_RESOURCES){
           resourceblocks[id-1-MAX_NUMBER_OF_PATCHES] = block;
-          resourceCount = max(resourceCount, id - MAX_NUMBER_OF_PATCHES + 1);
+          resourceCount = max(resourceCount, id - MAX_NUMBER_OF_PATCHES);
       }
     }
   }
@@ -175,6 +175,44 @@ bool PatchRegistry::store(uint8_t index, uint8_t* data, size_t size){
     return false;
   }
   return true;
+}
+
+void PatchRegistry::setDeleted(uint8_t index) {
+  if (!index) {
+    // 0 is dynamic patch, nothing to delete from storage
+    error(PROGRAM_ERROR, "Invalid ID");
+  }
+  else {
+    if (--index < MAX_NUMBER_OF_PATCHES){
+      StorageBlock* block = &patchblocks[index];
+      if (block->isValidSize()){
+        block->setDeleted();
+        init();
+        debugMessage("Deleted patch", index);
+      }
+      else {
+        error(PROGRAM_ERROR, "Invalid patch");
+      }
+    }
+    else {
+      index -= MAX_NUMBER_OF_PATCHES;
+      if (index < MAX_NUMBER_OF_RESOURCES) {
+        StorageBlock* block = &resourceblocks[index];
+        if (block->isValidSize()){
+          block->setDeleted();
+          init();
+          debugMessage("Deleted resource", index);
+//          onResourceUpdate();
+        }
+        else {
+          error(PROGRAM_ERROR, "Invalid resource");
+        }
+      }
+      else {
+          error(PROGRAM_ERROR, "Invalid ID");
+      }
+    }
+  }
 }
 
 const char* PatchRegistry::getResourceName(unsigned int index){
