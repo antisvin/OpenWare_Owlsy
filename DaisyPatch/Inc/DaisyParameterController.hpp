@@ -240,7 +240,7 @@ public:
         y += 3;
       }
     }
-  }  
+  }
 
   void drawStatus(ScreenBuffer &screen) {
     int offset = 16;
@@ -601,7 +601,7 @@ public:
 
   void drawMessage(int16_t y, ScreenBuffer &screen) {
     ProgramVector *pv = getProgramVector();
-    if (pv->message != NULL) {
+    if (pv->message != NULL && owl.getOperationMode() != LOAD_MODE) {
       screen.setTextSize(1);
       screen.setTextWrap(true);
       screen.print(0, y, pv->message);
