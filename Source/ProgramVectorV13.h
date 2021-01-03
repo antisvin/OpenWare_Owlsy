@@ -25,7 +25,8 @@
 #define BIOSIGNALS_HARDWARE         0x1d
 #define LICH_HARDWARE               0x1e
 #define WITCH_HARDWARE              0x1f
-#define DAISY_PATCH_HARDWARE        0x21
+#define DAISY_PATCH_HARDWARE        0xa0
+#define NEOPHYTE_HARDWARE           0xa1
 
 #define PROGRAM_VECTOR_CHECKSUM_V11 0x40
 #define PROGRAM_VECTOR_CHECKSUM_V12 0x50

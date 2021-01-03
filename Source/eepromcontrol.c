@@ -16,28 +16,36 @@ int eeprom_wait(){
 
 int eeprom_erase_sector(uint32_t sector) {
   FLASH_EraseInitTypeDef cfg;
+#ifndef OWL_ARCH_L4
   cfg.TypeErase = FLASH_TYPEERASE_SECTORS;
-#ifndef OWL_ARCH_F7
-  cfg.Banks = FLASH_BANK_1;
-#endif
   cfg.Sector = sector;
   cfg.NbSectors = 1;
   cfg.VoltageRange = FLASH_VOLTAGE_RANGE_3;
+#else
+  cfg.TypeErase = FLASH_TYPEERASE_PAGES;
+  cfg.Page = sector;
+  cfg.NbPages = 1;
+#endif  
+#ifndef OWL_ARCH_F7
+  cfg.Banks = FLASH_BANK_1;
+#endif
   uint32_t error;
   HAL_StatusTypeDef status = HAL_FLASHEx_Erase(&cfg, &error);
   return status;
 }
 
 int eeprom_write_word(uint32_t address, uint32_t data){
-#ifndef OWL_ARCH_H7
-  HAL_StatusTypeDef status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, address, data);
-#else
+#ifdef OWL_ARCH_H7
   HAL_StatusTypeDef status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_FLASHWORD, address, data);
+#elif defined(OWL_ARCH_L4)
+  HAL_StatusTypeDef status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD, address, data);
+#else
+  HAL_StatusTypeDef status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, address, data);
 #endif
   return status;
 }
 
-#ifndef OWL_ARCH_H7
+#if !defined(OWL_ARCH_H7) && !defined(OWL_ARCH_L4)
 int eeprom_write_byte(uint32_t address, uint8_t data){
   HAL_StatusTypeDef status =  HAL_FLASH_Program(FLASH_TYPEPROGRAM_BYTE, address, data);
   return status;
@@ -47,17 +55,26 @@ int eeprom_write_byte(uint32_t address, uint8_t data){
 int eeprom_write_block(uint32_t address, void* data, uint32_t size){
   uint32_t* p32 = (uint32_t*)data;
   uint32_t i=0; 
+#if defined(OWL_ARCH_H7)
+  for(;i+16<=size; i+=16){
+    eeprom_write_word(address+i, *p32);
+    *p32 += 4;
+  }
+#elif defined(OWL_ARCH_L4)
+  for(;i+8<=size; i+=8) {
+    eeprom_write_word(address+i, *p32);
+    *p32+= 2;
+  }
+#else
   for(;i+4<=size; i+=4)
     eeprom_write_word(address+i, *p32++);
+#endif
   uint8_t* p8 = (uint8_t*)p32;
-#ifndef OWL_ARCH_H7
+#if !defined(OWL_ARCH_H7) && !defined(OWL_ARCH_L4)
   for(;i<size; i++)
     eeprom_write_byte(address+i, *p8++);
 #else
-  // H7 requires flash alignment to words, so we align remaining bytes to the left
-  if (size < i){
-    eeprom_write_word(address + i, (*p32) << ((size - i) * 8));
-  }
+  // TODO: do something with unaligned remainder?
 #endif
   return eeprom_wait() == HAL_FLASH_ERROR_NONE ? 0 : -1;
 }
@@ -66,6 +83,7 @@ void eeprom_unlock(){
   HAL_FLASH_Unlock();
 }
 
+#ifndef OWL_ARCH_L4
 int eeprom_erase(uint32_t address){
   int ret = -1;
   if(address < ADDR_FLASH_SECTOR_1)
@@ -107,3 +125,16 @@ int eeprom_erase(uint32_t address){
     ret = -1;
   return ret;
 }
+#else
+int eeprom_erase(uint32_t address){
+  int ret;
+  extern char _FLASH_STORAGE_BEGIN, _FLASH_STORAGE_END;
+  if(address < (uint32_t)&_FLASH_STORAGE_BEGIN || address >= (uint32_t)&_FLASH_STORAGE_END)
+    ret = -1;  // protect boot sector
+    /* eeprom_erase_sector(FLASH_SECTOR_0, VoltageRange_3); */
+  else
+    /* This assumes 8kb pages, note that dual flash bank would use 4kb */
+    ret = eeprom_erase_sector((address >> 13) & 0xFF);
+  return ret;
+}
+#endif

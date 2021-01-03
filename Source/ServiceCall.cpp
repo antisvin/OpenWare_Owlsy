@@ -43,7 +43,7 @@ int SERVICE_ARM_CFFT_INIT_F32(arm_cfft_instance_f32* instance, int len){
     break;
   case 1024:
     *instance = arm_cfft_sR_f32_len1024;
-    break;      
+    break;
   case 2048:
     *instance = arm_cfft_sR_f32_len2048;
     break;

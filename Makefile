@@ -8,11 +8,11 @@ endif
 .PHONY: clean
 
 # To avoid problems on case insensitive filesystems, mark all targets named the same as a directory as phony
-.PHONY: midiboot tesseract alchemist wizard owlpedal quadfm player prism magus effectsbox noctua daisypatch midibootdaisy biosignals witch lich
+.PHONY: midiboot tesseract alchemist wizard owlpedal quadfm player prism magus effectsbox noctua daisypatch neophyte midibootdaisy midibootneo biosignals witch lich
 
 export OPENWARE CONFIG
 
-all: alchemist wizard magus witch lich owlpedal midiboot noctua effectsbox biosignals daisypatch midibootdaisy # biosignals tesseract prism effectsbox player quadfm  ## build most targets
+all: alchemist wizard magus witch lich owlpedal midiboot noctua effectsbox biosignals daisypatch neophyte midibootdaisy midibootneo # biosignals tesseract prism effectsbox player quadfm  ## build most targets
 
 midiboot: ## build MidiBoot project
 	@$(MAKE) -C MidiBoot all
@@ -59,8 +59,14 @@ biosignals: ## build BioSignals project
 daisypatch: ## build DaisyPatch project
 	@$(MAKE) -C DaisyPatch all
 
+neophyte: ## build Neophyte project
+	@$(MAKE) -C Neophyte all
+
 midibootdaisy: ## build MidiBootDaisy project
 	@$(MAKE) -C MidiBootDaisy all
+
+midibootneo: ## build MidiBootDaisy project
+	@$(MAKE) -C MidiBootNeo all
 
 clean: ## remove generated files
 	@$(MAKE) -C Tesseract clean
@@ -78,6 +84,10 @@ clean: ## remove generated files
 	@$(MAKE) -C Noctua clean
 	@$(MAKE) -C BioSignals clean
 	@$(MAKE) -C DaisyPatch clean
+	@$(MAKE) -C Neophyte clean
+	@$(MAKE) -C MidiBoot clean
+	@$(MAKE) -C MidiBootDaisy clean
+	@$(MAKE) -C MidiBootNeo clean
 
 docs: ## generate HTML documentation
 	@doxygen Doxyfile

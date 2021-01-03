@@ -4,6 +4,8 @@
 #include "stm32f7xx_hal.h"
 #elif defined(OWL_ARCH_H7)
 #include "stm32h7xx_hal.h"
+#elif defined(OWL_ARCH_L4)
+#include "stm32l4xx_hal.h"
 #else
 #error "Unknown OWL architecture"
 #endif

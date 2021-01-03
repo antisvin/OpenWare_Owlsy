@@ -1,3 +1,5 @@
 [submodule "Libraries"]
 	path = Libraries
-	url = git@github.com:pingdynasty/OpenWareLibraries.git
+	url = git@github.com:antisvin/OpenWareLibraries.git
+[submodule "Libraries/"]
+	branch = feature/l4

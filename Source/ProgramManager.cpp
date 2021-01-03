@@ -346,6 +346,12 @@ void updateProgramVector(ProgramVector* pv){
     { (uint8_t*)&_EXTRAM, (uint32_t)(&_EXTRAM_SIZE) },
     { NULL, 0 }
   };
+#elif defined OWL_ARCH_L4
+  extern char _HEAPRAM_BEGIN, _HEAPRAM_SIZE;
+  static MemorySegment heapSegments[] = {
+    { (uint8_t*)&_HEAPRAM_BEGIN, (uint32_t)(&_HEAPRAM_SIZE) },
+    { NULL, 0 }
+  };
 #elif defined OWL_ARCH_H7
   extern char _EXTRAM, _EXTRAM_SIZE;
   extern char _DTCMHEAP_BEGIN, _DTCMHEAP_SIZE;
@@ -539,7 +545,7 @@ void runManagerTask(void* p){
 #if defined OWL_ARCH_F7
         extern char _PATCHRAM, _PATCHRAM_SIZE;
         uint8_t* PROGRAMSTACK = ((uint8_t*)&_PATCHRAM )+_PATCHRAM_SIZE-PROGRAMSTACK_SIZE; // put stack at end of program ram (points to first byte of stack array, not last)
-#elif defined OWL_ARCH_H7
+#elif defined OWL_ARCH_H7 || defined OWL_ARCH_L4
         // NOTE: calculation used for F7 leads to HardFault on Daisy
         extern char _PATCHRAM_END;
         uint8_t* PROGRAMSTACK = ((uint8_t*)&_PATCHRAM_END ) - PROGRAMSTACK_SIZE; // put stack at end of program ram (points to first byte of stack array, not last)

@@ -47,8 +47,12 @@
 #endif
 
 #ifndef MINIMAL_BUILD
+#ifndef NO_FFT_TABLES
 #define USE_FFT_TABLES
+#endif
+#ifndef NO_FAST_POW
 #define USE_FAST_POW
+#endif
 #endif
 
 #define DEBUG_DWT
