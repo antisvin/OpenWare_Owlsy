@@ -16,7 +16,7 @@
 #define MAX_SYSEX_FIRMWARE_SIZE 256 * 1024
 
 #define HARDWARE_VERSION    "Neophyte boot"
-#define APPLICATION_ADDRESS 0x90000000
+#define APPLICATION_ADDRESS 0x08008000
 
 /* Firmware header configuration */
 #define FIRMWARE_HEADER        0xBABECAFE

@@ -12,6 +12,7 @@ C_SRC += $(OPENWARE)/Source/usbd_midi.c
 #CPP_SRC += $(OPENWARE)/Source/ScreenBufferColour.cpp
 #CPP_SRC += $(OPENWARE)/Source/Graphics.cpp
 CPP_SRC += $(OPENWARE)/Source/MidiStreamReader.cpp
+CPP_SRC += $(OPENWARE)/Source/FirmwareHeader.cpp
 
 include $(OPENWARE)/Hardware/sources.mk
 

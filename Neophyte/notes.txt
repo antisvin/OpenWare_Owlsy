@@ -1,1 +1,9 @@
 openocd -f ../Hardware/openocd_l4.cfg -c "program Build/Neophyte.bin 0x08000000 verify reset exit"
+
+# Correct way would be to set optionslike this:
+openocd -f ../Hardware/openocd_l4.cfg  -c "init" -c "halt" -c "stm32l4x option_write 0 0x20 0xffcff8aa 0xffeff8aa"  -c exit
+# Due to openocd bug we will have to change another bit:
+openocd -f ../Hardware/openocd_l4.cfg  -c "init" -c "halt" -c "stm32l4x option_write 0 0x20 0xff8ff8aa 0xffeff8aa"  -c exit
+
+openocd -f ../Hardware/openocd_l4.cfg  -c "init" -c "halt" -c "stm32l4x option_read 0 0x20" -c "exit"
+openocd -f ../Hardware/openocd_l4.cfg  -c "init" -c "halt" -c "stm32l4x option_load" -c "exit"

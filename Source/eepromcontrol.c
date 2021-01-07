@@ -38,7 +38,18 @@ int eeprom_write_word(uint32_t address, uint32_t data){
 #ifdef OWL_ARCH_H7
   HAL_StatusTypeDef status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_FLASHWORD, address, data);
 #elif defined(OWL_ARCH_L4)
-  HAL_StatusTypeDef status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD, address, data);
+  uint64_t dword = data;
+  dword <<= 32;
+  dword |= 0xFFFFFFFF;
+  if ((address & 0x7) == 4){
+    // Not aligned to double word, but aligned to single word
+    address += 4;
+  }
+  else if ((address & 0x7) != 0) {
+    // Not aligned - this is not expected, but we could fix this if necessary
+    return HAL_ERROR;
+  }
+  HAL_StatusTypeDef status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD, address, dword);
 #else
   HAL_StatusTypeDef status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, address, data);
 #endif
@@ -53,30 +64,39 @@ int eeprom_write_byte(uint32_t address, uint8_t data){
 #endif
 
 int eeprom_write_block(uint32_t address, void* data, uint32_t size){
-  uint32_t* p32 = (uint32_t*)data;
+  HAL_StatusTypeDef status = HAL_OK;
   uint32_t i=0; 
 #if defined(OWL_ARCH_H7)
+  uint32_t* p32 = (uint32_t*)data;
   for(;i+16<=size; i+=16){
     eeprom_write_word(address+i, *p32);
     *p32 += 4;
   }
 #elif defined(OWL_ARCH_L4)
-  for(;i+8<=size; i+=8) {
-    eeprom_write_word(address+i, *p32);
-    *p32+= 2;
+  // NOTE: fast programming can't be used here, it requires running from RAM or bootloader
+  uint64_t* p64 = (uint64_t*)data;
+  if (size & 0x7)
+    // Must be aligned to double words
+    return -1;
+  // Write in double words.
+  for(; i + 8 <= size && status == HAL_OK; i += 8) {
+    status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD, address + i, *p64++);
   }
+  if (size % 8 && status == HAL_OK) // Write last word if present
+    status = eeprom_write_word(address + size - 4, *((uint32_t*)p64 + 1));
 #else
+  uint32_t* p32 = (uint32_t*)data;
   for(;i+4<=size; i+=4)
     eeprom_write_word(address+i, *p32++);
 #endif
-  uint8_t* p8 = (uint8_t*)p32;
 #if !defined(OWL_ARCH_H7) && !defined(OWL_ARCH_L4)
+  uint8_t* p8 = (uint8_t*)p32;
   for(;i<size; i++)
     eeprom_write_byte(address+i, *p8++);
 #else
   // TODO: do something with unaligned remainder?
 #endif
-  return eeprom_wait() == HAL_FLASH_ERROR_NONE ? 0 : -1;
+  return (eeprom_wait() == HAL_FLASH_ERROR_NONE && status == HAL_OK)? 0: -1;
 }
 
 void eeprom_unlock(){

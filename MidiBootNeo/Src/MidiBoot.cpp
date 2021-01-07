@@ -114,7 +114,7 @@ void eraseFromFlash(uint32_t sector) {
   led_off(ALL_LEDS);
   led_on(USER_LED_BLUE);
   eeprom_unlock();
-  if(sector == 0xff){
+  if(sector == FIRMWARE_SECTOR){
     for (int i = STORAGE_START_SECTOR; i < STORAGE_END_SECTOR; i++){
       eeprom_erase_sector(i);
       led_toggle(USER_LED_BLUE);
@@ -132,7 +132,7 @@ void eraseFromFlash(uint32_t sector) {
 void saveToFlash(uint32_t address, void *data, uint32_t length) {
   extern char _FIRMWARE_STORAGE_SIZE, _FIRMWARE_STORAGE_BEGIN;
   led_off(ALL_LEDS);
-  uint32_t total_erased; 
+  uint32_t total_erased = 0;
   if(
       address == (uint32_t)&_FIRMWARE_STORAGE_BEGIN &&
       length <= (STORAGE_START_SECTOR - FIRMWARE_START_SECTOR) * PAGE_SIZE &&
@@ -140,17 +140,24 @@ void saveToFlash(uint32_t address, void *data, uint32_t length) {
     led_on(USER_LED_BLUE);
     eeprom_unlock();
 
-    for (int i = FIRMWARE_START_SECTOR; i < STORAGE_START_SECTOR && total_erased <= length; i++){
+    for (uint8_t i = FIRMWARE_START_SECTOR; i < STORAGE_START_SECTOR && total_erased <= length; i++){
       eeprom_erase_sector(i);
       total_erased += PAGE_SIZE;
       led_toggle(USER_LED_BLUE);
     }
     led_on(USER_LED_BLUE);
-    eeprom_write_block(FIRMWARE_START_SECTOR, data, length);
+    if (eeprom_write_block((uint32_t)&_FIRMWARE_STORAGE_BEGIN, data, length) != 0) {
+      error(RUNTIME_ERROR, "Firmware write error");
+      led_off(ALL_LEDS);
+      led_on(USER_LED_RED);
+    }
+    else {
+      led_off(ALL_LEDS);
+      led_on(USER_LED_GREEN);
+    }
     eeprom_lock();
-    led_off(USER_LED_BLUE);
-    led_on(USER_LED_GREEN);
-  }else{
+  }
+  else{
     error(RUNTIME_ERROR, "Firmware too big");
     led_off(ALL_LEDS);
     led_on(USER_LED_RED);
@@ -207,9 +214,11 @@ bool midi_error(const char *str) {
 
 bool updateChecksum(uint32_t address, uint32_t checksum){
   bool success = false;
-  if (eeprom_write_word(address, checksum) == 0) {
+  eeprom_unlock();
+  if (eeprom_write_word(address, checksum) == HAL_OK) {
     success = true;
   }
+  eeprom_lock();
   return success;
 }
 
@@ -217,23 +226,16 @@ void setup() {
   // led_on();
   midi_tx.setOutputChannel(MIDI_OUTPUT_CHANNEL);
   midi_rx.setInputChannel(MIDI_INPUT_CHANNEL);
-  setMessage("OWL Bootloader Ready");    
+  setMessage("OWL Bootloader Ready");
+  led_off(ALL_LEDS);
 }
 
 void loop(void) {
-  static int counter = 3 * 1200;
-  if (counter) {
-    switch (counter-- % 1200) {
-    case 600:
-      led_off(USER_LED_GREEN);
-      break;
-    case 0:
-      led_on(USER_LED_GREEN);
-      break;
-    default:
-      HAL_Delay(1);
-      break;
-    }
+  static int counter;
+  if (counter-- % 600) {
+    HAL_Delay(1);
+  } else {
+    led_toggle(USER_LED_GREEN);
   }
   midi_tx.transmit();
 }
@@ -281,20 +283,12 @@ void MidiHandler::handleFirmwareFlashCommand(uint8_t *data, uint16_t size) {
       led_on(USER_LED_BLUE);
       FirmwareHeader* header = (FirmwareHeader*)loader.getData();
       if (header->magic == HEADER_MAGIC && header->checksum == HEADER_CHECKSUM_PLACEHOLDER){
-        header->checksum = 0xFFFFFFFF; // Not an actual checksum yet
-        checksum = crc32((void*)header, header->header_size - 4, 0);
+        // Header checksum is based on FW blob contents, not sysex
+        header->checksum = crc32((void*)header, header->header_size - 4, 0);
         saveToFlash((uint32_t)&_FIRMWARE_STORAGE_BEGIN, loader.getData(), loader.getSize());
+        
         loader.clear();
-
-        // Now that data is stored, we can update the checksum field to confirm it's successful
-        uint32_t checksum_address = (uint32_t)&(getFirmwareHeader()->checksum);
-        if (updateChecksum(checksum_address, checksum)){
-          led_off(ALL_LEDS);
-        }
-        else {
-          error(PROGRAM_ERROR, "Error storing checksum");
-          led_on(USER_LED_RED);
-        }
+        led_off(ALL_LEDS);
       }
       else {
         error(PROGRAM_ERROR, "Invalid firmware header");
