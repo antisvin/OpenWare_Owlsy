@@ -20,7 +20,6 @@
 
 /* Firmware header configuration */
 #define FIRMWARE_HEADER        0xBABECAFE
-#define FIRMWARE_RELOCATIONS_COUNT 0
 
 #define USE_IWDG
 

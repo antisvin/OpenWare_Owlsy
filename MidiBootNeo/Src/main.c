@@ -166,6 +166,12 @@ int main(void)
     //SysTick->LOAD = 0;
     //SysTick->VAL = 0;
 
+    /* Clear Interrupt Enable Register & Interrupt Pending Register */
+    for (int i = 0;i < 5; i++) {
+    	NVIC->ICER[i]=0xFFFFFFFF;
+	    NVIC->ICPR[i]=0xFFFFFFFF;
+    }
+
     /* Jump to user application */
     struct FirmwareHeader* header = getFirmwareHeader();
 

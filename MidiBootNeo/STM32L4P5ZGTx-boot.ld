@@ -11,7 +11,7 @@ _Min_Stack_Size = 0x200; /* required amount of stack */
 MEMORY
 {
 RAM (rwx)        : ORIGIN = 0x20000000, LENGTH = 48K
-SYSRAM (rwx)     : ORIGIN = 0x2000c000, LENGTH = 16K
+SYSRAM (rwx)     : ORIGIN = 0x2000c000, LENGTH = 16K /* Used only to set magic word for bootloader in the end - we could change the address to increas firmware size a bit */
 PATCHRAM (rwx)   : ORIGIN = 0x2000c000, LENGTH = 256K /* Total RAM is 320kb */
 FLASH (rx)       : ORIGIN = 0x08000000, LENGTH = 32K
 APPLICATION (rx) : ORIGIN = 0x08008000, LENGTH = 256K

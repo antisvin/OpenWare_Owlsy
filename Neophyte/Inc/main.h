@@ -60,24 +60,14 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define B1_Pin GPIO_PIN_13
 #define B1_GPIO_Port GPIOC
-#define ENC2A_Pin GPIO_PIN_0
-#define ENC2A_GPIO_Port GPIOA
-#define ENC2B_Pin GPIO_PIN_1
-#define ENC2B_GPIO_Port GPIOA
 #define ENC2C_Pin GPIO_PIN_2
 #define ENC2C_GPIO_Port GPIOA
 #define PIXI_SCK_Pin GPIO_PIN_5
 #define PIXI_SCK_GPIO_Port GPIOA
 #define PIXI_MISO_Pin GPIO_PIN_6
 #define PIXI_MISO_GPIO_Port GPIOA
-#define PIXI_MOSI_Pin GPIO_PIN_7
-#define PIXI_MOSI_GPIO_Port GPIOA
-#define ENC1A_Pin GPIO_PIN_9
-#define ENC1A_GPIO_Port GPIOE
 #define ENC1C_Pin GPIO_PIN_10
 #define ENC1C_GPIO_Port GPIOE
-#define ENC1B_Pin GPIO_PIN_11
-#define ENC1B_GPIO_Port GPIOE
 #define LD3_Pin GPIO_PIN_14
 #define LD3_GPIO_Port GPIOB
 #define PIXI_nCS_Pin GPIO_PIN_14

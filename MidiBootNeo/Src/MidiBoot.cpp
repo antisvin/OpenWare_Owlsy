@@ -186,13 +186,11 @@ FirmwareHeader* getFirmwareHeader(void) {
 int loadFirmware(void) {
   FirmwareHeader* header = getFirmwareHeader();
   if (header->magic == FIRMWARE_HEADER) { // TODO: possibly check checksum here
-#if FIRMWARE_RELOCATIONS_COUNT > 0
-    uint32_t* start = &header->section_0_start;
+    uint32_t* start = &header->options + 1;
     for (uint32_t i = 0; i < (header->options >> OPT_NUM_RELOCATIONS_OFFSET) & OPT_NUM_RELOCATIONS_MASK; i++) {
       memcpy((void*)(*start), (void*)(*(start + 2)), *(start + 1) - *start);
       start += 3;
     }
-#endif
     return 1;
   }
   else {

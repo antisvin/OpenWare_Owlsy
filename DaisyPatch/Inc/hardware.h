@@ -11,7 +11,6 @@
   #error Invalid configuration
 #endif
 
-#define USE_FIRMWARE_HEADER
 #define FLASH_TASK_STACK_SIZE        (1024/sizeof(portSTACK_TYPE))
 
 //#define PROGRAM_TASK_STACK_SIZE      (6*1024/sizeof(portSTACK_TYPE))

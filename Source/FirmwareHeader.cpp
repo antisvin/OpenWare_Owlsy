@@ -7,7 +7,9 @@ extern char _ISR_VECTOR;
 extern char _sitcm, _eitcm, _siitcm;
 extern char _sdata, _edata, _sidata;
 extern char _scode, _ecode, _sicode;
-#endif  
+#elif defined OWL_ARCH_L4
+extern char _sisr, _eisr, _siisr;
+#endif
 
 #ifdef USE_IWDG
 static const uint32_t iwdg_enable     = 1U;
@@ -17,6 +19,8 @@ static const uint32_t iwdg_enable     = 0U;
 
 #ifdef OWL_ARCH_H7
 static const uint32_t num_relocations = 3U;
+#elif defined OWL_ARCH_L4
+static const uint32_t num_relocations = 1U;
 #else
 static const uint32_t num_relocations = 0U;
 #endif
@@ -41,6 +45,10 @@ static const struct FirmwareHeader firmware_header {
     (uint32_t)&_scode,
     (uint32_t)&_ecode,
     (uint32_t)&_sicode,
+#elif defined OWL_ARCH_L4
+    (uint32_t)&_sisr,
+    (uint32_t)&_eisr,
+    (uint32_t)&_siisr,
 #endif
     HEADER_CHECKSUM_PLACEHOLDER
 };

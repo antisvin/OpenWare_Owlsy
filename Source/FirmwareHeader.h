@@ -22,10 +22,12 @@ struct FirmwareHeader {
     uint32_t hardware_id;
     uint32_t isr_vector_address;
     uint32_t options;
-#ifdef OWL_ARCH_H7
-    uint32_t section_0_start; /* H7 - ITCM */
+#if defined OWL_ARCH_H7 || defined OWL_ARCH_L4
+    uint32_t section_0_start; /* H7 - ITCM, L4 - ISR to SRAM */
     uint32_t section_0_end;
     uint32_t section_0_address;
+#endif
+#ifdef OWL_ARCH_H7
     uint32_t section_1_start; /* H7 - DTCM */
     uint32_t section_1_end;
     uint32_t section_1_address;

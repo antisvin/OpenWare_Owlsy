@@ -15,10 +15,9 @@
 
 //#define MAIN_LOOP_SLEEP_MS          20
 
-#define MAX11300_SPI hspi5
-#define ENCODERS_SPI hspi5
+//#define MAX11300_SPI hspi5
+//#define ENCODERS_SPI hspi5
 #define NO_EXTERNAL_RAM
-#define USE_FIRMWARE_HEADER
 
 #define USE_USBD_FS
 

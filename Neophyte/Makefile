@@ -6,7 +6,7 @@ include $(OPENWARE)/Hardware/neophyte.mk
 
 C_SRC = $(filter-out Src/test.c, $(wildcard Src/*.c))
 CPP_SRC = $(wildcard Src/*.cpp)
-C_SRC += $(OPENWARE)/Source/HAL_MAX11300.c
+#C_SRC += $(OPENWARE)/Source/HAL_MAX11300.c
 C_SRC += $(OPENWARE)/Source/usbd_midi.c
 #CPP_SRC += $(OPENWARE)/Source/ScreenBuffer.cpp
 #CPP_SRC += $(OPENWARE)/Source/ScreenBufferColour.cpp
