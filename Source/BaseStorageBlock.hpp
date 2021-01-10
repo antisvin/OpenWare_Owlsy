@@ -2,16 +2,23 @@
 #define __BaseStorageBlock_hpp__
 
 #include <inttypes.h>
+#include "ResourceHeader.h"
 
 // Note: we can't use start/end page as template parameters, because they come from linker
 
 template<uint32_t alignment=4>
 class BaseStorageBlock {
 protected:
-  uint32_t* header; 
+  uint32_t* header;
   // one byte of the header is used for block magic and deleted status, 
   // 3 bytes for size (24 bits: max 16MB)
 public:
+#ifdef OWL_ARCH_L4
+  static constexpr uint32_t block_offset = 8; // Must be aligned to 4 bytes
+#else
+  static constexpr uint32_t block_offset = 0; // Must be aligned to 4 bytes
+#endif
+
   BaseStorageBlock() : header(nullptr) {};
 
   BaseStorageBlock(uint32_t* h) : header(h){}
@@ -34,7 +41,7 @@ public:
   }
 
   void* getBlock() const {
-    return (void*)header;
+    return (void*)(header - block_offset / sizeof(uint32_t*));
   }
 
   bool isWritten() const {
@@ -46,11 +53,15 @@ public:
   }
 
   bool isDeleted() const {
+  #ifdef OWL_ARCH_L4
+    return *(uint64_t*)(header - block_offset / sizeof(uint32_t*)) == RESOURCE_DELETED;
+  #else
     return getMagick() == 0xc0;
+  #endif
   }
 
   uint32_t getBlockSize() const {
-    uint32_t size = 4 + getDataSize();
+    uint32_t size = 4 + block_offset + getDataSize();
     // size = (size + (32 - 1)) & -32;  // Round up to 32-byte boundary
     // size = (size + (8 - 1)) & -8;  // Round up to 8-byte boundary
     // size = (size + (4 - 1)) & -4;  // Round up to 4-byte boundary

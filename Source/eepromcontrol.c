@@ -34,29 +34,25 @@ int eeprom_erase_sector(uint32_t sector) {
   return status;
 }
 
+#ifdef OWL_ARCH_F4
 int eeprom_write_word(uint32_t address, uint32_t data){
-#ifdef OWL_ARCH_H7
-  HAL_StatusTypeDef status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_FLASHWORD, address, data);
-#elif defined(OWL_ARCH_L4)
-  uint64_t dword = data;
-  dword <<= 32;
-  dword |= 0xFFFFFFFF;
-  if ((address & 0x7) == 4){
-    // Not aligned to double word, but aligned to single word
-    address += 4;
-  }
-  else if ((address & 0x7) != 0) {
-    // Not aligned - this is not expected, but we could fix this if necessary
-    return HAL_ERROR;
-  }
-  HAL_StatusTypeDef status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD, address, dword);
-#else
   HAL_StatusTypeDef status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, address, data);
-#endif
   return status;
 }
+#endif
 
-#if !defined(OWL_ARCH_H7) && !defined(OWL_ARCH_L4)
+#ifdef OWL_ARCH_L4
+int eeprom_write_dword(uint32_t address, uint64_t data){
+  if ((address & 0x7) != 0) {
+    // Not aligned to double word address, can't be written on L4
+    return HAL_ERROR;
+  }
+  HAL_StatusTypeDef status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD, address, data);
+  return status;
+}
+#endif
+
+#ifdef OWL_ARCH_F4
 int eeprom_write_byte(uint32_t address, uint8_t data){
   HAL_StatusTypeDef status =  HAL_FLASH_Program(FLASH_TYPEPROGRAM_BYTE, address, data);
   return status;
@@ -82,8 +78,6 @@ int eeprom_write_block(uint32_t address, void* data, uint32_t size){
   for(; i + 8 <= size && status == HAL_OK; i += 8) {
     status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD, address + i, *p64++);
   }
-  if (size % 8 && status == HAL_OK) // Write last word if present
-    status = eeprom_write_word(address + size - 4, *((uint32_t*)p64 + 1));
 #else
   uint32_t* p32 = (uint32_t*)data;
   for(;i+4<=size; i+=4)

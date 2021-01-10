@@ -41,10 +41,10 @@ erase-boot: # flash erase_sector num first last
 	$(OPENOCD) -c "init" -c "halt" -c "flash erase_sector 0 0 3" -c "exit"
 
 erase-firmware: # flash erase_sector num first last
-	$(OPENOCD) -c "init" -c "halt" -c "flash erase_sector 0 4 35" -c "exit"
+	$(OPENOCD) -c "init" -c "halt" -c "flash erase_sector 0 4 31" -c "exit"
 
 erase-storage: # flash erase_sector num first last
-	$(OPENOCD) -c "init" -c "halt" -c "flash erase_sector 0 36 127" -c "exit"
+	$(OPENOCD) -c "init" -c "halt" -c "flash erase_sector 0 32 127" -c "exit"
 
 dump: # flash read_bank num filename [offset [length]]
 	$(OPENOCD) -c "init" -c "halt" -c "flash read_bank 0 dump.bin" -c "exit"

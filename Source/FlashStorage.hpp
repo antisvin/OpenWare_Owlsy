@@ -14,7 +14,11 @@ extern char _FLASH_STORAGE_END;
 #define EEPROM_PAGE_BEGIN ((uint32_t)&_FLASH_STORAGE_BEGIN)
 #define EEPROM_PAGE_END ((uint32_t)&_FLASH_STORAGE_END)
 
+#ifdef OWL_ARCH_L4
+#define EEPROM_PAGE_SIZE (8 * 1024)
+#else
 #define EEPROM_PAGE_SIZE (128 * 1024)
+#endif
 
 using StorageBlock = FlashStorageBlock;
 using Storage = BaseStorage<FlashStorageBlock>;

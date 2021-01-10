@@ -24,9 +24,12 @@
    void eeprom_lock();
    void eeprom_unlock();
    int eeprom_write_block(uint32_t address, void* data, uint32_t size);
+#ifdef OWL_ARCH_F4
    int eeprom_write_word(uint32_t address, uint32_t data);
-#ifndef OWL_ARCH_H7
    int eeprom_write_byte(uint32_t address, uint8_t data);
+#endif
+#ifdef OWL_ARCH_L4
+   int eeprom_write_dword(uint32_t address, uint64_t data);
 #endif
    int eeprom_erase(uint32_t address);
 

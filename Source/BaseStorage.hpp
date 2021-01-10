@@ -135,11 +135,11 @@ protected:
 
   StorageBlock createBlock(uint32_t page, uint32_t offset) {
     // offset = (offset + (4 - 1)) & -4;  // Round up to 4-byte boundary
-    if (page + offset + 4 >= end_page || page < start_page) {
+    if (page + offset + 4 + StorageBlock::block_offset >= end_page || page < start_page) {
       error(FLASH_ERROR, "Block out of bounds");
       return StorageBlock();
     }
-    StorageBlock block((uint32_t *)(page + offset));
+    StorageBlock block((uint32_t *)(page + offset + StorageBlock::block_offset));
     return block;
   }
 };

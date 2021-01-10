@@ -187,7 +187,7 @@ int loadFirmware(void) {
   FirmwareHeader* header = getFirmwareHeader();
   if (header->magic == FIRMWARE_HEADER) { // TODO: possibly check checksum here
     uint32_t* start = &header->options + 1;
-    for (uint32_t i = 0; i < (header->options >> OPT_NUM_RELOCATIONS_OFFSET) & OPT_NUM_RELOCATIONS_MASK; i++) {
+    for (uint32_t i = 0; i < ((header->options >> OPT_NUM_RELOCATIONS_OFFSET) & OPT_NUM_RELOCATIONS_MASK); i++) {
       memcpy((void*)(*start), (void*)(*(start + 2)), *(start + 1) - *start);
       start += 3;
     }
@@ -208,16 +208,6 @@ const char *getErrorMessage() { return errormessage; }
 bool midi_error(const char *str) {
   error(PROGRAM_ERROR, str);
   return false;
-}
-
-bool updateChecksum(uint32_t address, uint32_t checksum){
-  bool success = false;
-  eeprom_unlock();
-  if (eeprom_write_word(address, checksum) == HAL_OK) {
-    success = true;
-  }
-  eeprom_lock();
-  return success;
 }
 
 void setup() {
