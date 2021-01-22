@@ -293,9 +293,14 @@ void onRegisterPatchParameter(uint8_t id, const char* name){
 
 // called from program
 void onRegisterPatch(const char* name, uint8_t inputChannels, uint8_t outputChannels){
-#if defined OWL_MAGUS || defined OWL_PRISM
+#ifdef USE_SCREEN
   graphics.params.setTitle(name);
+<<<<<<< HEAD
 #endif /* OWL_MAGUS */
+=======
+#endif
+  midi_tx.sendPatchName(program.getProgramIndex(), name);
+>>>>>>> d1fd4fe (Memory layout similar to OWL3)
 }
 
 // Called on init, resource operation, storage erase
@@ -351,12 +356,11 @@ void updateProgramVector(ProgramVector* pv){
     { NULL, 0 }
   };
 #elif defined OWL_ARCH_H7
+  extern char _RAMHEAP, _RAMHEAP_SIZE;
   extern char _EXTRAM, _EXTRAM_SIZE;
-  extern char _DTCMHEAP_BEGIN, _DTCMHEAP_SIZE;
   static MemorySegment heapSegments[] = {
-    { (uint8_t*)&_DTCMHEAP_BEGIN, (uint32_t)(&_DTCMHEAP_SIZE) },
+    { (uint8_t*)&_RAMHEAP, (uint32_t)(&_RAMHEAP_SIZE) },
     { (uint8_t*)&_EXTRAM, (uint32_t)(&_EXTRAM_SIZE) },
-    // todo: add remaining program space
     { NULL, 0 }
   };
 #else
@@ -414,6 +418,10 @@ void programFlashTask(void* p){
       onResourceUpdate();
     }else{
       program.loadProgram(index);
+    }
+    else {
+      owl.setOperationMode(RUN_MODE);
+      setLed(0, GREEN_COLOUR);      
     }
   }
   program.resetProgram(false);
@@ -566,8 +574,9 @@ void runManagerTask(void* p){
         uint8_t* PROGRAMSTACK = ((uint8_t*)&_PATCHRAM )+_PATCHRAM_SIZE-PROGRAMSTACK_SIZE; // put stack at end of program ram (points to first byte of stack array, not last)
 #elif defined OWL_ARCH_H7
         // NOTE: calculation used for F7 leads to HardFault on Daisy
-        extern char _PATCHRAM_END;
-        uint8_t* PROGRAMSTACK = ((uint8_t*)&_PATCHRAM_END ) - PROGRAMSTACK_SIZE; // put stack at end of program ram (points to first byte of stack array, not last)
+        // extern char _RAMHEAP_END;
+        /// uint8_t* PROGRAMSTACK = ((uint8_t*)&_RAMHEAP_END ) - PROGRAMSTACK_SIZE; // put stack at end of D1 RAM (points to first byte of stack array, not last)
+	      static uint8_t PROGRAMSTACK[PROGRAMSTACK_SIZE] __attribute__ ((section (".programstack")));
 #else
         extern char _CCMRAM_END;
         uint8_t* PROGRAMSTACK = ((uint8_t*)&_CCMRAM_END) - PROGRAMSTACK_SIZE;

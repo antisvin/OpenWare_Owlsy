@@ -9,36 +9,31 @@ ENTRY(Reset_Handler)
 /* _estack = 0x20020000; */   /* end of RAM */
 /* Generate a link error if heap and stack don't fit into RAM */
 _Min_Heap_Size = 0x000;      /* required amount of heap  */
-_Min_Stack_Size = 0x2000; /* required amount of stack */
+_Min_Stack_Size = 0x800; /* required amount of stack */
 
 /* Specify the memory areas */
 MEMORY
 {
 ITCMRAM (rx)      : ORIGIN = 0x00000000, LENGTH = 64K
-/* DTCMRAM (rwx)     : ORIGIN = 0x20000000, LENGTH = 128K */
-DTCMRAM (rw)      : ORIGIN = 0x20000000, LENGTH = 64K /* First half of DTCM is used as FW RAM */
-DTCMHEAP (rw)     : ORIGIN = 0x20010000, LENGTH = 64K /* Second half of DTCM is used as fast heap for patches */
-/* Second half of DTCMRAM could be fast heap? */
-PATCHRAM (rwx)    : ORIGIN = 0x24000000, LENGTH = 512K
+DTCMRAM (rw)      : ORIGIN = 0x20000000, LENGTH = 48K /* First 48kb of DTCM is used as FW RAM */
+PATCHRAM (rw)     : ORIGIN = 0x2000c000, LENGTH = 80K /* Remaining 80kb of DTCM is used as patch RAM */
+RAMHEAP (rwx)     : ORIGIN = 0x24000000, LENGTH = 512K
 RAM (rwx)         : ORIGIN = 0x30000000, LENGTH = 256K /* Firmware code, copied by bootloader */
-/* CARDBUF (rwx)     : ORIGIN = 0x30030000, LENGTH = 64K *//* Buffer for card streaming */
 BUFFERS (rwx)     : ORIGIN = 0x30040000, LENGTH = 32K /* DMA buffer */
-RAM_D3 (rwx)      : ORIGIN = 0x38000000, LENGTH = 64K /* Fast LOG table? */
-/*FIRMWARE (rwx)    : ORIGIN = 0xc0000000, LENGTH = 512K */ /* Firmware image copied by bootloader */
-/* EXTRAM (rwx)      : ORIGIN = 0xc0080000, LENGTH = 6400K */ /* 63M + 512K */
-EXTRAM (rwx)      : ORIGIN = 0xc0000000, LENGTH = 64M /* 63M + 512K */
+RAM_D3 (rwx)      : ORIGIN = 0x38000000, LENGTH = 64K /* UNUSED */
+EXTRAM (rwx)      : ORIGIN = 0xc0000000, LENGTH = 64M
 /* BOOTLOADER (rx)   : ORIGIN = 0x08000000, LENGTH = 128K */ /* Bootloader on flash */
 /* BOOTROM (rx)      : ORIGIN = 0x90000000, LENGTH = 512K */ /* QSPI flash - firmware part. This is used by bootloader only. */
 FIRMWARE (r)      : ORIGIN = 0x90000000, LENGTH = 512K  /* QSPI flash - firmware storage part. It would be used as bootrom and storage for builtin LUTs */
 STORAGE (rx)      : ORIGIN = 0x90080000, LENGTH = 7680K  /* QSPI flash - patch storage part. That's one hell of a lot of patches */
 }
-/* Device flash is 128k and only used for bootloader
- QSPI flash is 8M, split it between FW and patch/settings storage
-*/
+/* Internal flash is 128k and only used for bootloader
+ * QSPI flash is 8M, split it between FW and patch/settings storage
+ */
 
 /*
-	NOTE: we can write QSPI FLASH firmware, because we're running entirely from memory
-*/
+ *	NOTE: we can write QSPI FLASH firmware, because we're running entirely from memory
+ */
 
 
 SECTIONS
@@ -82,6 +77,13 @@ SECTIONS
 		*/stm32h7xx_hal_spi.o (.text .text*)
 		_eitcm = .;
 	} > ITCMRAM AT > FIRMWARE
+
+	.programstack 0x0000e000 (NOLOAD):
+	{
+		. = ALIGN(4);
+		*(.programstack)
+		*(.programstack*)
+	} > ITCMRAM
 
 	/*
 	 * Code (text and most constant data) will be copied to RAM in advance by bootloader
@@ -206,49 +208,17 @@ SECTIONS
   	} > DTCMRAM
   	_estack = ORIGIN(DTCMRAM) + LENGTH(DTCMRAM); /* end of firmware RAM */
 
-
-	.dtcmheap (NOLOAD):
+	.ramheap (NOLOAD):
 	{
 		. = ALIGN(4);
-		_DTCMHEAP_BEGIN = .;
+		PROVIDE(_RAMHEAP = .);
 
-		PROVIDE(__bss_start__ = _sbss);
-		*(.dtcmheap)
-		*(.dtcmheap*)
+		*(.ramheap)
+		*(.ramheap*)
 
-	} > DTCMHEAP
-	_DTCMHEAP_SIZE = LENGTH(DTCMHEAP);
-	_DTCMHEAP_END = ORIGIN(DTCMHEAP) + LENGTH(DTCMHEAP);
-
-/*
-	.dtcmram_bss (NOLOAD) :
-	{
-		. = ALIGN(4);
-		_sdtcmram_bss = .;
-
-		PROVIDE(__dtcmram_bss_start__ = _sdtcmram_bss);
-		*(.dtcmram_bss)
-		*(.dtcmram_bss*)
-		. = ALIGN(4);
-		_edtcmram_bss = .;
-
-		PROVIDE(__dtcmram_bss_end__ = _edtcmram_bss);
-	} > DTCMRAM
-
-	.sram1_bss (NOLOAD) :
-	{
-		. = ALIGN(4);
-		_ssram1_bss = .;
-
-		PROVIDE(__sram1_bss_start__ = _sram1_bss);
-		*(.sram1_bss)
-		*(.sram1_bss*)
-		. = ALIGN(4);
-		_esram1_bss = .;
-
-		PROVIDE(__sram1_bss_end__ = _esram1_bss);
-	} > RAM_D2
-*/
+	} > RAMHEAP
+	_RAMHEAP_SIZE = LENGTH(RAMHEAP);
+	_RAMHEAP_END = ORIGIN(RAMHEAP) + LENGTH(RAMHEAP);
 
   	/* External memory, vars must be located here explicitly */
   	/* Example: int foo __attribute__ ((section (".extdata"))); */
@@ -267,80 +237,6 @@ SECTIONS
   	} >PATCHRAM
   	_PATCHRAM_END = ORIGIN(PATCHRAM) + LENGTH(PATCHRAM);
   	_PATCHRAM_SIZE = LENGTH(PATCHRAM);	
-
-	/*
-	.sdram_text :
-	{
-		. = ALIGN(4);
-		_ssdram_text = .;
-
-		PROVIDE(__sdram_text_start = _ssdram_text);
-		*(.sdram_text)
-		*(.sdram_text*)
-		. = ALIGN(4);
-		_esdram_text = .;
-
-		PROVIDE(__sdram_text_end = _esdram_text);
-	} > SDRAM AT >FLASH
-	_sisdram_text = LOADADDR(.sdram_text);
-
-	.sdram_bss (NOLOAD) :
-	{
-		. = ALIGN(4);
-		_ssdram_bss = .;
-
-		PROVIDE(__sdram_bss_start = _ssdram_bss);
-		*(.sdram_bss)
-		*(.sdram_bss*)
-		. = ALIGN(4);
-		_esdram_bss = .;
-
-		PROVIDE(__sdram_bss_end = _esdram_bss);
-	} > SDRAM
-*/
-/*
-    .qspiflash_text :
-	{
-		. = ALIGN(4);
-		_sqspiflash_text = .;
-
-		PROVIDE(__qspiflash_text_start = _sqspiflash_text);
-		*(.qspiflash_text)
-		*(.qspiflash_text*)
-		. = ALIGN(4);
-		_eqspiflash_text = .;
-
-		PROVIDE(__qspiflash_text_end = _eqspiflash_text);
-	} > QSPIFLASH
-
-	.qspiflash_data :
-	{
-		. = ALIGN(4);
-		_sqspiflash_data = .;
-
-		PROVIDE(__qspiflash_data_start = _sqspiflash_data);
-		*(.qspiflash_data)
-		*(.qspiflash_data*)
-		. = ALIGN(4);
-		_eqspiflash_data = .;
-
-		PROVIDE(__qspiflash_data_end = _eqspiflash_data);
-	} > QSPIFLASH
-
-	.qspiflash_bss (NOLOAD) :
-	{
-		. = ALIGN(4);
-		_sqspiflash_bss = .;
-
-		PROVIDE(__qspiflash_bss_start = _sqspiflash_bss);
-		*(.qspiflash_bss)
-		*(.qspiflash_bss*)
-		. = ALIGN(4);
-		_eqspiflash_bss = .;
-
-		PROVIDE(__qspiflash_bss_end = _eqspiflash_bss);
-	} > QSPIFLASH
-*/
 
 /* This would be used if we'll want to write FW ROM without bootloader */	
 

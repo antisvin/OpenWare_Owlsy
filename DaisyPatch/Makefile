@@ -4,7 +4,7 @@ OPENWARE ?= $(BUILDROOT)/..
 
 OPENOCD ?= openocd -f $(OPENWARE)/Hardware/openocd_h7.cfg
 
-LDSCRIPT = $(OPENWARE)/Hardware/daisy_rom.ld
+LDSCRIPT = $(OPENWARE)/Hardware/daisy.ld
 
 include $(OPENWARE)/Hardware/daisy.mk
 
