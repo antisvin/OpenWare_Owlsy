@@ -27,7 +27,7 @@ void defaultDrawCallback(uint8_t *pixels, uint16_t width, uint16_t height);
 template <uint8_t SIZE>
 class ParameterController {
 public:
-  const char title[10] = "  Owlsy";
+  char title[10] = "  Owlsy";
 
   enum EncoderSensitivity {
     SENS_SUPER_FINE = 0,
@@ -422,34 +422,35 @@ public:
   void draw(ScreenBuffer& screen){
     screen.clear();
     screen.setTextWrap(false);
-    switch(displayMode){
-    case STANDARD:
-      // draw most recently changed parameter
-      // drawParameter(selectedPid[selectedBlock], 44, screen);
-      if (owl.getOperationMode() == LOAD_MODE){
-        drawLoadProgress(user[LOAD_INDICATOR_PARAMETER] * 127 / 4095, screen);
-      }
-      else {
-        drawParameter(selectedPid[0], 54, screen);
-      }
-      // use callback to draw title and message
-      drawCallback(screen.getBuffer(), screen.getWidth(), screen.getHeight());
-      break;
-    case SELECTGLOBALPARAMETER:
+    if (owl.getOperationMode() == LOAD_MODE){
       drawTitle(screen);
-      drawGlobalParameterNames(screen);
-      break;
-    case CONTROL:
-      drawControlMode(screen);
-      break;
-    case ERROR:
-      drawTitle("ERROR", screen);
-      drawError(screen);
-      drawStats(screen);
-      break;
+      drawLoadProgress(user[LOAD_INDICATOR_PARAMETER] * 127 / 4095, screen);
     }
-    drawParameters(screen);
-  }  
+    else {
+      switch(displayMode){
+      case STANDARD: 
+        // draw most recently changed parameter
+        // drawParameter(selectedPid[selectedBlock], 44, screen);
+        drawParameter(selectedPid[0], 54, screen);
+        // use callback to draw title and message
+        drawCallback(screen.getBuffer(), screen.getWidth(), screen.getHeight());
+        break;
+      case SELECTGLOBALPARAMETER:
+        drawTitle(screen);
+        drawGlobalParameterNames(screen);
+        break;
+      case CONTROL:
+        drawControlMode(screen);
+        break;
+      case ERROR:
+        drawTitle("ERROR", screen);
+        drawError(screen);
+        drawStats(screen);
+        break;
+      }
+      drawParameters(screen);
+    }
+  }
 
   void drawPatchNames(int selected, ScreenBuffer &screen) {
     screen.setTextSize(1);
@@ -601,7 +602,7 @@ public:
 
   void drawMessage(int16_t y, ScreenBuffer &screen) {
     ProgramVector *pv = getProgramVector();
-    if (pv->message != NULL && owl.getOperationMode() != LOAD_MODE) {
+    if (pv->message != NULL) {
       screen.setTextSize(1);
       screen.setTextWrap(true);
       screen.print(0, y, pv->message);
