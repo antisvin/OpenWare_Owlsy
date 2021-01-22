@@ -55,7 +55,7 @@ void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t*
 void setup(){
   HAL_GPIO_WritePin(OLED_RST_GPIO_Port, OLED_RST_Pin, GPIO_PIN_RESET); // OLED off
 
-  //qspi_init(QSPI_MODE_MEMORY_MAPPED);
+  qspi_init(QSPI_MODE_MEMORY_MAPPED);
   
   /* This doesn't work with bootloader, need to find how to deinit it earlier*/
   #if 0
