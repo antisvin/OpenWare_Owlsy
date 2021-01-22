@@ -49,6 +49,13 @@ int qspi_init(QspiMode mode) {
   QSPI_HANDLE.Init.FlashID = QSPI_FLASH_ID_1;
   QSPI_HANDLE.Init.DualFlash = QSPI_DUALFLASH_DISABLE;
 
+  // Important - this prevents timeout due to previous operations in some cases
+  // https://community.st.com/s/question/0D50X00009XkXMHSA3/qspi-flag-qspiflagbusy-sometimes-stays-set
+  if ((FlagStatus)(__HAL_QSPI_GET_FLAG(&QSPI_HANDLE, QSPI_FLAG_BUSY)) == SET){
+    QSPI_HANDLE.State = HAL_QSPI_STATE_BUSY;
+    HAL_QSPI_Abort(&QSPI_HANDLE);
+  }
+
   if (HAL_QSPI_Init(&QSPI_HANDLE) != HAL_OK) {
     return MEMORY_ERROR;
   }
