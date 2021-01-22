@@ -184,7 +184,7 @@ int main(void)
       SysTick->VAL = 0;
 
       /* Clear Interrupt Enable Register & Interrupt Pending Register */
-      for (int i = 0;i < 5; i++) {
+      for (int i = 0;i < 8; i++) {
     	  NVIC->ICER[i]=0xFFFFFFFF;
 	      NVIC->ICPR[i]=0xFFFFFFFF;
       }
