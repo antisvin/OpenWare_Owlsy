@@ -48,12 +48,20 @@ inline void Storage::recover(){
 
 // erase entire allocated FLASH memory
 template<>
-inline void Storage::erase() {
-  uint32_t page = start_page;
+inline void Storage::erase(uint8_t sector) {
+  uint32_t erase_start, erase_end;
+  if (sector == 0xFF){
+    erase_start = start_page;
+    erase_end = end_page;
+  }
+  else {
+    erase_start = start_page + uint32_t(sector) * STORAGE_SECTOR_SIZE;
+    erase_end = start_page + uint32_t(sector + 1) * STORAGE_SECTOR_SIZE;
+  }
   eeprom_unlock();
-  while (page < end_page) {
-    eeprom_erase(page);
-    page += EEPROM_PAGE_SIZE;
+  while (erase_start < erase_end) {
+    eeprom_erase(erase_start);
+    erase_start += EEPROM_PAGE_SIZE;
   }
   eeprom_lock();
   init();

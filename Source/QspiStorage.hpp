@@ -47,10 +47,19 @@ inline void Storage::recover(){
 
 // erase entire allocated FLASH memory
 template<>
-inline void Storage::erase() {
+inline void Storage::erase(uint8_t sector) {
   int status = qspi_init(QSPI_MODE_INDIRECT_POLLING);
+  uint32_t erase_start, erase_end;
+  if (sector == 0xFF){
+    erase_start = start_page;
+    erase_end = end_page;
+  }
+  else {
+    erase_start = start_page + uint32_t(sector) * STORAGE_SECTOR_SIZE;
+    erase_end = start_page + uint32_t(sector + 1) * STORAGE_SECTOR_SIZE;
+  }
   if (status == MEMORY_OK)
-    status = qspi_erase(start_page, end_page);
+    status = qspi_erase(erase_start, erase_end);
   else
     error(FLASH_ERROR, "Error erasing storage");
   qspi_init(QSPI_MODE_MEMORY_MAPPED);

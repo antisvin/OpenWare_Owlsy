@@ -124,7 +124,7 @@ public:
     return StorageBlock();
   }
 
-  void erase() {};
+  void erase(uint8_t sector = 0xFF);
   bool setDeleted(StorageBlock &block) { return false; }
   void defrag(void *buffer, uint32_t size) {};
 

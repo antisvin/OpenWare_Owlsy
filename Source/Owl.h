@@ -25,6 +25,8 @@ extern "C" {
     STARTUP_MODE,
     LOAD_MODE,
     RUN_MODE,
+    ERASE_MODE,
+    DEFRAG_MODE,
     CONFIGURE_MODE,
     STREAM_MODE,
     ERROR_MODE

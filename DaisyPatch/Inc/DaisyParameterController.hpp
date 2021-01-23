@@ -13,6 +13,7 @@
 #include "ProgramManager.h"
 #include "ProgramVector.h"
 #include "Scope.hpp"
+#include "StorageTasks.hpp"
 
 #ifdef USE_DIGITALBUS
 #include "bus.h"
@@ -51,9 +52,25 @@ public:
     DATA,
     GATES,
     SCOPE,
+    SYSTEM,
     EXIT,
     NOF_CONTROL_MODES, // Not an actual mode
   };
+
+  enum SystemAction {
+    SYS_BOOTLOADER,
+    SYS_ERASE,
+//    SYS_DEFRAG,
+    SYS_EXIT,
+    SYS_LAST,
+  };
+  const char system_names[SYS_LAST][16] = {
+    "Bootloader",
+    "Erase patches",
+//    "Defragmentation",
+    "Exit",
+  };
+  bool systemPressed;
 
   float cpu_used;
   static constexpr float cpu_smooth_lambda = 0.98;
@@ -85,6 +102,7 @@ public:
 #endif
     "< Gates  >",
     "< Scope  >",
+    "< System  >",
     "< Exit    ",
   };
 
@@ -222,6 +240,29 @@ public:
         screen.drawRectangle(4 + (selectedPid[1] - AUDIO_CHANNELS) * 30, offset, 30, 10, WHITE);
       }
     }
+  }
+
+  void drawSystem(uint8_t selected, ScreenBuffer& screen) {
+    screen.setTextSize(1);
+    if (activeEncoder == 1)
+      selected = min(selected, uint8_t(SYS_LAST));
+    if (activeEncoder == 1 && selected < 1)
+      screen.print(18, 24, "Caveat emptor!");
+
+    if (selected > 0) {
+      screen.setCursor(1, 24);
+      screen.print(system_names[selected - 1]);
+    };
+    screen.setCursor(1, 24 + 10);
+    screen.print(system_names[selected]);
+    if (selected + 1 < uint8_t(SYS_LAST)) {
+      screen.setCursor(1, 24 + 20);
+      screen.print(system_names[selected + 1]);
+    }
+    if (activeEncoder == 0)
+      screen.invert(0, 25, 128, 10);
+    else
+      screen.drawRectangle(0, 25, 128, 10, WHITE);      
   }
 
   void drawParameterValues(ScreenBuffer& screen){
@@ -363,6 +404,10 @@ public:
       drawTitle(controlModeNames[controlMode], screen);
       drawScope(selectedPid[1], screen);
       break;
+    case SYSTEM:
+      drawTitle(controlModeNames[controlMode], screen);
+      drawSystem(selectedPid[1], screen);
+      break;
     case EXIT:
       drawTitle("done", screen);
       break;
@@ -422,11 +467,16 @@ public:
   void draw(ScreenBuffer& screen){
     screen.clear();
     screen.setTextWrap(false);
-    if (owl.getOperationMode() == LOAD_MODE){
+    switch (owl.getOperationMode()){
+    case LOAD_MODE:
       drawTitle(screen);
-      drawLoadProgress(user[LOAD_INDICATOR_PARAMETER] * 127 / 4095, screen);
-    }
-    else {
+      drawProgress(user[LOAD_INDICATOR_PARAMETER] * 127 / 4095, screen, "Uploading...");
+      break;
+    case ERASE_MODE:
+      drawTitle(screen);
+      drawProgress(user[LOAD_INDICATOR_PARAMETER] * 127 / 4095, screen, "Erasing...");
+      break;
+    default:
       switch(displayMode){
       case STANDARD: 
         // draw most recently changed parameter
@@ -516,12 +566,12 @@ public:
       screen.invert(0, 25, 128, 10);
   }
 
-  void drawLoadProgress(uint8_t progress, ScreenBuffer &screen){
+  void drawProgress(uint8_t progress, ScreenBuffer &screen, const char* message){
     // progress should be 0 - 127
     screen.drawRectangle(0, 30, 128, 20, WHITE);
     screen.setCursor(32, 40);
     screen.setTextSize(1);
-    screen.print("Uploading...");
+    screen.print(message);
     screen.fillRectangle(0, 44, progress, 5, WHITE);
   }
 
@@ -684,6 +734,9 @@ public:
       lastChannel = selectedPid[1];
       scope.setChannel(lastChannel);
       break;
+    case SYSTEM:
+      selectedPid[1] = max(0, min(int(SYS_LAST) - 1, value));
+      break;
     default:
       break;
     }
@@ -774,6 +827,8 @@ public:
       break;
     case SCOPE:
       selectedPid[1] = lastChannel;
+    case SYSTEM:
+      systemPressed = false;
     default:
       break;
     }
@@ -799,6 +854,16 @@ public:
       case STATUS:
         setErrorStatus(NO_ERROR);
         break;
+      case SYSTEM: {
+        if (!systemPressed && activeEncoder == 1) {
+          systemPressed = true;
+          handleSystem(SystemAction(selectedPid[1]));
+        }
+        else {
+          activeEncoder = 1;
+        }
+        break;
+      }
       case PATCH:
         // load patch
         if (activeEncoder == 1){
@@ -879,6 +944,32 @@ public:
       }
       encoders[0] = value;
       encoders[1] = value;
+    }
+  }
+
+  void handleSystem(SystemAction action){
+    debugMessage("PRESSED ", int(action));
+    controlMode = EXIT;
+
+    switch (action) {
+    case SYS_BOOTLOADER:
+      jump_to_bootloader();
+      break;
+    case SYS_ERASE:
+      static EraseStorageTask erase_task;
+      owl.setBackgroundTask(&erase_task);
+//      program.exitProgram(false);
+//      SCB_DisableICache();
+//      SCB_DisableDCache();
+//      program.eraseFromFlash(0xff);
+//      SCB_EnableICache();
+//      SCB_EnableDCache();
+//      program.startProgram(false);
+      break;
+    case SYS_EXIT:
+      break;
+    default:
+      break;
     }
   }
 

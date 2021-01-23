@@ -89,6 +89,9 @@
 #endif
 #define MAX_FACTORY_PATCHES          36
 #define MAX_USER_PATCHES             4
+#ifndef STORAGE_SECTOR_SIZE
+#define STORAGE_SECTOR_SIZE          (128 * 1024)
+#endif
 
 #ifndef MAX_NUMBER_OF_PATCHES
 #define MAX_NUMBER_OF_PATCHES        40
