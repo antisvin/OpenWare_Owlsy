@@ -13,6 +13,7 @@
 #include "PatchRegistry.h"
 #include "OpenWareMidiControl.h"
 #include "SoftwareEncoder.hpp"
+#include "VersionToken.h"
 
 extern bool updateUi;
 extern uint16_t button_values;
@@ -24,9 +25,15 @@ static SoftwareEncoder encoder(
   ENC_B_GPIO_Port, ENC_B_Pin, 
   ENC_CLICK_GPIO_Port, ENC_CLICK_Pin);
 
+VersionToken token_placeholder __attribute__ ((section (".bootloader_token")));
 
 extern "C" void updateEncoderCounter(){
   encoder.updateCounter();
+}
+
+void updateToken(){
+  extern char _ISR_VECTOR_END, _ISR_VECTOR_SIZE, _BOOTLOADER;
+  memcpy((void*)&_ISR_VECTOR_END, (void*)((uint32_t)&_BOOTLOADER + (uint32_t)&_ISR_VECTOR_SIZE), sizeof(VersionToken));
 }
 
 void setGateValue(uint8_t bid, int16_t value){
@@ -38,7 +45,6 @@ void setGateValue(uint8_t bid, int16_t value){
     //button_values |= (bool(value) << BUTTON_C);
   }
 }
-
 
 void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t* adc_values, size_t adc_len){
 #ifdef USE_CACHE
@@ -67,6 +73,8 @@ void setup(){
 
   extern SPI_HandleTypeDef OLED_SPI;
   graphics.begin(&OLED_SPI);
+
+  updateToken();
 
   owl.setup();
 }

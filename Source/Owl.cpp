@@ -620,9 +620,14 @@ const char* getFirmwareVersion(){
   return (const char*)(HARDWARE_VERSION " " FIRMWARE_VERSION) ;
 }
 
+#ifdef DAISY
+extern char _ISR_VECTOR_END;
+VersionToken* bootloader_token = reinterpret_cast<VersionToken*>(&_ISR_VECTOR_END);
+#else
 extern char _BOOTLOADER, _ISR_VECTOR_SIZE;
 VersionToken* bootloader_token = reinterpret_cast<VersionToken*>(
   (uint32_t)&_BOOTLOADER + (uint32_t)&_ISR_VECTOR_SIZE);
+#endif
 
 const char* getBootloaderVersion(){
   if (bootloader_token->magic == BOOTLOADER_MAGIC){

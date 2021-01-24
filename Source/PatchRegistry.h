@@ -25,8 +25,6 @@ public:
   ResourceHeader* getResource(const char* name);
   unsigned int getSlot(ResourceHeader* resource);
   void* getData(ResourceHeader* resource);
-  void store(uint8_t index, uint8_t* data, size_t size);
-  void setDeleted(uint8_t index);
   StorageBlock* getPatchBlock(uint8_t index);
   StorageBlock* getPatchBlock(const char* name);
   StorageBlock* getResourceBlock(uint8_t index);

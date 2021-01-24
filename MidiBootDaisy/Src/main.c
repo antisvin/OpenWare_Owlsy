@@ -193,7 +193,7 @@ int main(void)
       struct FirmwareHeader* header = getFirmwareHeader();
 
       // Enable IWDG if firmware has option bit set
-      if ((header->options >> OPT_IWDG_OFFSET) & OPT_IWDG_MASK)
+      //if ((header->options >> OPT_IWDG_OFFSET) & OPT_IWDG_MASK)
         MX_IWDG1_Init();
 
       uint32_t JumpAddress = *(__IO uint32_t*) (header->isr_vector_address + 4);

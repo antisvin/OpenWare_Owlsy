@@ -6,7 +6,7 @@
 
 #if defined DAISY
   #define HARDWARE_ID                  DAISY_PATCH_HARDWARE
-  #define HARDWARE_VERSION             "Daisy Patch"
+  #define HARDWARE_VERSION             "Owlsy"
 #else
   #error Invalid configuration
 #endif
@@ -30,7 +30,7 @@
 
 #define MAX_NUMBER_OF_PATCHES       60
 #define MAX_NUMBER_OF_RESOURCES     60
-#define STORAGE_MAX_BLOCKS          256
+#define STORAGE_MAX_BLOCKS          128
 
 #define USE_SCREEN
 #define SSD1309

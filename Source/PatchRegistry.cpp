@@ -1,6 +1,6 @@
 #include "PatchRegistry.h"
 // #include "FactoryPatches.h"
-// #include "ProgramManager.h"
+#include "ProgramManager.h"
 #include "ResourceHeader.h"
 #include "ProgramHeader.h"
 #include "DynamicPatchDefinition.hpp"
@@ -65,7 +65,6 @@ ResourceHeader* PatchRegistry::getResource(const char* name){
   return NULL;
 }
 
-template<class Storage, class StorageBlock>
 unsigned int PatchRegistry::getSlot(ResourceHeader* resource){
   const char* name = resource->name;
   for(int i=0; i<MAX_NUMBER_OF_RESOURCES; ++i){
@@ -78,13 +77,11 @@ unsigned int PatchRegistry::getSlot(ResourceHeader* resource){
   return 0;
 }
 
-template<class Storage, class StorageBlock>
 void* PatchRegistry::getData(ResourceHeader* resource){
   return (uint8_t*)resource + sizeof(ResourceHeader);
 }
 
-template<class Storage, class StorageBlock>
-StorageBlock* ResourceRegistry<Storage, StorageBlock>::getPatchBlock(uint8_t index){
+StorageBlock* PatchRegistry::getPatchBlock(uint8_t index){
   if (index < MAX_NUMBER_OF_PATCHES - 1) {
     return &patchblocks[index];
   }
@@ -93,7 +90,6 @@ StorageBlock* ResourceRegistry<Storage, StorageBlock>::getPatchBlock(uint8_t ind
   }
 }
 
-template<class Storage, class StorageBlock>
 bool PatchRegistry::store(uint8_t index, uint8_t* data, size_t size){
   if(size > storage.getFreeSize() + storage.getDeletedSize()) {
     error(FLASH_ERROR, "Insufficient flash available");
@@ -150,7 +146,6 @@ bool PatchRegistry::store(uint8_t index, uint8_t* data, size_t size){
   return true;
 }
 
-template<class Storage, class StorageBlock>
 void PatchRegistry::setDeleted(uint8_t index) {
   if (!index) {
     // 0 is dynamic patch, nothing to delete from storage
@@ -189,7 +184,6 @@ void PatchRegistry::setDeleted(uint8_t index) {
   }
 }
 
-template<class Storage, class StorageBlock>
 const char* PatchRegistry::getResourceName(unsigned int index){
   ResourceHeader* hdr = getResource(index);
   if(hdr == NULL)
@@ -197,7 +191,6 @@ const char* PatchRegistry::getResourceName(unsigned int index){
   return hdr->name;
 }
 
-template<class Storage, class StorageBlock>
 const char* PatchRegistry::getPatchName(unsigned int index){
   PatchDefinition* def = getPatchDefinition(index);
   if(def == NULL)
@@ -205,7 +198,6 @@ const char* PatchRegistry::getPatchName(unsigned int index){
   return def->getName();
 }
 
-template<class Storage, class StorageBlock>
 unsigned int PatchRegistry::getNumberOfPatches(){
   // +1 for the current / dynamic patch in slot 0
   // return nofPatches+1;
@@ -213,17 +205,14 @@ unsigned int PatchRegistry::getNumberOfPatches(){
   return patchCount+1;
 }
 
-template<class Storage, class StorageBlock>
 unsigned int PatchRegistry::getNumberOfResources(){
   return resourceCount;
 }
 
-template<class Storage, class StorageBlock>
 bool PatchRegistry::hasPatches(){
   return patchCount > 0 || dynamicPatchDefinition != NULL;
 }
 
-template<class Storage, class StorageBlock>
 PatchDefinition* PatchRegistry::getPatchDefinition(unsigned int index){
   PatchDefinition *def = NULL;
   if(index == 0)

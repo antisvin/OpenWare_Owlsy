@@ -2,7 +2,6 @@
 #define __ParameterController_hpp__
 
 #include <cstring>
-#include "basicmaths.h"
 #include "errorhandlers.h"
 #include "message.h"
 #include "ApplicationSettings.h"
@@ -14,10 +13,23 @@
 #include "ProgramVector.h"
 #include "Scope.hpp"
 #include "StorageTasks.hpp"
+#include "VersionToken.h"
 
 #ifdef USE_DIGITALBUS
 #include "bus.h"
 #endif
+
+#ifndef min
+#define min(a,b) ((a)<(b)?(a):(b))
+#endif
+#ifndef max
+#define max(a,b) ((a)>(b)?(a):(b))
+#endif
+#ifndef abs
+#define abs(x) ((x)>0?(x):-(x))
+#endif
+
+extern VersionToken* bootloader_token;
 
 void defaultDrawCallback(uint8_t *pixels, uint16_t width, uint16_t height);
 
@@ -338,6 +350,11 @@ public:
     screen.print("%");
     // draw firmware version
     screen.print(1, offset + 26, getFirmwareVersion());
+    if (bootloader_token->magic == BOOTLOADER_MAGIC){
+      screen.print(" (bt.");
+      screen.print(getBootloaderVersion());
+      screen.print(")");
+    }
   }
 
 #ifdef USE_DIGITALBUS
@@ -537,9 +554,9 @@ public:
   void drawResourceNames(int selected, ScreenBuffer &screen) {
     screen.setTextSize(1);
     if (resourceDelete)
-      selected = min(selected, registry.getNumberOfResources());
+      selected = min(uint8_t(selected), registry.getNumberOfResources());
     else
-      selected = min(selected, registry.getNumberOfResources() - 1);
+      selected = min(uint8_t(selected), registry.getNumberOfResources() - 1);
     if (resourceDelete && selected == 0)
       screen.print(18, 24, "Delete:");
     if (selected > 0 && registry.getNumberOfResources() > 0) {

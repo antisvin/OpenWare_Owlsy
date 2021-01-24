@@ -295,12 +295,7 @@ void onRegisterPatchParameter(uint8_t id, const char* name){
 void onRegisterPatch(const char* name, uint8_t inputChannels, uint8_t outputChannels){
 #ifdef USE_SCREEN
   graphics.params.setTitle(name);
-<<<<<<< HEAD
 #endif /* OWL_MAGUS */
-=======
-#endif
-  midi_tx.sendPatchName(program.getProgramIndex(), name);
->>>>>>> d1fd4fe (Memory layout similar to OWL3)
 }
 
 // Called on init, resource operation, storage erase
@@ -418,10 +413,6 @@ void programFlashTask(void* p){
       onResourceUpdate();
     }else{
       program.loadProgram(index);
-    }
-    else {
-      owl.setOperationMode(RUN_MODE);
-      setLed(0, GREEN_COLOUR);      
     }
   }
   program.resetProgram(false);

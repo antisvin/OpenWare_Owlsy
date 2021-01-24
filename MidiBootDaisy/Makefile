@@ -20,6 +20,7 @@ C_SRC += $(OPENWARE)/Source/crc32.c
 C_SRC += $(OPENWARE)/Source/message.c
 CPP_SRC += $(OPENWARE)/Source/MidiWriter.cpp
 CPP_SRC += $(OPENWARE)/Source/MidiController.cpp
+CPP_SRC += $(OPENWARE)/Source/VersionToken.cpp
 # S_SRC = startup_openboot.s
 
 

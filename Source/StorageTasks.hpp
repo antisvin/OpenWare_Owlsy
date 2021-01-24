@@ -5,6 +5,10 @@
 #include "Storage.h"
 #include "message.h"
 
+#ifndef min
+#define min(a,b) ((a)<(b)?(a):(b))
+#endif
+
 extern char _FLASH_STORAGE_SIZE;
 extern char _EXTRAM_END, _FLASH_STORAGE_SIZE;
 

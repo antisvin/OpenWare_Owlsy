@@ -22,7 +22,7 @@ RAM (rwx)         : ORIGIN = 0x30000000, LENGTH = 256K /* Firmware code, copied 
 BUFFERS (rwx)     : ORIGIN = 0x30040000, LENGTH = 32K /* DMA buffer */
 RAM_D3 (rwx)      : ORIGIN = 0x38000000, LENGTH = 64K /* UNUSED */
 EXTRAM (rwx)      : ORIGIN = 0xc0000000, LENGTH = 64M
-/* BOOTLOADER (rx)   : ORIGIN = 0x08000000, LENGTH = 128K */ /* Bootloader on flash */
+BOOTLOADER (rx)   : ORIGIN = 0x08000000, LENGTH = 128K /* Bootloader on flash */
 /* BOOTROM (rx)      : ORIGIN = 0x90000000, LENGTH = 512K */ /* QSPI flash - firmware part. This is used by bootloader only. */
 FIRMWARE (r)      : ORIGIN = 0x90000000, LENGTH = 512K  /* QSPI flash - firmware storage part. It would be used as bootrom and storage for builtin LUTs */
 STORAGE (rx)      : ORIGIN = 0x90080000, LENGTH = 7680K  /* QSPI flash - patch storage part. That's one hell of a lot of patches */
@@ -55,6 +55,12 @@ SECTIONS
 		_sitcm = .;
     	PROVIDE ( _ISR_VECTOR = . );
 		KEEP(*(.isr_vector))
+    	PROVIDE ( _ISR_VECTOR_END = . );
+	} > ITCMRAM AT > FIRMWARE
+	_ISR_VECTOR_SIZE = _ISR_VECTOR_END - _ISR_VECTOR;
+
+	.bootloader_token : {
+		KEEP(*(.bootloader_token))
 	} > ITCMRAM AT > FIRMWARE
 
 	.itcm : 
@@ -219,6 +225,14 @@ SECTIONS
 	} > RAMHEAP
 	_RAMHEAP_SIZE = LENGTH(RAMHEAP);
 	_RAMHEAP_END = ORIGIN(RAMHEAP) + LENGTH(RAMHEAP);
+
+  	/* Bootloader will be used for finding bootloader token */
+  	.bootloader (NOLOAD) :
+  	{
+	    PROVIDE (_BOOTLOADER = .);
+  	} >BOOTLOADER
+  	_BOOTLOADER_END = ORIGIN(BOOTLOADER) + LENGTH(BOOTLOADER);	
+	_BOOTLOADER_TOKEN = _ISR_VECTOR_END;
 
   	/* External memory, vars must be located here explicitly */
   	/* Example: int foo __attribute__ ((section (".extdata"))); */

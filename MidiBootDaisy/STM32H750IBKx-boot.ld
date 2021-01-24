@@ -32,6 +32,12 @@ SECTIONS
 		. = ALIGN(4);
 	} > FLASH
 
+  	.bootloader_token :
+  	{
+    	. = ALIGN(4);
+    	KEEP(*(.bootloader_token));
+  	} > FLASH	
+
 	.text :
 	{
 		. = ALIGN(4);

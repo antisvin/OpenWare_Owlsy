@@ -300,6 +300,10 @@ void MidiHandler::handleFirmwareFlashCommand(uint8_t* data, uint16_t size){
         program.saveToFlash(-2, loader.getData(), loader.getSize());
         loader.clear();
         program.resetProgram(true);
+#ifdef DAISY
+        extern void updateToken();
+        updateToken();
+#endif
       }
     }else{
       error(PROGRAM_ERROR, "Invalid FLASH checksum");

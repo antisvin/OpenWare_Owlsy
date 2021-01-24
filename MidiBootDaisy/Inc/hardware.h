@@ -1,13 +1,17 @@
 #include "main.h"
 #include "stm32h7xx_hal.h"
+#include "hardware_ids.h"
 
 #define USE_USBD_MIDI
 #define USBD_MAX_POWER              100 // 100mA for iPad compatibility
 #define USBD_HANDLE hUsbDeviceFS
+#define USE_BOOTLOADER_MODE
+
 
 #define MAX_SYSEX_FIRMWARE_SIZE 512 * 1024
 
 #if defined DAISY
+  #define HARDWARE_ID         DAISY_PATCH_HARDWARE
   #define HARDWARE_VERSION    "Daisy Boot"
   #define APPLICATION_ADDRESS 0x90000000
 #else

@@ -1,4 +1,5 @@
 C_SRC += $(OPENWARE)/Source/crc32.c
+C_SRC += $(OPENWARE)/Source/eepromcontrol.c
 C_SRC += $(OPENWARE)/Source/errorhandlers.c
 C_SRC += $(OPENWARE)/Source/sysex.c
 C_SRC += $(OPENWARE)/Source/sramalloc.c
@@ -13,7 +14,6 @@ CPP_SRC += $(OPENWARE)/Source/ProgramManager.cpp
 CPP_SRC += $(OPENWARE)/Source/FlashStorage.cpp
 CPP_SRC += $(OPENWARE)/Source/ServiceCall.cpp
 CPP_SRC += $(OPENWARE)/Source/message.cpp
-CPP_SRC += $(OPENWARE)/Source/StorageBlock.cpp
 CPP_SRC += $(OPENWARE)/Source/BootloaderStorage.cpp
 CPP_SRC += $(OPENWARE)/Source/MidiWriter.cpp
 CPP_SRC += $(OPENWARE)/Source/MidiController.cpp
