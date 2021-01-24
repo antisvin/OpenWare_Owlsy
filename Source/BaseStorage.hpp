@@ -125,8 +125,9 @@ public:
   }
 
   void erase(uint8_t sector = 0xFF);
-  bool setDeleted(StorageBlock &block) { return false; }
-  void defrag(void *buffer, uint32_t size) {};
+  bool setDeleted(StorageBlock &block);
+  void defrag(void *buffer, uint32_t size);
+  void write(uint32_t offset, void* buffer, uint32_t size);
 
 protected:
   StorageBlock blocks[max_blocks];

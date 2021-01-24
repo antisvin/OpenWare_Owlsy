@@ -68,6 +68,14 @@ inline void Storage::erase(uint8_t sector) {
 }
 
 template<>
+inline void Storage::write(uint32_t offset, void* buffer, uint32_t size) {
+  eeprom_unlock();
+  eeprom_write_block(start_page + offset, buffer, size);
+  eeprom_lock();
+  init();
+}
+
+template<>
 inline void Storage::defrag(void *buffer, uint32_t size) {
   // ASSERT(size >= getWrittenSize(), "Insufficient space for full defrag");
   uint8_t *ptr = (uint8_t *)buffer;
@@ -80,10 +88,7 @@ inline void Storage::defrag(void *buffer, uint32_t size) {
       }
     }
     erase();
-    eeprom_unlock();
-    eeprom_write_block(start_page, buffer, offset);
-    eeprom_lock();
-    init();
+    write(0, buffer, size);
   }
 }
 

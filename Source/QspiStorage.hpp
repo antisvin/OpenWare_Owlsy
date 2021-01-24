@@ -67,6 +67,20 @@ inline void Storage::erase(uint8_t sector) {
 }
 
 template<>
+inline void Storage::write(uint32_t offset, void* buffer, uint32_t size) {
+  // ASSERT(size >= getWrittenSize(), "Insufficient space for full defrag");
+  int status = qspi_init(QSPI_MODE_INDIRECT_POLLING);
+  if (status == MEMORY_OK) {
+    status = qspi_write_block(start_page + offset, (uint8_t*)buffer, size);
+  }
+  else {
+    error(FLASH_ERROR, "Error writing flash");
+  }
+  qspi_init(QSPI_MODE_MEMORY_MAPPED);
+  init();
+}
+
+template<>
 inline void Storage::defrag(void *buffer, uint32_t size) {
   // ASSERT(size >= getWrittenSize(), "Insufficient space for full defrag");
   uint8_t *ptr = (uint8_t *)buffer;
@@ -79,16 +93,7 @@ inline void Storage::defrag(void *buffer, uint32_t size) {
       }
     }
     erase();
-    int status = qspi_init(QSPI_MODE_INDIRECT_POLLING);
-    if (status == MEMORY_OK) {
-      status = qspi_write_block(start_page, (uint8_t*)buffer, offset);
-    }    
-    else {
-      error(FLASH_ERROR, "Error writing flash");
-    }
-
-    qspi_init(QSPI_MODE_MEMORY_MAPPED);
-    init();
+    write(0, buffer, size);
   }
 }
 

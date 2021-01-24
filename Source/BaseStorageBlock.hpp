@@ -66,9 +66,9 @@ public:
    * 
    * Note that we don't use pointers to this class, so virtual methods are not required.
    */
-  bool isValidSize() const { return true; };
-  bool setDeleted() { return false; };
-  bool write(void* data, uint32_t size) { return false; };
+  bool isValidSize() const;
+  bool setDeleted();
+  bool write(void* data, uint32_t size);
 
   static constexpr uint8_t num_trailing_zeros = __builtin_ctz(alignment);
   // I.e. for alignment = 4, we have 2 trailing zeros

@@ -23,6 +23,9 @@ void defaultDrawCallback(uint8_t *pixels, uint16_t width, uint16_t height);
 
 #define ENC_MULTIPLIER 6 // shift left by this many steps
 
+static EraseStorageTask erase_task;
+static DefragStorageTask defrag_task;
+
 /* shows a single parameter selected and controlled with a single encoder
  */
 template <uint8_t SIZE>
@@ -60,14 +63,14 @@ public:
   enum SystemAction {
     SYS_BOOTLOADER,
     SYS_ERASE,
-//    SYS_DEFRAG,
+    SYS_DEFRAG,
     SYS_EXIT,
     SYS_LAST,
   };
   const char system_names[SYS_LAST][16] = {
     "Bootloader",
     "Erase patches",
-//    "Defragmentation",
+    "Defragmentation",
     "Exit",
   };
   bool systemPressed;
@@ -380,7 +383,7 @@ public:
     case STATUS:
       drawTitle(controlModeNames[controlMode], screen);
       drawStatus(screen);
-      drawMessage(46, screen);
+      drawMessage(55, screen);
       break;
     case PATCH:
       drawTitle(controlModeNames[controlMode], screen);
@@ -476,6 +479,10 @@ public:
       drawTitle(screen);
       drawProgress(user[LOAD_INDICATOR_PARAMETER] * 127 / 4095, screen, "Erasing...");
       break;
+    case DEFRAG_MODE:
+      drawTitle(screen);
+      drawProgress(user[LOAD_INDICATOR_PARAMETER] * 127 / 4095, screen, "Defrag...");
+      break;
     default:
       switch(displayMode){
       case STANDARD: 
@@ -568,11 +575,14 @@ public:
 
   void drawProgress(uint8_t progress, ScreenBuffer &screen, const char* message){
     // progress should be 0 - 127
-    screen.drawRectangle(0, 30, 128, 20, WHITE);
-    screen.setCursor(32, 40);
+    screen.drawRectangle(0, 26, 128, 20, WHITE);
+    screen.setCursor(32, 36);
     screen.setTextSize(1);
     screen.print(message);
-    screen.fillRectangle(0, 44, progress, 5, WHITE);
+    screen.fillRectangle(0, 40, progress, 5, WHITE);
+    ProgramVector* pv = getProgramVector();
+    if (pv->message != NULL)
+      screen.print(0, 55, pv->message);
   }
 
   void drawParameter(int pid, int y, ScreenBuffer &screen) {
@@ -948,23 +958,16 @@ public:
   }
 
   void handleSystem(SystemAction action){
-    debugMessage("PRESSED ", int(action));
     controlMode = EXIT;
-
     switch (action) {
     case SYS_BOOTLOADER:
       jump_to_bootloader();
       break;
     case SYS_ERASE:
-      static EraseStorageTask erase_task;
       owl.setBackgroundTask(&erase_task);
-//      program.exitProgram(false);
-//      SCB_DisableICache();
-//      SCB_DisableDCache();
-//      program.eraseFromFlash(0xff);
-//      SCB_EnableICache();
-//      SCB_EnableDCache();
-//      program.startProgram(false);
+      break;
+    case SYS_DEFRAG:
+      owl.setBackgroundTask(&defrag_task);
       break;
     case SYS_EXIT:
       break;
