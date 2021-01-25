@@ -70,3 +70,6 @@ deploy: upload lock
 
 dfu:
 	dfu-util -a 0 -s 0x08000000:leave -D Build/MidiBootDaisy.bin -d 0483:df11
+
+sysex:
+	FirmwareSender -in "Build/${PROJECT}.bin" -flash `crc32 "Build/${PROJECT}.bin"` -save "Build/${PROJECT}.syx"

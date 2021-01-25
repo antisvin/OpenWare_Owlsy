@@ -59,10 +59,6 @@ SECTIONS
 	} > ITCMRAM AT > FIRMWARE
 	_ISR_VECTOR_SIZE = _ISR_VECTOR_END - _ISR_VECTOR;
 
-	.bootloader_token : {
-		KEEP(*(.bootloader_token))
-	} > ITCMRAM AT > FIRMWARE
-
 	.itcm : 
 	{
 		. = ALIGN(4);

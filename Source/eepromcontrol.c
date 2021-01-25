@@ -36,7 +36,8 @@ int eeprom_erase_sector(uint32_t sector) {
 
 int eeprom_write_word(uint32_t address, uint32_t data){
 #ifndef OWL_ARCH_H7
-  HAL_StatusTypeDef status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, address, data);
+// This should read data from void* to implement wrting in flash words
+//  HAL_StatusTypeDef status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, address, data);
 #else
   HAL_StatusTypeDef status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_FLASHWORD, address, data);
 #endif
@@ -44,6 +45,7 @@ int eeprom_write_word(uint32_t address, uint32_t data){
 }
 
 #ifndef OWL_ARCH_H7
+// Can't write in less than a flash word on H7
 int eeprom_write_byte(uint32_t address, uint8_t data){
   HAL_StatusTypeDef status =  HAL_FLASH_Program(FLASH_TYPEPROGRAM_BYTE, address, data);
   return status;
@@ -52,21 +54,23 @@ int eeprom_write_byte(uint32_t address, uint8_t data){
 
 int eeprom_write_block(uint32_t address, void* data, uint32_t size){
   uint32_t* p32 = (uint32_t*)data;
-  uint32_t i=0; 
-  for(;i+4<=size; i+=4)
-    eeprom_write_word(address+i, *p32++);
-  uint8_t* p8 = (uint8_t*)p32;
+  uint32_t i=0;
+  HAL_StatusTypeDef status = HAL_OK;
 #ifndef OWL_ARCH_H7
+  for(;i+4<=size; i+=4)
+    status |= eeprom_write_word(address+i, *p32++);
+  uint8_t* p8 = (uint8_t*)p32;
   for(;i<size; i++)
-    eeprom_write_byte(address+i, *p8++);
+    status |= eeprom_write_byte(address+i, *p8++);
 #else
-  // H7 requires flash alignment to words, so we align remaining bytes to the left
-  if (size < i){
-    eeprom_write_word(address + i, (*p32) << ((size - i) * 8));
+  for(; i <= size; i += 32){
+    status |= HAL_FLASH_Program(FLASH_TYPEPROGRAM_FLASHWORD, address + i, (uint32_t)p32);
+    p32 += 32 / sizeof(void*);
   }
 #endif
-  return eeprom_wait() == HAL_FLASH_ERROR_NONE ? 0 : -1;
+  return eeprom_wait() == HAL_FLASH_ERROR_NONE ? (status != HAL_OK) : -1;
 }
+
 
 void eeprom_unlock(){
   HAL_FLASH_Unlock();
