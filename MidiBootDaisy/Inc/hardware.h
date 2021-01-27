@@ -27,8 +27,6 @@
 
 #define USE_IWDG
 
-#if 0
 #define USE_ENCODER_PIN
 #define ENC_CLICK_Pin GPIO_PIN_12
 #define ENC_CLICK_GPIO_Port GPIOB
-#endif
