@@ -158,7 +158,7 @@ void MPU_Config(void){
 
   // ITCM
   MPU_InitStruct.BaseAddress = 0x00000000;
-  MPU_InitStruct.Size = MPU_REGION_SIZE_64KB;
+  MPU_InitStruct.Size = MPU_REGION_SIZE_32KB;
   MPU_InitStruct.AccessPermission = MPU_REGION_FULL_ACCESS;
   MPU_InitStruct.IsBufferable = MPU_ACCESS_NOT_BUFFERABLE;
   MPU_InitStruct.IsCacheable = MPU_ACCESS_NOT_CACHEABLE;
@@ -166,12 +166,12 @@ void MPU_Config(void){
   MPU_InitStruct.Number = MPU_REGION_NUMBER7;
   MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL1;
   MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_ENABLE;
-  MPU_InitStruct.SubRegionDisable = 0b00000001;
+  MPU_InitStruct.SubRegionDisable = 0x0;
   HAL_MPU_ConfigRegion(&MPU_InitStruct);
 
- // ITCM - programstack
-  MPU_InitStruct.BaseAddress = 0x0000e000;
-  MPU_InitStruct.Size = MPU_REGION_SIZE_8KB;
+ // ITCM - HEAP + programstack
+  MPU_InitStruct.BaseAddress = 0x00008000;
+  MPU_InitStruct.Size = MPU_REGION_SIZE_32KB;
   MPU_InitStruct.AccessPermission = MPU_REGION_FULL_ACCESS;
   MPU_InitStruct.IsBufferable = MPU_ACCESS_NOT_BUFFERABLE;
   MPU_InitStruct.IsCacheable = MPU_ACCESS_NOT_CACHEABLE;

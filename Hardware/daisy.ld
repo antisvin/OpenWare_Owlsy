@@ -14,7 +14,9 @@ _Min_Stack_Size = 0x800; /* required amount of stack */
 /* Specify the memory areas */
 MEMORY
 {
-ITCMRAM (rx)      : ORIGIN = 0x00000000, LENGTH = 64K
+ITCMRAM (rx)      : ORIGIN = 0x00000000, LENGTH = 32K /* We split ITCM between 3 sections */
+ITCMHEAP (rw)     : ORIGIN = 0x00008000, LENGTH = 28K
+PROGRAMSTACK(rw)  : ORIGIN = 0x0000f000, LENGTH = 4K
 DTCMRAM (rw)      : ORIGIN = 0x20000000, LENGTH = 48K /* First 48kb of DTCM is used as FW RAM */
 PATCHRAM (rw)     : ORIGIN = 0x2000c000, LENGTH = 80K /* Remaining 80kb of DTCM is used as patch RAM */
 RAMHEAP (rwx)     : ORIGIN = 0x24000000, LENGTH = 512K
@@ -80,12 +82,21 @@ SECTIONS
 		_eitcm = .;
 	} > ITCMRAM AT > FIRMWARE
 
-	.programstack 0x0000e000 (NOLOAD):
+	.itcmheap (NOLOAD):
+	{
+		. = ALIGN(4);
+		PROVIDE(_ITCMHEAP = .);
+		*(.itcmheap)
+		*(.itcmheap*)
+	} > ITCMHEAP
+	_ITCMHEAP_SIZE = LENGTH(ITCMHEAP);
+
+	.programstack (NOLOAD):
 	{
 		. = ALIGN(4);
 		*(.programstack)
 		*(.programstack*)
-	} > ITCMRAM
+	} > PROGRAMSTACK
 
 	/*
 	 * Code (text and most constant data) will be copied to RAM in advance by bootloader
