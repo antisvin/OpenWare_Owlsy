@@ -59,6 +59,9 @@ extern uint16_t adc_values[NOF_ADC_VALUES];
 #ifndef USE_SCREEN
 int16_t parameter_values[NOF_PARAMETERS];
 #endif
+#ifdef DUAL_CODEC
+bool is_multichannel_patch = true;
+#endif
 BitState32 stateChanged;
 uint16_t button_values;
 uint16_t timestamps[NOF_BUTTONS]; 
@@ -296,6 +299,9 @@ void onRegisterPatch(const char* name, uint8_t inputChannels, uint8_t outputChan
 #ifdef USE_SCREEN
   graphics.params.setTitle(name);
 #endif /* OWL_MAGUS */
+#ifdef DUAL_CODEC
+  is_multichannel_patch = getProgramVector()->audio_format == AUDIO_FORMAT_24B32_4X;
+#endif
 }
 
 // Called on init, resource operation, storage erase
@@ -351,9 +357,11 @@ void updateProgramVector(ProgramVector* pv){
     { NULL, 0 }
   };
 #elif defined OWL_ARCH_H7
+  extern char _ITCMHEAP, _ITCMHEAP_SIZE;
   extern char _RAMHEAP, _RAMHEAP_SIZE;
   extern char _EXTRAM, _EXTRAM_SIZE;
   static MemorySegment heapSegments[] = {
+    { (uint8_t*)&_ITCMHEAP, (uint32_t)(&_ITCMHEAP_SIZE) },
     { (uint8_t*)&_RAMHEAP, (uint32_t)(&_RAMHEAP_SIZE) },
     { (uint8_t*)&_EXTRAM, (uint32_t)(&_EXTRAM_SIZE) },
     { NULL, 0 }
@@ -372,8 +380,8 @@ void updateProgramVector(ProgramVector* pv){
   pv->audio_format = AUDIO_FORMAT_24B16_2X;
 #elif defined OWL_BIOSIGNALS || defined OWL_NOCTUA
   pv->audio_format = AUDIO_FORMAT_24B32 | AUDIO_CHANNELS;
-#elif defined USE_AK4556 && defined DUAL_CODEC
-  pv->audio_format = AUDIO_FORMAT_24B32_4X;
+//#elif defined USE_AK4556 && defined DUAL_CODEC
+//  pv->audio_format = AUDIO_FORMAT_24B32_4X;
 #else
   pv->audio_format = AUDIO_FORMAT_24B32;
   // pv->audio_format = AUDIO_FORMAT_24B32_2X;
