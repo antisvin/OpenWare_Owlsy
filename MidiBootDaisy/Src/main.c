@@ -145,6 +145,7 @@ int main(void)
   MX_GPIO_Init();
   MX_FMC_Init();
   MX_QUADSPI_Init();
+  MX_IWDG1_Init();
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
 
@@ -460,7 +461,7 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin : ENC_CLICK_Pin */
   GPIO_InitStruct.Pin = ENC_CLICK_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(ENC_CLICK_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PB14 PB15 */
