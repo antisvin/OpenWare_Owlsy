@@ -13,3 +13,7 @@ CPP_SRC = $(wildcard Src/*.cpp)
 #OBJS += $(S_SRC:%.s=$(BUILDROOT)/%.o)
 
 include $(OPENWARE)/Hardware/f0.mk
+
+
+upload:
+	$(OPENOCD) -c "program Build/${PROJECT}.elf verify reset exit"
