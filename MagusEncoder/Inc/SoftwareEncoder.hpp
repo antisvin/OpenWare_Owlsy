@@ -3,9 +3,6 @@
 
 #include "DebouncedButton.hpp"
 
-#define ENCODER_SPEED 9
-// Something around 8-10 works fine
-
 #define min(a, b) (a < b ? a : b)
 #define max(a, b) (a > b ? a : b)
 
@@ -28,31 +25,28 @@ public:
      * 
      * @return: true if rotation detected
      */
-    bool updateCounter(uint32_t max_value) {
+    bool updateCounter() {
         a_state <<= 1;
         a_state |= getPin(port_a, pin_a);
         b_state <<= 1;
         b_state |= getPin(port_b, pin_b);
-        if ((a_state & 0x03) == 0x00 && (b_state & 0x03) == 0x02 ) {
-            updateTicks();
-            counter += max_value / getTicks();
-            return true;
+        if ((a_state & 0x03) == 0x02){
+            if (b_state & 0x01)
+                counter++;
+            else
+                counter--;
         }
-        else if ((b_state & 0x03) == 0x00 && (a_state & 0x03) == 0x02 ) {
-            updateTicks();
-            counter -= max_value / getTicks();
-            return true;
+        else if ((a_state & 0x03) == 0x01){
+            if (b_state & 0x01)
+                counter--;
+            else
+                counter++;
         }
         return false;
     }
 
     inline uint16_t getValue() const {
         return counter;
-    }
-
-    uint16_t getTicks() const {
-        uint16_t ticks = min(last_counter_update - prev_counter_update, 0xFFFFU);
-        return max(1, (ticks * ticks) >> ENCODER_SPEED);
     }
 
 private:
