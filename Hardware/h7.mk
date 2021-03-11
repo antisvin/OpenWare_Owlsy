@@ -13,6 +13,7 @@ USB_DEVICE_FILE=$(OPENWARE)/Libraries/Middlewares/ST/STM32_USB_Device_Library
 USB_HOST_FILE=$(OPENWARE)/Libraries/Middlewares/ST/STM32_USB_Host_Library
 USB_OTG_FILE=$(LIBROOT)/STM32_USB_OTG_Driver
 FREERTOS_DIR=$(OPENWARE)/Libraries/Middlewares/Third_Party/FreeRTOS/Source
+FATFS_DIR=$(OPENWARE)/Libraries/Middlewares/Third_Party/FatFs/src
 
 INC_FLAGS = -I$(CMSIS_CORE) -I$(CMSIS_DEVICE)/Include -I$(DRIVERS)/Inc 
 INC_FLAGS += -I$(OPENWARE)/Source -I$(OPENWARE)/LibSource -I$(BUILDROOT)/Inc
@@ -22,6 +23,8 @@ INC_FLAGS += -I$(USB_OTG_FILE)/inc
 INC_FLAGS += -I$(FREERTOS_DIR)/include
 INC_FLAGS += -I$(FREERTOS_DIR)/portable/GCC/ARM_CM7/r0p1
 INC_FLAGS += -I$(FREERTOS_DIR)/CMSIS_RTOS
+INC_FLAGS += -I$(FREERTOS_DIR)/CMSIS_RTOS_V2
+INC_FLAGS += -I$(FATFS_DIR)
 INC_FLAGS += -I$(LIBROOT)/CMSIS/DSP/Include
 
 CPPFLAGS += -mtune=cortex-m7 -DOWL_ARCH_H7

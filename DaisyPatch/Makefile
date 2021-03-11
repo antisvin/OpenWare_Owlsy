@@ -36,6 +36,8 @@ C_SRC += $(C_SRC_USBD)
 C_SRC += $(C_SRC_UART)
 C_SRC += $(C_SRC_IWDG)
 C_SRC += $(C_SRC_QSPI)
+C_SRC += $(C_SRC_SD)
+C_SRC += $(C_SRC_FAT)
 
 include $(OPENWARE)/Hardware/h7.mk
 
