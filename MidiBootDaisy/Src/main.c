@@ -190,6 +190,9 @@ int main(void)
 	      NVIC->ICPR[i]=0xFFFFFFFF;
       }
 
+      /* put marker in to prevent reset cycles */
+      *OWLBOOT_MAGIC_ADDRESS = OWLBOOT_LOOP_NUMBER;
+
       /* Jump to user application */
       struct FirmwareHeader* header = getFirmwareHeader();
 
