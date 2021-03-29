@@ -161,7 +161,7 @@ public:
     }
   }
 };
-UartMidiTransmitter uart_midi;
+UartMidiTransmitter uart_midi NO_CACHE;
 #endif
 
 void MidiWriter::send(MidiMessage msg){
