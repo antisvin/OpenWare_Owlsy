@@ -16,6 +16,7 @@ C_SRC += $(OPENWARE)/Source/ssd1309.c
 C_SRC += $(OPENWARE)/Source/ak4556.c
 CPP_SRC += $(OPENWARE)/Source/FirmwareHeader.cpp
 CPP_SRC += $(OPENWARE)/Source/uart.cpp
+CPP_SRC += $(OPENWARE)/Source/uart_midi.cpp
 CPP_SRC += $(OPENWARE)/Source/MidiStreamReader.cpp
 CPP_SRC += $(OPENWARE)/Source/ScreenBuffer.cpp
 CPP_SRC += $(OPENWARE)/Source/ScreenBufferMono.cpp
