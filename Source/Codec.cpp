@@ -13,20 +13,20 @@
 #include "SerialBuffer.hpp"
 SerialBuffer<CODEC_BUFFER_SIZE, int32_t> audio_rx_buffer
 #ifndef DUAL_CODEC
-NO_CACHE
+DMA_RAM
 #endif
 ;
 SerialBuffer<CODEC_BUFFER_SIZE, int32_t> audio_tx_buffer
 #ifndef DUAL_CODEC
-NO_CACHE
+DMA_RAM
 #endif
 ;
 
 #ifdef DUAL_CODEC
-SerialBuffer<CODEC_BUFFER_SIZE / 2, int32_t> audio_rx1_buffer NO_CACHE;
-SerialBuffer<CODEC_BUFFER_SIZE / 2, int32_t> audio_tx1_buffer NO_CACHE;
-SerialBuffer<CODEC_BUFFER_SIZE / 2, int32_t> audio_rx2_buffer NO_CACHE;
-SerialBuffer<CODEC_BUFFER_SIZE / 2, int32_t> audio_tx2_buffer NO_CACHE;
+SerialBuffer<CODEC_BUFFER_SIZE / 2, int32_t> audio_rx1_buffer DMA_RAM;
+SerialBuffer<CODEC_BUFFER_SIZE / 2, int32_t> audio_tx1_buffer DMA_RAM;
+SerialBuffer<CODEC_BUFFER_SIZE / 2, int32_t> audio_rx2_buffer DMA_RAM;
+SerialBuffer<CODEC_BUFFER_SIZE / 2, int32_t> audio_tx2_buffer DMA_RAM;
 extern bool is_multichannel_patch;
 #endif
 
@@ -268,6 +268,7 @@ void usbd_audio_tx_callback(uint8_t* data, size_t len){
   usbd_audio_write(data, len);
 #endif
 }
+#endif // USE_USBD_AUDIO
 
 void usbd_audio_mute_callback(int16_t gain){
   // todo!
@@ -280,7 +281,6 @@ void usbd_audio_gain_callback(int16_t gain){
 uint32_t usbd_audio_get_rx_count(){
   return 0; // todo!
 }
-#endif // USE_USBD_AUDIO
 
 uint16_t Codec::getBlockSize(){
   return codec_blocksize;
@@ -476,11 +476,11 @@ extern "C"{
 #if defined USE_CS4271 || defined USE_PCM3168A || defined USE_AK4556
 
 extern "C" {
-  SAI_HandleTypeDef HSAI_RX1;
-  SAI_HandleTypeDef HSAI_TX1;
+  extern SAI_HandleTypeDef HSAI_RX1;
+  extern SAI_HandleTypeDef HSAI_TX1;
 #ifdef DUAL_CODEC
-  SAI_HandleTypeDef HSAI_RX2;
-  SAI_HandleTypeDef HSAI_TX2;
+  extern SAI_HandleTypeDef HSAI_RX2;
+  extern SAI_HandleTypeDef HSAI_TX2;
 #endif
   void HAL_SAI_RxHalfCpltCallback(SAI_HandleTypeDef *hsai){
 #ifdef DUAL_CODEC

@@ -36,7 +36,6 @@
 #define FLASH_TASK_PRIORITY 5
 
 #define PROGRAMSTACK_SIZE (PROGRAM_TASK_STACK_SIZE*sizeof(portSTACK_TYPE)) // size in bytes
-// const uint32_t PROGRAMSTACK_SIZE = PROGRAM_TASK_STACK_SIZE*sizeof(portSTACK_TYPE); // size in bytes
 
 #define START_PROGRAM_NOTIFICATION  0x01
 #define STOP_PROGRAM_NOTIFICATION   0x02
@@ -296,7 +295,7 @@ void onRegisterPatchParameter(uint8_t id, const char* name){
 
 // called from program
 void onRegisterPatch(const char* name, uint8_t inputChannels, uint8_t outputChannels){
-#ifdef USE_SCREEN
+#if defined USE_SCREEN
   graphics.params.setTitle(name);
 #endif /* OWL_MAGUS */
 #ifdef DUAL_CODEC
@@ -308,8 +307,7 @@ void onRegisterPatch(const char* name, uint8_t inputChannels, uint8_t outputChan
 __weak void onResourceUpdate(void){
 }
 
-
-void updateProgramVector(ProgramVector* pv){
+void updateProgramVector(ProgramVector* pv, PatchDefinition* def){
   pv->hardware_version = HARDWARE_ID;
   pv->checksum = PROGRAM_VECTOR_CHECKSUM;
 #ifdef USE_SCREEN
@@ -398,24 +396,20 @@ void programFlashTask(void* p){
   uint32_t size = flashSizeToWrite;
   uint8_t* source = (uint8_t*)flashAddressToWrite;
   if(index == 0xff && size <= MAX_SYSEX_FIRMWARE_SIZE){
-    // flashFirmware(source, size); 
-    error(PROGRAM_ERROR, "Flash firmware TODO");
-  }
-  else if (index == 0xfe && size <= MAX_SYSEX_BOOTLOADER_SIZE){
+    error(PROGRAM_ERROR, "Enter bootloader to flash firmware");
+  }else if (index == 0xfe && size <= MAX_SYSEX_BOOTLOADER_SIZE){
     taskENTER_CRITICAL();
     bootloader.erase();
     extern char _BOOTLOADER, _BOOTLOADER_END;
-    if (*(uint32_t*)&_BOOTLOADER != 0xFFFFFFFF ||
+    if(*(uint32_t*)&_BOOTLOADER != 0xFFFFFFFF ||
         *(uint32_t*)((uint32_t)&_BOOTLOADER_END - sizeof(VersionToken)) != 0xFFFFFFFF){
       error(PROGRAM_ERROR, "Bootloader not erased");
-    }
-    else {
-      if (!bootloader.store((void*)source, size))
+    }else{
+      if(!bootloader.store((void*)source, size))
         error(PROGRAM_ERROR, "Bootloader write error");
     }
     taskEXIT_CRITICAL();
-  }
-  else{
+  }else{
     registry.store(index, source, size);
     if(index > MAX_NUMBER_OF_PATCHES){
       onResourceUpdate();
@@ -428,23 +422,23 @@ void programFlashTask(void* p){
   vTaskDelete(NULL);
 }
 
-
 void eraseFlashTask(void* p){
-  uint8_t sector = flashSectorToWrite;
-  if(sector == 0xff){
-    taskENTER_CRITICAL();
+  uint8_t slot = flashSectorToWrite;
+  taskENTER_CRITICAL();
+  if(slot == 0xff){
     storage.erase();
     taskEXIT_CRITICAL();
     // debugMessage("Erased flash storage");
     registry.init();
     onResourceUpdate();
   }else{
-    registry.setDeleted(sector);
+    registry.setDeleted(slot);
   }
+  taskEXIT_CRITICAL();
   storage.init();
   registry.init();
   settings.init();
-  if(sector > MAX_NUMBER_OF_PATCHES)
+  if(slot > MAX_NUMBER_OF_PATCHES)
     onResourceUpdate();
   program.resetProgram(false);
   utilityTask = NULL;
@@ -458,7 +452,7 @@ void runAudioTask(void* p){
     PatchDefinition* def = getPatchDefinition();
     ProgramVector* pv = def == NULL ? NULL : def->getProgramVector();
     if(pv != NULL && def->verify()){
-      updateProgramVector(pv);
+      updateProgramVector(pv, def);
       programVector = pv;
       setErrorStatus(NO_ERROR);
       owl.setOperationMode(RUN_MODE);
@@ -554,7 +548,7 @@ void runManagerTask(void* p){
     else if(ulNotifiedValue & ERASE_FLASH_NOTIFICATION){ // erase flash
       if(utilityTask != NULL)
         error(PROGRAM_ERROR, "Utility task already running");
-      xTaskCreate(eraseFlashTask, "Flash Write", FLASH_TASK_STACK_SIZE, NULL, FLASH_TASK_PRIORITY, &utilityTask);
+      xTaskCreate(eraseFlashTask, "Flash Erase", FLASH_TASK_STACK_SIZE, NULL, FLASH_TASK_PRIORITY, &utilityTask);
       // bool ret = utilityTask.create(eraseFlashTask, "Flash Erase", FLASH_TASK_PRIORITY);
       // if(!ret)
       // 	error(PROGRAM_ERROR, "Failed to start Flash Erase task");
@@ -606,7 +600,7 @@ ProgramManager::ProgramManager(){
 }
 
 void ProgramManager::startManager(){
-  updateProgramVector(getProgramVector());
+  // updateProgramVector(getProgramVector(), NULL);
 // #ifdef USE_SCREEN
 //   xTaskCreate(runScreenTask, "Screen", SCREEN_TASK_STACK_SIZE, NULL, SCREEN_TASK_PRIORITY, &screenTask);
 // #endif
@@ -700,7 +694,7 @@ uint32_t ProgramManager::getProgramStackAllocation(){
   if(patchdef != NULL)
     ss = patchdef->getStackSize();
   if(ss == 0)
-    ss = PROGRAMSTACK_SIZE; // PROGRAM_TASK_STACK_SIZE*sizeof(portSTACK_TYPE);
+    ss = PROGRAMSTACK_SIZE;
   return ss;
 }
 

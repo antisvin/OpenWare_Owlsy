@@ -12,10 +12,7 @@
 #include "ProgramManager.h"
 #include "Storage.h"
 #include "Owl.h"
-#ifdef DEBUG_BOOTLOADER
 #include "BootloaderStorage.h"
-extern BootloaderStorage bootloader;
-#endif
 
 
 void MidiController::sendPatchParameterValues(){
@@ -166,7 +163,6 @@ void MidiController::sendDeviceInfo(){
   sendFirmwareVersion();
   sendBootloaderVersion();
   sendProgramMessage();
-  //   sendProgramStats(); done by sendStatus() in case of no error
   sendDeviceStats();
   sendStatus();
 }

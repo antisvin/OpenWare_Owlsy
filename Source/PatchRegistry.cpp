@@ -1,16 +1,10 @@
 #include "PatchRegistry.h"
-// #include "FactoryPatches.h"
+#include "Storage.h"
 #include "ProgramManager.h"
 #include "ResourceHeader.h"
 #include "ProgramHeader.h"
 #include "DynamicPatchDefinition.hpp"
 #include "message.h"
-
-#ifdef MINIMAL_BUILD
-#include "ProgramManager.h"
-#endif
-
-// #define REGISTER_PATCH(T, STR, UNUSED, UNUSED2) registerPatch(STR, Register<T>::construct)
 
 #ifndef max
 #define max(a,b) ((a)>(b)?(a):(b))
@@ -21,15 +15,6 @@ static PatchDefinition emptyPatch("---", 0, 0);
 void PatchRegistry::init() {
   patchCount = 0;
   resourceCount = 0;
-  // FactoryPatchDefinition::init();
-  // PatchDefinition* def;
-  // for(int i=0; i<MAX_USER_PATCHES; ++i){
-  //   def = program.getPatchDefinitionFromFlash(i);
-  //   if(def == NULL)
-  //     registerPatch(&emptyPatch);
-  //   else
-  //     registerPatch(def);
-  // }
   for(int i=0; i<storage.getBlocksTotal(); ++i){
     StorageBlock block = storage.getBlock(i);
     if(block.verify() && block.getDataSize() > 4){

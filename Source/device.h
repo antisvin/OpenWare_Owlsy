@@ -3,7 +3,7 @@
 
 #include "hardware.h"
 
-#define FIRMWARE_VERSION_MAJOR       22
+#define FIRMWARE_VERSION_MAJOR       23
 #define FIRMWARE_VERSION_MINOR       0
 #define _FW_STR(x)                   #x
 #define _FW_TO_STR(x)                _FW_STR(x)
@@ -53,8 +53,8 @@
 
 #define DEBUG_DWT
 /* #define DEBUG_STACK */
-/* #define DEBUG_STORAGE */
-#define DEBUG_BOOTLOADER
+#define DEBUG_STORAGE
+/* #define DEBUG_BOOTLOADER */
 
 #ifdef SSD1331
 #define OLED_WIDTH		     96
@@ -76,10 +76,13 @@
 #ifndef MAX_SYSEX_BOOTLOADER_SIZE
 #define MAX_SYSEX_BOOTLOADER_SIZE    (64 * 1024) // OWL1 uses 32kb, must be overridden
 #endif
+#ifndef MAX_SYSEX_PROGRAM_SIZE
+#define MAX_SYSEX_PROGRAM_SIZE       (144 * 1024)
+#endif
 #ifdef USE_BOOTLOADER_MODE // Flag to choose if we're flashing firmware or bootloader from SySex
 #define MAX_SYSEX_PAYLOAD_SIZE       MAX_SYSEX_FIRMWARE_SIZE
 #else
-#define MAX_SYSEX_PAYLOAD_SIZE       MAX_SYSEX_BOOTLOADER_SIZE
+#define MAX_SYSEX_PAYLOAD_SIZE       MAX_SYSEX_PROGRAM_SIZE
 #endif
 #define BOOTLOADER_MAGIC             0xB007C0DE
 #define BOOTLOADER_VERSION           "v0.2"
@@ -137,8 +140,12 @@
 
 #define USBD_AUDIO_RX_FREQ           AUDIO_SAMPLINGRATE
 #define USBD_AUDIO_TX_FREQ           AUDIO_SAMPLINGRATE
+#ifndef USBD_AUDIO_RX_CHANNELS
 #define USBD_AUDIO_RX_CHANNELS       AUDIO_CHANNELS
+#endif
+#ifndef USBD_AUDIO_TX_CHANNELS
 #define USBD_AUDIO_TX_CHANNELS       AUDIO_CHANNELS
+#endif
 
 #ifndef MAIN_LOOP_SLEEP_MS
 #define MAIN_LOOP_SLEEP_MS           2
@@ -170,8 +177,6 @@
 #define ARM_CYCLES_PER_SAMPLE        (168000000/AUDIO_SAMPLINGRATE) /* 168MHz / 48kHz */
 #endif
 
-#define CCM                          __attribute__ ((section (".ccmdata")))
-
 /* The "__" prefix would be used by UI controller to prevent user from deleting system resources */
 #define RESOURCE_SETTINGS_NAME       "__SETTINGS__"
 #define RESOURCE_FFT_LUT_NAME        "__FFT_LUT__"
@@ -180,12 +185,12 @@
 #define FFT_LUT_SIZE                 120104U
 
 #ifdef OWL_ARCH_H7
-  #define NO_CACHE                     __attribute__ ((section (".nocache")))
+  #define DMA_RAM                      __attribute__ ((section (".nocache")))
   #define CACHE_ALIGNED                __attribute__ ((aligned(32)))
   #define ITCM                         __attribute__ ((section (".itcm")))
   #define TABLE                        __attribute__ ((section (".tables")))
 #else
-  #define NO_CACHE
+  #define DMA_RAM
   #define CACHE_ALIGNED
   #define ITCM
   #define TABLE
@@ -198,6 +203,17 @@
 
 #ifndef NO_EXTERNAL_RAM
 #define USE_EXTERNAL_RAM
+#endif
+
+#ifndef NO_CCM_RAM
+#define USE_CCM_RAM
+#define CCM_RAM                          __attribute__ ((section (".ccmdata")))
+#else
+#define CCM_RAM
+#endif
+
+#ifndef DMA_RAM
+#define DMA_RAM
 #endif
 
 #if defined USE_USBD_FS

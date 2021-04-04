@@ -34,14 +34,19 @@ int eeprom_erase_sector(uint32_t sector) {
   return status;
 }
 
+/*
+ * Flash word is 32 bytes, so we'd have to pass pointer or address instead of raw object on H7
+ */
 int eeprom_write_word(uint32_t address, uint32_t data){
 #ifndef OWL_ARCH_H7
-// This should read data from void* to implement wrting in flash words
-//  HAL_StatusTypeDef status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, address, data);
-#else
-  HAL_StatusTypeDef status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_FLASHWORD, address, data);
-#endif
+  HAL_StatusTypeDef status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, address, data);
   return status;
+#else
+  // TODO: not implemented, this is just a stub to allow compiling Genius firmware.
+  // This is used to store patches, so we'd have to either change function signature
+  // or use block writes for patch storage.
+  return 0;
+#endif
 }
 
 #ifndef OWL_ARCH_H7
@@ -56,17 +61,17 @@ int eeprom_write_block(uint32_t address, void* data, uint32_t size){
   uint32_t* p32 = (uint32_t*)data;
   uint32_t i=0;
   HAL_StatusTypeDef status = HAL_OK;
-#ifndef OWL_ARCH_H7
+#ifdef OWL_ARCH_H7
+  for(; i <= size; i += 32){
+    status |= HAL_FLASH_Program(FLASH_TYPEPROGRAM_FLASHWORD, address + i, (uint32_t)p32);
+    p32 += 32 / sizeof(void*);
+  }
+#else
   for(;i+4<=size; i+=4)
     status |= eeprom_write_word(address+i, *p32++);
   uint8_t* p8 = (uint8_t*)p32;
   for(;i<size; i++)
     status |= eeprom_write_byte(address+i, *p8++);
-#else
-  for(; i <= size; i += 32){
-    status |= HAL_FLASH_Program(FLASH_TYPEPROGRAM_FLASHWORD, address + i, (uint32_t)p32);
-    p32 += 32 / sizeof(void*);
-  }
 #endif
   return eeprom_wait() == HAL_FLASH_ERROR_NONE ? (status != HAL_OK) : -1;
 }
@@ -102,7 +107,7 @@ int eeprom_erase(uint32_t address){
     ret = eeprom_erase_sector(FLASH_SECTOR_6);
   else if(address < ADDR_FLASH_SECTOR_8)
     ret = eeprom_erase_sector(FLASH_SECTOR_7);
-#ifndef OWL_ARCH_F7
+#ifdef FLASH_SECTOR_8
   else if(address < ADDR_FLASH_SECTOR_9)
     ret = eeprom_erase_sector(FLASH_SECTOR_8);
   else if(address < ADDR_FLASH_SECTOR_10)

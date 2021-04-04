@@ -39,6 +39,18 @@ void setGateValue(uint8_t bid, int16_t value){
   }
 }
 
+void setAnalogValue(uint8_t ch, int16_t value){
+  extern DAC_HandleTypeDef DAC_PERIPH;
+  switch(ch){
+  case PARAMETER_F:
+    HAL_DAC_SetValue(&DAC_PERIPH, DAC_CHANNEL_1, DAC_ALIGN_12B_R, __USAT(value, 12));
+    break;
+  case PARAMETER_G:
+    HAL_DAC_SetValue(&DAC_PERIPH, DAC_CHANNEL_2, DAC_ALIGN_12B_R, __USAT(value, 12));
+    break;
+  }
+}
+
 void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t* adc_values, size_t adc_len){
 #ifdef USE_CACHE
   //SCB_InvalidateDCache_by_Addr((uint32_t*)adc_values, sizeof(adc_values));
@@ -50,6 +62,17 @@ void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t*
   graphics.params.updateValue(3, 4095 - adc_values[3]);
 }
 
+void onChangePin(uint16_t pin){
+  switch(pin){
+  case GATE_IN1_Pin:
+    setButtonValue(BUTTON_A, !(GATE_IN1_GPIO_Port->IDR & GATE_IN1_Pin));
+    setButtonValue(PUSHBUTTON, !(GATE_IN1_GPIO_Port->IDR & GATE_IN1_Pin));
+    break;
+  case GATE_IN2_Pin:
+    setButtonValue(BUTTON_B, !(GATE_IN2_GPIO_Port->IDR & GATE_IN2_Pin));
+    break;
+  }
+}
 
 void setup(){
   HAL_GPIO_WritePin(OLED_RST_GPIO_Port, OLED_RST_Pin, GPIO_PIN_RESET); // OLED off
@@ -86,6 +109,9 @@ void loop(){
     for(int i = NOF_ADC_VALUES; i < NOF_PARAMETERS; ++i) {
       graphics.params.updateValue(i, 0);
     }
+
+    graphics.draw();
+    graphics.display();
   }
   
   owl.loop();

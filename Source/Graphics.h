@@ -15,6 +15,8 @@
 #include "EffectsBoxParameterController.hpp"
 #elif defined DAISY
 #include "DaisyParameterController.hpp"
+#elif defined OWL_GENIUS
+#include "GeniusParameterController.hpp"
 #else
 #include "ParameterController.hpp"
 #endif
@@ -26,11 +28,7 @@ public:
   void display();
   void draw();
   void setCallback(void *callback);
-#ifdef OWL_MAGUS
-  ParameterController<20> params;
-#else
   ParameterController<NOF_PARAMETERS> params;
-#endif
   ScreenBuffer screen;
 private:
   uint8_t pixelbuffer[OLED_BUFFER_SIZE] CACHE_ALIGNED;

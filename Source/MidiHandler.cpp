@@ -15,7 +15,6 @@
 #include "PatchRegistry.h"
 #ifndef USE_BOOTLOADER_MODE
 #include "BootloaderStorage.h"
-extern BootloaderStorage bootloader;
 #endif
 #ifdef USE_DIGITALBUS
 #include "bus.h"
@@ -35,7 +34,6 @@ MidiHandler::MidiHandler() : channel(MIDI_OMNI_CHANNEL) {
 }
 
 void MidiHandler::handlePitchBend(uint8_t status, uint16_t value){
-  // setParameterValue(PARAMETER_G, ((int16_t)value - 8192)>>1);
 }
 
 void MidiHandler::handleNoteOn(uint8_t status, uint8_t note, uint8_t velocity){
@@ -43,7 +41,6 @@ void MidiHandler::handleNoteOn(uint8_t status, uint8_t note, uint8_t velocity){
     return;
   if(getProgramVector()->buttonChangedCallback != NULL)
     getProgramVector()->buttonChangedCallback(MIDI_NOTE_BUTTON+note, velocity<<5, getSampleCounter());
-  // setButtonValue(MIDI_NOTE_BUTTON+note, velocity<<5);
 }
 
 void MidiHandler::handleNoteOff(uint8_t status, uint8_t note, uint8_t velocity){
@@ -51,7 +48,6 @@ void MidiHandler::handleNoteOff(uint8_t status, uint8_t note, uint8_t velocity){
     return;
   if(getProgramVector()->buttonChangedCallback != NULL)
     getProgramVector()->buttonChangedCallback(MIDI_NOTE_BUTTON+note, 0, getSampleCounter());
-  // setButtonValue(MIDI_NOTE_BUTTON+note, 0);
 }
 
 void MidiHandler::handleProgramChange(uint8_t status, uint8_t pid){
@@ -99,10 +95,10 @@ void MidiHandler::handleControlChange(uint8_t status, uint8_t cc, uint8_t value)
     setParameterValue(PARAMETER_H, value<<5);
     break;
   case PATCH_BUTTON:
-    setButtonValue(PUSHBUTTON, value == 127 ? 4095 : 0);
+    setButtonValue(PUSHBUTTON, value < 64 ? 0 : 255);
     break;
   case PATCH_BUTTON_ON:
-    setButtonValue(value, 127);
+    setButtonValue(value, 255);
     break;
   case PATCH_BUTTON_OFF:
     setButtonValue(value, 0);

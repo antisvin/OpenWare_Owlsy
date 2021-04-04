@@ -18,7 +18,7 @@
 #define abs(x) ((x)>0?(x):-(x))
 #endif
 
-void pinChanged(uint16_t pin){
+void onChangePin(uint16_t pin){
   switch(pin){
   case SW2_Pin:
     {
@@ -43,19 +43,34 @@ void pinChanged(uint16_t pin){
 
 void setAnalogValue(uint8_t ch, int16_t value){
   extern DAC_HandleTypeDef hdac;
-  // todo set LEDs
+  value = __USAT(value, 12);
   switch(ch){
   case PARAMETER_F:
-    HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, __USAT(value, 12));
+    HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, value);
+    setLed(5, value);
     break;
   case PARAMETER_G:
     HAL_DAC_SetValue(&hdac, DAC_CHANNEL_2, DAC_ALIGN_12B_R, __USAT(value, 12));
+    setLed(6, value);
     break;
   }
 }
 
 void setGateValue(uint8_t ch, int16_t value){
   switch(ch){
+    // todo: always fiddle pushbutton LEDs to allow toggle
+  // case BUTTON_A:
+  //   setLed(1, value);
+  //   break;
+  // case BUTTON_B:
+  //   setLed(2, value);
+  //   break;
+  // case BUTTON_C:
+  //   setLed(3, value);
+  //   break;
+  // case BUTTON_D:
+  //   setLed(f, value);
+  //   break;
   case PUSHBUTTON:
   case BUTTON_E:
     HAL_GPIO_WritePin(TR_OUT1_GPIO_Port, TR_OUT1_Pin, value ? GPIO_PIN_RESET :  GPIO_PIN_SET);
@@ -84,7 +99,6 @@ void initLed(){
 }
 
 void setLed(uint8_t led, uint32_t rgb){
-  // uint32_t value = 1023 - ((rgb>>20)&0x3ff); // red
   uint32_t value = 1023 - (__USAT(rgb>>2, 10)); // expects 12-bit parameter value
   switch(led){
   case 0:
@@ -112,10 +126,10 @@ void setLed(uint8_t led, uint32_t rgb){
 
 void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t* adc_values, size_t adc_len){
   // IIR exponential filter with lambda 0.75
-  parameter_values[0] = (parameter_values[0]*3 + adc_values[ADC_A] + adc_values[ADC_B])>>2;
-  parameter_values[1] = (parameter_values[1]*3 + adc_values[ADC_C] + adc_values[ADC_D])>>2;
-  parameter_values[2] = (parameter_values[2]*3 + adc_values[ADC_E] + adc_values[ADC_F])>>2;
-  parameter_values[3] = (parameter_values[3]*3 + adc_values[ADC_G] + adc_values[ADC_H])>>2;
+  parameter_values[0] = __USAT((parameter_values[0]*3 + adc_values[ADC_A] + adc_values[ADC_B])>>2, 12);
+  parameter_values[1] = __USAT((parameter_values[1]*3 + adc_values[ADC_C] + adc_values[ADC_D])>>2, 12);
+  parameter_values[2] = __USAT((parameter_values[2]*3 + adc_values[ADC_E] + adc_values[ADC_F])>>2, 12);
+  parameter_values[3] = __USAT((parameter_values[3]*3 + adc_values[ADC_G] + adc_values[ADC_H])>>2, 12);
   parameter_values[4] = (parameter_values[4]*3 + adc_values[ADC_I])>>2;
 }
 
@@ -231,7 +245,7 @@ bool fiddle(int i, bool selected){
   LL_GPIO_SetPinMode(port, llpin, LL_GPIO_MODE_INPUT);
   // bool value = LL_GPIO_IsInputPinSet(port, llpin);
   bool value = HAL_GPIO_ReadPin(port, pin) == GPIO_PIN_RESET;
-  uint32_t portvalues = LL_GPIO_ReadOutputPort(port);
+  // uint32_t portvalues = LL_GPIO_ReadOutputPort(port);
   if(selected){
     LL_GPIO_SetPinMode(port, llpin, LL_GPIO_MODE_OUTPUT);
     // LL_GPIO_WriteOutputPort(port, portvalues & ~llpin); // switch pin off
@@ -248,8 +262,6 @@ static uint32_t counter = 0;
 static void update_preset(){
   switch(owl.getOperationMode()){
   case STARTUP_MODE:
-    owl.setOperationMode(RUN_MODE);
-    break;
   case STREAM_MODE:
   case LOAD_MODE:
     setLed(1, counter > PATCH_RESET_COUNTER*0.1 ? 4095 : 0);
@@ -258,14 +270,12 @@ static void update_preset(){
     setLed(6, counter > PATCH_RESET_COUNTER*0.4 ? 4095 : 0);
     setLed(3, counter > PATCH_RESET_COUNTER*0.5 ? 4095 : 0);
     setLed(4, counter > PATCH_RESET_COUNTER*0.6 ? 4095 : 0);
+    if(getErrorStatus() != NO_ERROR || isModeButtonPressed())
+      owl.setOperationMode(ERROR_MODE);
     break;
   case RUN_MODE:
     if(isModeButtonPressed()){
       program.exitProgram(false);
-      for(int i=1; i<=6; ++i)
-	setLed(i, 0);
-      setGateValue(BUTTON_E, 0);
-      setGateValue(BUTTON_F, 0);
       owl.setOperationMode(CONFIGURE_MODE);
     }else if(getErrorStatus() != NO_ERROR){
       owl.setOperationMode(ERROR_MODE);
@@ -274,14 +284,8 @@ static void update_preset(){
       setLed(2, getAnalogValue(ADC_C));
       setLed(3, getAnalogValue(ADC_E));
       setLed(4, getAnalogValue(ADC_G));
-      // setLed(1, getParameterValue(PARAMETER_A));
-      // setLed(2, getParameterValue(PARAMETER_B));
-      // setLed(3, getParameterValue(PARAMETER_C));
-      // setLed(4, getParameterValue(PARAMETER_D));
-      setLed(5, getParameterValue(PARAMETER_F));
-      setLed(6, getParameterValue(PARAMETER_G));
     }
-    counter = 0;
+    break;
   case CONFIGURE_MODE:
     if(isModeButtonPressed()){
       uint8_t patchselect = program.getProgramIndex();
@@ -309,18 +313,29 @@ static void update_preset(){
     setLed(6, counter < PATCH_RESET_COUNTER*0.5 ? 4095 : 0);
     setLed(3, counter > PATCH_RESET_COUNTER*0.5 ? 4095 : 0);
     setLed(4, counter > PATCH_RESET_COUNTER*0.5 ? 4095 : 0);
-    if(isModeButtonPressed())
-      program.resetProgram(false); // runAudioTask() changes to RUN_MODE
+    if(isModeButtonPressed()){
+      setErrorStatus(NO_ERROR);
+      owl.setOperationMode(RUN_MODE); // allows new patch selection if patch doesn't load
+      program.resetProgram(false);
+    }
     break;
   }
   if(++counter >= PATCH_RESET_COUNTER)
     counter = 0;
 }
 
+void onChangeMode(OperationMode new_mode, OperationMode old_mode){
+  for(int i=1; i<=6; ++i)
+    setLed(i, 0);
+  setGateValue(BUTTON_E, 0);
+  setGateValue(BUTTON_F, 0);
+  setAnalogValue(PARAMETER_F, 0);
+  setAnalogValue(PARAMETER_G, 0);
+  counter = 0;
+}
+
 void setup(){
-  HAL_GPIO_WritePin(TR_OUT1_GPIO_Port, TR_OUT1_Pin, GPIO_PIN_SET);
-  HAL_GPIO_WritePin(TR_OUT2_GPIO_Port, TR_OUT2_Pin, GPIO_PIN_SET);
-  HAL_GPIO_WritePin(LEDPWM1_GPIO_Port, LEDPWM1_Pin, GPIO_PIN_SET);
+  initLed();
   HAL_GPIO_WritePin(LEDPWM_GPIO_Port, LEDPWM_Pin, GPIO_PIN_SET);
   owl.setup();
 }
@@ -332,9 +347,6 @@ void loop(void){
       setButtonValue(PUSHBUTTON, state);
       setButtonValue(BUTTON_A, state);
   }
-  // state = HAL_GPIO_ReadPin(SW5_GPIO_Port, SW5_Pin) == GPIO_PIN_RESET;
-  // if(state != getButtonValue(BUTTON_E))
-  //   setButtonValue(BUTTON_E, state); // todo: mode button
   update_preset();
   owl.loop();
 }
