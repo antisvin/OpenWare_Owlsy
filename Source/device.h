@@ -3,7 +3,7 @@
 
 #include "hardware.h"
 
-#define FIRMWARE_VERSION "v21.2-pre1"
+#define FIRMWARE_VERSION "v21.2-pre2"
 
 #ifndef AUDIO_OUTPUT_GAIN
 #define AUDIO_OUTPUT_GAIN            112
@@ -135,6 +135,10 @@
 
 #ifndef LOAD_INDICATOR_PARAMETER
 #define LOAD_INDICATOR_PARAMETER     PARAMETER_A
+#endif
+
+#ifndef LEDS_BRIGHTNESS
+#define LEDS_BRIGHTNESS              20 /* default value - 0 = off, 63 = supernova */
 #endif
 
 #define PROGRAM_TASK_STACK_SIZE      (4*1024/sizeof(portSTACK_TYPE))
