@@ -11,6 +11,16 @@ ifeq ($(CONFIG),Release)
   CFLAGS   = -O2
 endif
 
+# compile with semihosting if Debug is selected
+ifeq ($(CONFIG),Debug)
+  LDLIBS += -lrdimon
+  LDFLAGS += -specs=rdimon.specs
+else
+  CPPFLAGS += -nostdlib -nostartfiles -fno-builtin -ffreestanding
+  C_SRC += libnosys_gnu.c
+  LDFLAGS += --specs=nano.specs
+endif
+
 # Compilation Flags
 LDFLAGS += -Wl,--gc-sections
 LDSCRIPT = $(OPENWARE)/Hardware/STM32F100CB_FLASH.ld

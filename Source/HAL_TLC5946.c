@@ -15,8 +15,15 @@ static uint8_t rgGSbuf[TLC_DEVICES*TLC_GS_BYTES+1];
 static uint8_t rgDCbuf[TLC_DEVICES*TLC_DC_BYTES+1] =
   {
    12, 48, 195, 12, 48, 195, 12, 48, 195, 12, 48, 195, // DC=3 Red
+#if TLC_DEVICES > 1
    12, 48, 195, 12, 48, 195, 12, 48, 195, 12, 48, 195, // DC=3 Blue
+#if TLC_DEVICES > 2
    12, 48, 195, 12, 48, 195, 12, 48, 195, 12, 48, 195, // DC=3 Green
+#if TLC_DEVICES > 3
+#error Add defaults for extra chips here
+#endif
+#endif
+#endif
   };
 static SPI_HandleTypeDef* TLC5946_SPIConfig;
 

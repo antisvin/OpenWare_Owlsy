@@ -1,7 +1,7 @@
 PROJECT = Expander
 BUILDROOT = .
 OPENWARE ?= $(BUILDROOT)/..
-OPENOCD ?= openocd -f openocd.cfg
+OPENOCD ?= openocd -f $(BUILDROOT)/openocd.cfg
 
 include $(OPENWARE)/Hardware/STM32F100CB.mk
 
@@ -13,6 +13,7 @@ CPP_SRC += $(OPENWARE)/Source/DigitalBusHandler.cpp
 CPP_SRC += $(OPENWARE)/Source/DigitalBusStreamReader.cpp
 CPP_SRC += $(OPENWARE)/Source/MidiReader.cpp
 C_SRC += $(OPENWARE)/Source/errorhandlers.c
+C_SRC += $(OPENWARE)/Source/message.c
 C_SRC += $(OPENWARE)/Source/HAL_MAX11300.c
 C_SRC += $(OPENWARE)/Source/HAL_TLC5946.c
 
