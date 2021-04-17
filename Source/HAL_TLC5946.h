@@ -8,6 +8,10 @@
 	extern "C" {
 #endif
 
+#ifndef TLC_DEVICES
+#define TLC_DEVICES 	3
+#endif
+
 // Modes
 #define Mode_GS 	0
 #define Mode_DC		1
@@ -25,9 +29,13 @@ void TLC5946_Refresh_GS(void);
 void TLC5946_Refresh_DC(void);
 void TLC5946_TxINTCallback(void);
 
+#if TLC_DEVICES == 3
 void TLC5946_setRGB(uint8_t LED_ID, uint16_t val_R, uint16_t val_G, uint16_t val_B);
 void TLC5946_setRGB_DC(uint8_t val_R, uint8_t val_G, uint8_t val_B);
 void TLC5946_setAll(uint16_t val_R, uint16_t val_G, uint16_t val_B);
+#elif TLC_DEVICES == 1
+void TLC5946_set(uint16_t value); // Updates first device
+#endif
 void TLC5946_setAll_DC(uint8_t value);
 
 #ifdef __cplusplus

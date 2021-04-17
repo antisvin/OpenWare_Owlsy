@@ -3,9 +3,6 @@
 #include "device.h"
 
 // #define TLC_CONTINUOUS
-#ifndef TLC_DEVICES
-#define TLC_DEVICES 	3
-#endif
 
 #define TLC_CHANNELS 16
 #define TLC_DC_BYTES    (TLC_CHANNELS * 3 / 4)
@@ -126,6 +123,7 @@ void TLC5946_Refresh_DC(void)
 }
 
 // _____ Magus Functions _____
+#if TLC_DEVICES == 3
 void TLC5946_setRGB(uint8_t LED_ID, uint16_t val_R, uint16_t val_G, uint16_t val_B)
 {
 	TLC5946_SetOutput_GS(0, rgLED_R[LED_ID-1], val_R);
@@ -142,18 +140,25 @@ void TLC5946_setRGB_DC(uint8_t val_R, uint8_t val_G, uint8_t val_B)
 	TLC5946_Refresh_DC();
 }
 
-void TLC5946_setAll_DC(uint8_t value)
-{
-	TLC5946_SetOutput_DC_Many(rgDCbuf, TLC_CHANNELS * TLC_DEVICES, value);
-	TLC5946_Refresh_DC();
-}
-
 void TLC5946_setAll(uint16_t val_R, uint16_t val_G, uint16_t val_B){
   for(int i=0; i<16; i++){
     TLC5946_SetOutput_GS(0, i, val_R);
     TLC5946_SetOutput_GS(2, i, val_G);
     TLC5946_SetOutput_GS(1, i, val_B);
   }
+}
+#elif TLC_DEVICES == 1
+void TLC5946_set(uint16_t value){
+  for(int i=0; i<16; i++){
+    TLC5946_SetOutput_GS(0, i, value);
+  }
+}
+#endif
+
+void TLC5946_setAll_DC(uint8_t value)
+{
+	TLC5946_SetOutput_DC_Many(rgDCbuf, TLC_CHANNELS * TLC_DEVICES, value);
+	TLC5946_Refresh_DC();
 }
 
 //_____ Initialisaion _________________________________________________________________________________________________
