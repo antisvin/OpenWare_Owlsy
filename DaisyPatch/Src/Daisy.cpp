@@ -30,10 +30,10 @@ extern "C" void updateEncoderCounter(){
 }
 
 void setGateValue(uint8_t bid, int16_t value){
-  if (bid == BUTTON_C) {
+  if (bid == BUTTON_C || bid == PUSHBUTTON) {
     HAL_GPIO_WritePin(GATE_OUT_GPIO_Port, GATE_OUT_Pin, value ? GPIO_PIN_SET :  GPIO_PIN_RESET);
     // We have to update button values here, because currently it's not propagated from program vector. A bug?
-    setButtonValue(BUTTON_C, value);
+    // setButtonValue(BUTTON_C, value);
     //button_values &= ~((!value) << BUTTON_C);
     //button_values |= (bool(value) << BUTTON_C);
   }
@@ -64,12 +64,16 @@ void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t*
 
 void onChangePin(uint16_t pin){
   switch(pin){
-  case GATE_IN1_Pin:
-    setButtonValue(BUTTON_A, !(GATE_IN1_GPIO_Port->IDR & GATE_IN1_Pin));
-    setButtonValue(PUSHBUTTON, !(GATE_IN1_GPIO_Port->IDR & GATE_IN1_Pin));
+  case GATE_IN1_Pin: {
+    bool state = !(GATE_IN1_GPIO_Port->IDR & GATE_IN1_Pin);
+    setButtonValue(BUTTON_A, state);
+    setButtonValue(PUSHBUTTON, state);
     break;
+  }
   case GATE_IN2_Pin:
     setButtonValue(BUTTON_B, !(GATE_IN2_GPIO_Port->IDR & GATE_IN2_Pin));
+    break;
+  default:
     break;
   }
 }
@@ -91,6 +95,7 @@ void setup(){
   graphics.begin(&OLED_SPI);
 
   owl.setup();
+  setButtonValue(PUSHBUTTON, 0);
 }
 
 static int16_t enc_data[2];
@@ -102,7 +107,8 @@ void loop(){
     SCB_CleanInvalidateDCache_by_Addr((uint32_t*)graphics.params.user, sizeof(graphics.params.user));
 #endif
     encoder.debounce();
-    enc_data[0] = int16_t(encoder.isFallingEdge() | encoder.isLongPress() << 1);
+    enc_data[0] = int16_t(
+      encoder.isRisingEdge() | (encoder.isFallingEdge() << 1) | (encoder.isLongPress() << 2));
     enc_data[1] = int16_t(encoder.getValue());
     graphics.params.updateEncoders(enc_data, 2);
 

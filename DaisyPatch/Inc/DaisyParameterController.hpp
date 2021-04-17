@@ -190,36 +190,46 @@ public:
   void drawGates(uint8_t selected, ScreenBuffer &screen) {
     screen.setTextSize(1);
     int offset = 16;
-    screen.drawCircle(29, offset + 15, 12, WHITE);
+
+    screen.drawCircle(15, offset + 15, 12, WHITE);
+    if (getButtonValue(PUSHBUTTON)) {
+      screen.fillCircle(15, offset + 15, 9, WHITE);
+    }
+    else {
+      screen.drawCircle(15, offset + 15, 9, WHITE);
+    }
+    screen.print(2, offset + 38, "PUSH");
+
+    screen.drawCircle(47, offset + 15, 12, WHITE);
     if (getButtonValue(BUTTON_A)) {
-      screen.fillCircle(29, offset + 15, 9, WHITE);
+      screen.fillCircle(47, offset + 15, 9, WHITE);
     }
     else {
-      screen.drawCircle(29, offset + 15, 9, WHITE);
+      screen.drawCircle(47, offset + 15, 9, WHITE);
     }
-    screen.print(14, offset + 38, "A:IN1");
+    screen.print(32, offset + 38, "A:IN1");
     
-    screen.drawCircle(63, offset + 15, 12, WHITE);
+    screen.drawCircle(79, offset + 15, 12, WHITE);
     if (getButtonValue(BUTTON_B)) {
-      screen.fillCircle(63, offset + 15, 9, WHITE);
+      screen.fillCircle(79, offset + 15, 9, WHITE);
     }
     else {
-      screen.drawCircle(63, offset + 15, 9, WHITE);
+      screen.drawCircle(79, offset + 15, 9, WHITE);
     }
-    screen.print(48, offset + 38, "B:IN2");
+    screen.print(64, offset + 38, "B:IN2");
 
-    screen.drawCircle(97, offset + 15, 12, WHITE);
+    screen.drawCircle(111, offset + 15, 12, WHITE);
     if (getButtonValue(BUTTON_C)) {
-      screen.fillCircle(97, offset + 15, 9, WHITE);
+      screen.fillCircle(111, offset + 15, 9, WHITE);
     }
     else {
-      screen.drawCircle(97, offset + 15, 9, WHITE);
+      screen.drawCircle(111, offset + 15, 9, WHITE);
     }
-    screen.print(82, offset + 38, "C:OUT");
+    screen.print(96, offset + 38, "C:OUT");
 
-    if (selected)
-      screen.drawRectangle(84, offset + 2, 27, 27, WHITE);
-    screen.drawRectangle(85, offset + 3, 25, 25, WHITE);
+    if (selectedPid[1])
+      screen.drawRectangle(2, offset + 2, 27, 27, WHITE);
+    screen.drawRectangle(3, offset + 3, 25, 25, WHITE);
   }
 
   void drawScope(uint8_t selected, ScreenBuffer &screen) {
@@ -772,8 +782,8 @@ public:
   void updateEncoders(int16_t *data, uint8_t size) {
     uint16_t pressed = data[0];
     int16_t value = data[1];
-    bool isPress = pressed & 0x01;
-    bool isLongPress = pressed & 0x02;
+    bool isPress = pressed & 0x02;
+    bool isLongPress = pressed & 0x04;
 
     switch (displayMode) {
     case STANDARD:
@@ -861,13 +871,17 @@ public:
     }
   }
 
-  void selectControlMode(int16_t value, bool pressed) {
-    if (pressed & 0x02) {
-      // Long press
+  void selectControlMode(int16_t value, uint8_t pressed) {
+    if (pressed & 0x04) {
+      // Long press end
+      if (controlMode == GATES) {
+        setButtonValue(PUSHBUTTON, 0);
+        selectedPid[1] = 0;
+      }
       controlMode = EXIT;
     }
-    else if (pressed & 0x01) {
-      // Short press
+    else if (pressed & 0x02) {
+      // Short press end
       switch (controlMode) {
       case SETUP:
       case SCOPE:
@@ -875,8 +889,8 @@ public:
         break;
       case GATES:
         // Invert output gate on click
-        setButtonValue(BUTTON_C, !getButtonValue(BUTTON_C));
-        selectedPid[1] = 1;
+        setButtonValue(PUSHBUTTON, 0);
+        selectedPid[1] = 0;
         break;
       case STATUS:
         setErrorStatus(NO_ERROR);
@@ -939,6 +953,12 @@ public:
         break;
       }
     }
+    else if (pressed & 0x01) {
+      if (controlMode == GATES) {
+        setButtonValue(PUSHBUTTON, 1);
+        selectedPid[1] = 1;
+      }
+    }
     if (controlMode == EXIT) {
       displayMode = STANDARD;
       activeEncoder = 1;
@@ -949,8 +969,6 @@ public:
     }
     else {
       int16_t delta = value - encoders[activeEncoder];
-      if (controlMode == GATES)
-        selectedPid[1] = pressed & 0x01;
       if (activeEncoder == 0) {
         if (delta > 0 && controlMode + 1 < NOF_CONTROL_MODES) {
           setControlMode(controlMode + 1);
