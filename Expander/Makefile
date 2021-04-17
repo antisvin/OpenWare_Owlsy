@@ -8,6 +8,7 @@ include $(OPENWARE)/Hardware/STM32F100CB.mk
 C_SRC = $(wildcard Src/*.c)
 CPP_SRC = $(wildcard Src/*.cpp)
 CPP_SRC += $(OPENWARE)/Source/bus.cpp
+CPP_SRC += $(OPENWARE)/Source/uart.cpp
 CPP_SRC += $(OPENWARE)/Source/DigitalBusReader.cpp
 CPP_SRC += $(OPENWARE)/Source/DigitalBusHandler.cpp
 CPP_SRC += $(OPENWARE)/Source/DigitalBusStreamReader.cpp
