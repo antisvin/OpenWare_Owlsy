@@ -8,6 +8,7 @@
 #define USE_DIGITALBUS
 #define BUS_HUART                    huart1
 #define BUS_UART_BAUDRATE            115200
+#define DIGITAL_BUS_ENABLED          1
 
 #define USE_TLC
 #define TLC_CONTINUOUS

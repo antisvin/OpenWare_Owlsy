@@ -18,7 +18,7 @@ public:
   uint8_t program_index;
   bool program_change_button;
 #ifdef USE_DIGITALBUS
-  bool bus_enabled;
+  bool bus_enabled = DIGITAL_BUS_ENABLED;
   bool bus_forward_midi;
 #endif
   uint32_t input_offset;
