@@ -354,8 +354,9 @@ public:
 
     // draw CPU load
     screen.print(1, offset + 17, "cpu ");
-    float new_cpu_used = (pv->cycles_per_block) / pv->audio_blocksize / 100;
-    cpu_used = cpu_used * cpu_smooth_lambda + new_cpu_used - new_cpu_used * cpu_smooth_lambda;
+    cpu_used = (pv->cycles_per_block) / pv->audio_blocksize / 100;
+    //float new_cpu_used = (pv->cycles_per_block) / pv->audio_blocksize / 100;
+    //cpu_used = cpu_used * cpu_smooth_lambda + new_cpu_used - new_cpu_used * cpu_smooth_lambda;
     screen.print((int)cpu_used);
     screen.print("%");
     // draw firmware version
