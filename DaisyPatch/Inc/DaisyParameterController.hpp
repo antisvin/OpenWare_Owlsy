@@ -29,6 +29,9 @@
 #define abs(x) ((x)>0?(x):-(x))
 #endif
 
+#define HYSTERESIS 64
+//#define CPU_SMOOTH
+
 extern VersionToken* bootloader_token;
 
 void defaultDrawCallback(uint8_t *pixels, uint16_t width, uint16_t height);
@@ -88,9 +91,12 @@ public:
   bool systemPressed;
 
   float cpu_used;
-  static constexpr float cpu_smooth_lambda = 0.98;
+  #ifdef CPU_SMOOTH
+  static constexpr float cpu_smooth_lambda = 0.8;
+  #endif
 
   int16_t parameters[SIZE];
+  int16_t display_parameters[SIZE];
   int16_t encoders[NOF_ENCODERS]; // last seen encoder values
   int16_t offsets[NOF_ENCODERS];  // last seen encoder values
   int16_t user[SIZE] CACHE_ALIGNED;             // user set values (ie by encoder or MIDI)
@@ -297,9 +303,9 @@ public:
     for(int i=0; i<16; ++i){
       // 4px high by up to 16px long rectangle, filled if selected
       if(i == lastSelectedPid)
-        screen.fillRectangle(x, y, max(1, min(16, parameters[i]/255)), 4, WHITE);
+        screen.fillRectangle(x, y, max(1, min(16, display_parameters[i]/255)), 4, WHITE);
       else
-        screen.drawRectangle(x, y, max(1, min(16, parameters[i]/255)), 4, WHITE);
+        screen.drawRectangle(x, y, max(1, min(16, display_parameters[i]/255)), 4, WHITE);
       x += 16;
       if(i == 7){
         x = 0;
@@ -354,9 +360,12 @@ public:
 
     // draw CPU load
     screen.print(1, offset + 17, "cpu ");
+#ifdef CPU_SMOOTH
+    float new_cpu_used = (pv->cycles_per_block) / pv->audio_blocksize / 100;
+    cpu_used = cpu_used * cpu_smooth_lambda + new_cpu_used - new_cpu_used * cpu_smooth_lambda;
+#else
     cpu_used = (pv->cycles_per_block) / pv->audio_blocksize / 100;
-    //float new_cpu_used = (pv->cycles_per_block) / pv->audio_blocksize / 100;
-    //cpu_used = cpu_used * cpu_smooth_lambda + new_cpu_used - new_cpu_used * cpu_smooth_lambda;
+#endif
     screen.print((int)cpu_used);
     screen.print("%");
     // draw firmware version
@@ -620,7 +629,7 @@ public:
     // 6px high by up to 96px long rectangle
     y -= 7;
     x += 64;
-    screen.drawRectangle(x, y, max(1, min(64, parameters[pid] / 64)), 6, WHITE);
+    screen.drawRectangle(x, y, max(1, min(64, display_parameters[pid] / 64)), 6, WHITE);
   }
 
   void drawParameters(ScreenBuffer& screen){
@@ -729,6 +738,8 @@ public:
   void updateValue(uint8_t pid, int16_t value){
     // smoothing at apprx 50Hz
     parameters[pid] = max(0, min(4095, (parameters[pid] + user[pid] + value)>>1));
+    if (abs(parameters[pid] - display_parameters[pid]) > HYSTERESIS)
+      display_parameters[pid] = parameters[pid];
   }
 
   void updateOutput(uint8_t pid, int16_t value){
