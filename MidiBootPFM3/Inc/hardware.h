@@ -12,12 +12,14 @@
 #endif
 
 #if defined OWL_GENIUS
-  #define HARDWARE_VERSION    "OWL Genius Boot"
-  #define HARDWARE_ID         GENIUS_HARDWARE
-  #define APPLICATION_ADDRESS 0x08020000
+  #define HARDWARE_VERSION    "PreenFM3 Boot"
+  #define HARDWARE_ID         OTHER_HARDWARE
+  #define APPLICATION_ADDRESS 0x08080000
 #else
   #error Invalid configuration
 #endif
+
+#define PFM3_SECTOR           0xFE
 
 /* #define USE_IWDG */
 /* #define INIT_FMC */

@@ -30,28 +30,18 @@ const char* getFirmwareVersion(){
 void led_off(){
 #ifdef USE_LED
   HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET);
-  HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_SET);
 #endif
 }
 
-void led_green(){
+void led_on(){
 #ifdef USE_LED
   HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET);
-  HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_RESET);
-#endif
-}
-
-void led_red(){
-#ifdef USE_LED
-  HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_RESET);
-  HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_SET);
 #endif
 }
 
 void led_toggle(){
 #ifdef USE_LED
   HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
-  HAL_GPIO_TogglePin(LED2_GPIO_Port, LED2_Pin);
 #endif
 }
 
@@ -76,15 +66,19 @@ void sendMessage(){
 void eraseFromFlash(uint8_t sector){
   eeprom_unlock();
   if(sector == 0xff){
-    eeprom_erase_sector(FLASH_SECTOR_1);
-    eeprom_erase_sector(FLASH_SECTOR_2);
-    eeprom_erase_sector(FLASH_SECTOR_3);
+    extern char _FLASH_STORAGE_BEGIN, _FLASH_STORAGE_END;
+    uint32_t address = (uint32_t)&_FLASH_STORAGE_BEGIN;
+    uint32_t sector = FLASH_SECTOR_4;
+    while (address < (uint32_t)&_FLASH_STORAGE_END) {
+      eeprom_erase_sector(sector++);
+      address += FLASH_SECTOR_SIZE;
+    }
     setMessage("Erased patch storage");
-    led_green();
+    led_on();
   }else{
     eeprom_erase_sector(sector);
     setMessage("Erased flash sector");
-    led_green();
+    led_on();
   }
   eeprom_lock();
 }
@@ -121,7 +115,7 @@ extern "C" {
     if(err == NO_ERROR)
       errormessage = NULL;
     else
-      led_red();
+      led_off();
   }
 
   void error(int8_t err, const char* msg){
@@ -139,7 +133,7 @@ extern "C" {
   }
 
   void setup(){
-    led_green();
+    led_on();
     midi_tx.setOutputChannel(MIDI_OUTPUT_CHANNEL);
     midi_rx.setInputChannel(MIDI_INPUT_CHANNEL);
     setMessage("OWL Bootloader Ready");
@@ -152,14 +146,14 @@ extern "C" {
     if(counter){
       switch(counter-- % 1200){
       case 600:
-	led_red();
-	break;
+        led_off();
+        break;
       case 0:
-	led_green();
-	break;
+        led_on();
+        break;
       default:
-	HAL_Delay(1);
-	break;
+        HAL_Delay(1);
+        break;
       }
     }
 #endif
@@ -174,7 +168,7 @@ void MidiHandler::handleFirmwareUploadCommand(uint8_t* data, uint16_t size){
     setMessage("Firmware upload complete");
     // firmware upload complete: wait for run or store
     // setLed(NONE); todo!
-    led_green();
+    led_on();
   }else if(ret == 0){
     setMessage("Firmware upload in progress");
     led_toggle();
