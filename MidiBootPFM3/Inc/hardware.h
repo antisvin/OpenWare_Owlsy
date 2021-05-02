@@ -11,15 +11,16 @@
 #define USBD_HANDLE hUsbDeviceHS
 #endif
 
-#if defined OWL_GENIUS
+#if defined OWL_PREENFM3
   #define HARDWARE_VERSION    "PreenFM3 Boot"
   #define HARDWARE_ID         OTHER_HARDWARE
-  #define APPLICATION_ADDRESS 0x08080000
+  #define APPLICATION_ADDRESS 0x08100000
 #else
   #error Invalid configuration
 #endif
 
 #define PFM3_SECTOR           0xFE
+#define NO_EXTERNAL_RAM
 
 /* #define USE_IWDG */
 /* #define INIT_FMC */

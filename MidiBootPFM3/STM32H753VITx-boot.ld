@@ -147,7 +147,7 @@ SECTIONS
     /* *(.extdata) */
     /* . = ALIGN(8); */
     PROVIDE ( _EXTRAM = . );
-  } >RAM_D1 */
+  } >RAM_D1
   _EXTRAM_END = ORIGIN(RAM_D1) + LENGTH(RAM_D1);
   _EXTRAM_SIZE = LENGTH(RAM_D1);
 

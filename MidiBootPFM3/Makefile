@@ -1,9 +1,11 @@
 BUILDROOT = .
 OPENWARE ?= $(BUILDROOT)/..
 OPENOCD ?= openocd -f $(OPENWARE)/Hardware/openocd_h7.cfg
+DFUUTIL ?= dfu-util
+
 
 LDSCRIPT = STM32H753VITx-boot.ld
-include $(OPENWARE)/Hardware/owl3.mk
+include $(OPENWARE)/Hardware/preenfm3.mk
 
 C_SRC = $(wildcard Src/*.c)
 CPP_SRC = $(wildcard Src/*.cpp)
@@ -20,15 +22,15 @@ CPP_SRC += $(OPENWARE)/Source/VersionToken.cpp
 # S_SRC = startup_openboot.s
 
 ifndef PLATFORM
-PLATFORM = Genius
+PLATFORM = PreenFM3
+endif
+
+ifeq ($(PLATFORM),PreenFM3)
+	CPPFLAGS += -Iusbd-fs -DOWL_PREENFM3 -DUSE_USBD_FS
+	vpath %.c usbd-fs
 endif
 
 PROJECT = MidiBoot-$(PLATFORM)
-
-ifeq ($(PLATFORM),Genius)
-  CPPFLAGS += -Iusbd-fs -DOWL_GENIUS -DUSE_USBD_FS
-  vpath %.c usbd-fs
-endif
 
 CPP_SRC += $(OPENWARE)/Source/MidiController.cpp
 
@@ -66,6 +68,10 @@ lock:
 	$(OPENOCD) -c "init" -c "halt" -c "flash protect 0 0 1 on" -c "flash info 0" -c "exit"
 
 deploy: upload lock
+
+dfu: Build/${PROJECT}.bin
+	$(DFUUTIL) -d 0483:df11 -c 1 -i 0 -a 0 -s 0x8000000 -D $<
+	@echo Uploaded $< to OWL bootsector
 
 sysex:
 	FirmwareSender -in "Build/${PROJECT}.bin" -flash `crc32 "Build/${PROJECT}.bin"` -save "Build/${PROJECT}.syx"

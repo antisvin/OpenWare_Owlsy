@@ -58,7 +58,6 @@ static void MX_IWDG1_Init(void);
 /* Private function prototypes -----------------------------------------------*/
 
 void setup();
-void SDRAM_Initialization_Sequence(SDRAM_HandleTypeDef *hsdram);
 void loop(void);
 void setMessage(const char* msg);
 
@@ -179,8 +178,6 @@ int main(void)
   MX_IWDG1_Init();
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
-
-  SDRAM_Initialization_Sequence(&hsdram1);   
 
   // Initialise
   setup();
