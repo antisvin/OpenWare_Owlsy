@@ -21,6 +21,7 @@
 
 #define PFM3_SECTOR           0xFE
 #define NO_EXTERNAL_RAM
+#define USE_LED
 
 /* #define USE_IWDG */
 /* #define INIT_FMC */

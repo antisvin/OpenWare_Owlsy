@@ -29,7 +29,7 @@ const char* getFirmwareVersion(){
 
 void led_off(){
 #ifdef USE_LED
-  HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_RESET);
 #endif
 }
 
