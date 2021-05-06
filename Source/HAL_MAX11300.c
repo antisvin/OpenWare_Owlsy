@@ -1,7 +1,6 @@
-#include <string.h>
-#include <stdint.h>
 #include "HAL_MAX11300.h"
-#include "device.h"
+#include "main.h"
+#include <string.h>
 
 //#define Pixi_SPIDMA_CTRL
 
