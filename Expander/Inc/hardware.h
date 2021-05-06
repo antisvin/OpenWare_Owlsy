@@ -9,6 +9,7 @@
 #define BUS_HUART                    huart1
 #define BUS_UART_BAUDRATE            115200
 #define DIGITAL_BUS_ENABLED          1
+#define DIGITAL_BUS_FORWARD_MIDI     0
 
 #define USE_TLC
 #define TLC_CONTINUOUS
@@ -21,3 +22,6 @@
 // #define MAX_CONTINUOUS
 #define MAX11300_SPI                 hspi1
 #define MAX11300_CHANNELS            20
+
+/* Adds extra variables for UART DMA that don't get canceled */
+#define NO_DMA_STREAMS

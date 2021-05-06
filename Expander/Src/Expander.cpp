@@ -138,6 +138,10 @@ void setup(){
     // cfg[ch] = ch < 8 ? ADC_0TO10 : ADC_5TO5;
   }
 
+  // We don't have a functional flash storage yet, so we just reset
+  // settings to get reasonable defaults
+  settings.reset();
+
   for(int ch=0; ch<MAX11300_CHANNELS; ++ch)
     configureChannel(ch, cfg[ch]);
 
@@ -259,7 +263,7 @@ void setPortValue(uint8_t ch, uint16_t value){
 }
 
 void loop(){
-  bus_status();
+  int status = bus_status();
 #if defined USE_MAX_DMA && !defined MAX_CONTINUOUS
   MAX11300_bulksetDAC();
 #endif
@@ -267,7 +271,7 @@ void loop(){
     if(cfg[ch] < DAC_MODE){
       setADC(ch, getPortValue(ch));
       uint8_t cc = adc[ch] >> 5;
-      if(abs(cc - cc_values[ch]) > HYSTERESIS_DELTA){
+      if(status == BUS_STATUS_CONNECTED && abs(cc - cc_values[ch]) > HYSTERESIS_DELTA){
         bus_tx_parameter(getChannelIndex(PARAMETER_AA+ch), adc[ch]);
         cc_values[ch] = cc;
       }

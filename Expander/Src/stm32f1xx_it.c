@@ -245,14 +245,17 @@ void USART1_IRQHandler(void)
 
   /* Check for IDLE flag */
   UART_HandleTypeDef *huart = &huart1;
+
   if(__HAL_UART_GET_FLAG(huart, UART_FLAG_IDLE)){
     /* This part is important */
     /* Clear IDLE flag by reading status and data registers */
     __HAL_UART_CLEAR_IDLEFLAG(huart);
     if(huart->hdmarx != NULL)
-      __HAL_DMA_DISABLE(huart->hdmarx);
+      HAL_UART_RxCpltCallback(huart);
+      /* __HAL_DMA_DISABLE(huart->hdmarx); */
       /* Disabling DMA will force transfer complete interrupt if enabled */
   }
+
 #endif
 
   /* USER CODE END USART1_IRQn 1 */
