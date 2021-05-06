@@ -24,9 +24,11 @@ static uint8_t rgDCbuf[TLC_DEVICES*TLC_DC_BYTES+1] =
   };
 static SPI_HandleTypeDef* TLC5946_SPIConfig;
 
+#if TLC_DEVICES == 3
 static const uint8_t rgLED_R[16] = {14,12,9,8,7,4,2,0,15,13,11,10,6,5,3,1};
 static const uint8_t rgLED_G[16] = {14,12,10,8,7,4,2,0,15,13,11,9,6,5,3,1};
 static const uint8_t rgLED_B[16] = {14,12,9,8,7,4,2,0,15,13,11,10,6,5,3,1};
+#endif
 
 // see also https://yurichev.com/blog/FAT12/ for optimised ASM
 
