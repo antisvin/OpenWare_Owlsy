@@ -24,6 +24,10 @@ SerialBuffer<DIGITAL_BUS_BUFFER_SIZE> bus_rx_buf DMA_RAM;
 uint32_t bus_tx_packets = 0;
 uint32_t bus_rx_packets = 0;
 
+#if defined USE_DIGITALBUS && defined NO_DMA_STREAMS
+uint32_t bus_rx_position;
+#endif
+
 void initiateBusRead(){
 #ifndef OWL_RACK // currently we suppress all returning messages
   extern UART_HandleTypeDef BUS_HUART;
@@ -31,6 +35,9 @@ void initiateBusRead(){
   /* Check that a Rx process is not already ongoing */
   if(huart->RxState == HAL_UART_STATE_READY){
     uint16_t size = min(bus_rx_buf.getCapacity()/2, bus_rx_buf.getContiguousWriteCapacity());
+#ifdef NO_DMA_STREAMS
+    bus_rx_position = 0;
+#endif
     // keep at least half the buffer back, it will fill up while this half is processing
     HAL_UART_Receive_DMA(huart, bus_rx_buf.getWriteHead(), size);
   }
@@ -63,6 +70,8 @@ void bus_setup(){
   debug << "bus_setup\r\n";
   // serial_setup(USART_BAUDRATE);
   // bus.sendReset();
+  bus_rx_buf.setAll(0);
+  bus_tx_buf.setAll(0);
 
   extern UART_HandleTypeDef BUS_HUART;
   UART_HandleTypeDef *huart = &BUS_HUART;

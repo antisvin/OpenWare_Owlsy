@@ -8,6 +8,9 @@
 SerialBuffer<UART_MIDI_RX_BUFFER_SIZE> uart_rx_buf DMA_RAM;
 #endif
 
+#if defined USE_UART_MIDI_RX && defined NO_DMA_STREAMS
+uint32_t uart_rx_position;
+#endif
 
 #ifdef USE_UART_MIDI_RX
 void initiateUartRead(){
@@ -16,6 +19,9 @@ void initiateUartRead(){
   /* Check that a Rx process is not already ongoing */
   if(huart->RxState == HAL_UART_STATE_READY){
     uint16_t size = min(uart_rx_buf.getCapacity()/2, uart_rx_buf.getContiguousWriteCapacity());
+#ifdef NO_DMA_STREAMS
+    uart_rx_position = 0;
+#endif
     // keep at least half the buffer back, it will fill up while this half is processing
     HAL_UART_Receive_DMA(huart, uart_rx_buf.getWriteHead(), size);
   }

@@ -19,6 +19,13 @@ extern DigitalBusReader bus;
 extern uint32_t bus_tx_packets;
 extern uint32_t bus_rx_packets;
 #endif
+#if defined USE_DIGITALBUS && defined NO_DMA_STREAMS
+extern uint32_t bus_rx_position;
+#endif
+#if defined USE_UART_MIDI_RX && defined NO_DMA_STREAMS
+extern uint32_t uart_rx_position;
+#endif
+
 
 extern "C" {
 #if defined USE_UART_MIDI_TX || defined USE_DIGITALBUS
@@ -43,6 +50,10 @@ extern "C" {
     if (huart == &UART_MIDI_HANDLE) {
       // what is the correct size if IDLE interrupts?
       size_t size = huart->RxXferSize - __HAL_DMA_GET_COUNTER(huart->hdmarx);
+#ifdef NO_DMA_STREAMS
+      size -= uart_rx_position;
+      uart_rx_position += size;
+#endif
       uart_rx_buf.incrementWriteHead(size);
       /* bus_rx_packets += size; */
       initiateUartRead();
@@ -57,6 +68,10 @@ extern "C" {
     if (huart == &BUS_HUART) {
       // what is the correct size if IDLE interrupts?
       size_t size = huart->RxXferSize - __HAL_DMA_GET_COUNTER(huart->hdmarx);
+#ifdef NO_DMA_STREAMS
+      size -= bus_rx_position;
+      bus_rx_position += size;
+#endif
       bus_rx_buf.incrementWriteHead(size);
       bus_rx_packets += size/4;
       initiateBusRead();
@@ -64,7 +79,7 @@ extern "C" {
 #endif
   }
 #endif
-  
+
 #if defined USE_UART_MIDI_TX || defined USE_UART_MIDI_RX || defined USE_DIGITALBUS
   void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart){
 #ifdef USE_UART_MIDI_RX
