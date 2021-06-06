@@ -65,6 +65,8 @@ UART_HandleTypeDef huart1;
 DMA_HandleTypeDef hdma_usart1_rx;
 DMA_HandleTypeDef hdma_usart1_tx;
 
+PCD_HandleTypeDef hpcd_USB_OTG_FS;
+
 MDMA_HandleTypeDef hmdma_mdma_channel40_sw_0;
 osThreadId defaultTaskHandle;
 /* USER CODE BEGIN PV */
@@ -85,6 +87,7 @@ static void MX_SPI2_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_IWDG1_Init(void);
+static void MX_USB_OTG_FS_PCD_Init(void);
 void StartDefaultTask(void const * argument);
 
 /* USER CODE BEGIN PFP */
@@ -117,13 +120,11 @@ int main(void)
 #ifdef USE_ICACHE
   /* Enable I-Cache-------------------------------------------------------------*/
   /* After reset, you must invalidate each cache before enabling (SCB_EnableICache) it. */
-  SCB_InvalidateICache();
   SCB_EnableICache();
 #endif
 #ifdef USE_DCACHE
   /* Enable D-Cache-------------------------------------------------------------*/
   /* Before enabling the data cache, you must invalidate the entire data cache (SCB_InvalidateDCache), because external memory might have changed from when the cache was disabled. */
-  SCB_InvalidateDCache();
   SCB_EnableDCache();
 #endif
 
@@ -132,7 +133,7 @@ int main(void)
   __HAL_RCC_D2SRAM2_CLK_ENABLE();
   __HAL_RCC_D2SRAM3_CLK_ENABLE();
 
-
+#if 0
   /* USER CODE END 1 */
 
   /* Enable I-Cache---------------------------------------------------------*/
@@ -147,10 +148,14 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
+#endif
+  HAL_Init();
   /* USER CODE END Init */
 
   /* USER CODE BEGIN SysInit */
+
+  /* Configure the system clock */
+  SystemClock_Config();
 
   /* MPU Configuration--------------------------------------------------------*/
   MPU_Config();
@@ -168,6 +173,7 @@ int main(void)
   MX_USART1_UART_Init();
   MX_TIM3_Init();
   MX_IWDG1_Init();
+  MX_USB_OTG_FS_PCD_Init();
   /* USER CODE BEGIN 2 */
   HAL_SAI_DeInit(&hsai_BlockA1);
   HAL_SAI_DeInit(&hsai_BlockB1);
@@ -693,6 +699,42 @@ static void MX_USART1_UART_Init(void)
 }
 
 /**
+  * @brief USB_OTG_FS Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_USB_OTG_FS_PCD_Init(void)
+{
+
+  /* USER CODE BEGIN USB_OTG_FS_Init 0 */
+
+  /* USER CODE END USB_OTG_FS_Init 0 */
+
+  /* USER CODE BEGIN USB_OTG_FS_Init 1 */
+
+  /* USER CODE END USB_OTG_FS_Init 1 */
+  hpcd_USB_OTG_FS.Instance = USB_OTG_FS;
+  hpcd_USB_OTG_FS.Init.dev_endpoints = 9;
+  hpcd_USB_OTG_FS.Init.speed = PCD_SPEED_FULL;
+  hpcd_USB_OTG_FS.Init.dma_enable = DISABLE;
+  hpcd_USB_OTG_FS.Init.phy_itface = PCD_PHY_EMBEDDED;
+  hpcd_USB_OTG_FS.Init.Sof_enable = DISABLE;
+  hpcd_USB_OTG_FS.Init.low_power_enable = DISABLE;
+  hpcd_USB_OTG_FS.Init.lpm_enable = DISABLE;
+  hpcd_USB_OTG_FS.Init.battery_charging_enable = DISABLE;
+  hpcd_USB_OTG_FS.Init.vbus_sensing_enable = DISABLE;
+  hpcd_USB_OTG_FS.Init.use_dedicated_ep1 = DISABLE;
+  if (HAL_PCD_Init(&hpcd_USB_OTG_FS) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USB_OTG_FS_Init 2 */
+
+  /* USER CODE END USB_OTG_FS_Init 2 */
+
+}
+
+/**
   * Enable DMA controller clock
   */
 static void MX_DMA_Init(void)
@@ -812,7 +854,6 @@ void StartDefaultTask(void const * argument)
 {
   /* USER CODE BEGIN 5 */
   /* init code for USB_DEVICE */
-  /* NOTE: we get frequent boot failures if host is called first */
   MX_USB_DEVICE_Init();
   
   setup();

@@ -9,7 +9,7 @@
 /* #define NO_CCM_RAM */
 #define DMA_RAM                      __attribute__ ((section (".dmadata")))
 
-#define USE_PLUS_RAM
+//#define USE_PLUS_RAM
 //#define USE_ICACHE
 //#define USE_DCACHE
 
@@ -24,7 +24,7 @@
 #define OLED_SOFT_CS
 #define OLED_SPI hspi2
 #define OLED_UPSIDE_DOWN
-//#define USE_CODEC
+#define USE_CODEC
 #define MULTI_CODEC
 #define USE_CS4344
 #define HSAI_TX1 hsai_BlockA1
@@ -63,5 +63,9 @@
 /* #define DIGITAL_BUS_FORWARD_MIDI 0 */
 /* #define BUS_HUART huart2 */
 
-#define NOF_PARAMETERS               20
+#define NOF_PARAMETERS               40
 #define NOF_BUTTONS                  (4+6)
+
+#define PFM_SET_PIN(x, y)   x->BSRR = y
+#define PFM_CLEAR_PIN(x, y)  x->BSRR = (uint32_t)y << 16
+#define PREENFM_FREQUENCY 47916.0f

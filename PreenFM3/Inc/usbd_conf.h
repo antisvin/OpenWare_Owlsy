@@ -76,7 +76,6 @@
 /*---------- -----------*/
 #define USBD_SELF_POWERED     1U
 /*---------- -----------*/
-#define USBD_AUDIO_FREQ     48000U
 
 /****************************************/
 /* #define for FS and HS identification */
@@ -92,12 +91,13 @@
   * @{
   */
 
-/* Memory management macros make sure to use static memory allocation */
+/* Memory management macros */
+
 /** Alias for memory allocation. */
-#define USBD_malloc         (void *)USBD_static_malloc
+#define USBD_malloc         malloc
 
 /** Alias for memory release. */
-#define USBD_free           USBD_static_free
+#define USBD_free           free
 
 /** Alias for memory set. */
 #define USBD_memset         memset
@@ -153,8 +153,7 @@
   */
 
 /* Exported functions -------------------------------------------------------*/
-void *USBD_static_malloc(uint32_t size);
-void USBD_static_free(void *p);
+
 /**
   * @}
   */
