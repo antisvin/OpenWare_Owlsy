@@ -17,7 +17,7 @@ C_SRC += $(DRIVERS)/Src/stm32h7xx_hal_cortex.c
 C_SRC += $(DRIVERS)/Src/stm32h7xx_hal_spi.c
 # C_SRC += $(DRIVERS)/Src/stm32h7xx_hal_rng.c
 # C_SRC += $(DRIVERS)/Src/stm32h7xx_hal_qspi.c
-# C_SRC += $(DRIVERS)/Src/stm32h7xx_hal_dma2d.c
+C_SRC += $(DRIVERS)/Src/stm32h7xx_hal_dma2d.c
 
 # optionals
 C_SRC_UART = $(DRIVERS)/Src/stm32h7xx_hal_uart.c

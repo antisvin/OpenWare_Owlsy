@@ -10,8 +10,8 @@
 #define DMA_RAM                      __attribute__ ((section (".dmadata")))
 
 #define USE_PLUS_RAM
-#define USE_ICACHE
-#define USE_DCACHE
+//#define USE_ICACHE
+//#define USE_DCACHE
 
 #define MAX_SYSEX_PROGRAM_SIZE      (512*1024)
 
@@ -24,7 +24,7 @@
 #define OLED_SOFT_CS
 #define OLED_SPI hspi2
 #define OLED_UPSIDE_DOWN
-#define USE_CODEC
+//#define USE_CODEC
 #define MULTI_CODEC
 #define USE_CS4344
 #define HSAI_TX1 hsai_BlockA1
