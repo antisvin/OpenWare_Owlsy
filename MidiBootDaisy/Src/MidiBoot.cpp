@@ -1,10 +1,10 @@
+#include "device.h"
 #include "FirmwareHeader.h"
 #include "FirmwareLoader.hpp"
 #include "MidiController.h"
 #include "MidiReader.h"
 #include "MidiStatus.h"
 #include "OpenWareMidiControl.h"
-#include "device.h"
 #include "errorhandlers.h"
 #include "midi.h"
 #include "qspicontrol.h"
@@ -12,7 +12,7 @@
 extern char _FIRMWARE_STORAGE_BEGIN, _FIRMWARE_STORAGE_END, _FIRMWARE_STORAGE_SIZE;
 extern char _PATCH_STORAGE_BEGIN, _PATCH_STORAGE_END;
 
-static MidiReader midi_rx;
+static SystemMidiReader midi_rx;
 MidiController midi_tx;
 FirmwareLoader loader;
 ProgramManager program;
@@ -22,7 +22,7 @@ MidiHandler::MidiHandler() {}
 ProgramManager::ProgramManager() {}
 void ProgramManager::exitProgram(bool isr) {}
 void setParameterValue(uint8_t ch, int16_t value) {}
-void MidiReader::reset() {}
+void SystemMidiReader::reset() {}
 
 void led_off() {
   HAL_GPIO_WritePin(USER_LED_GPIO_Port, USER_LED_Pin, GPIO_PIN_RESET);
@@ -305,7 +305,7 @@ void MidiHandler::handleSysEx(uint8_t *data, uint16_t size) {
   }
 }
 
-bool MidiReader::readMidiFrame(uint8_t *frame) {
+bool SystemMidiReader::readMidiFrame(uint8_t *frame) {
   switch (frame[0] & 0x0f) { // accept any cable number /  port
   case USB_COMMAND_SINGLE_BYTE:
     // Single Byte: in some special cases, an application may prefer not to use
