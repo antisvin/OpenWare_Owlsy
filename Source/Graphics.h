@@ -15,6 +15,8 @@
 #include "EffectsBoxParameterController.hpp"
 #elif defined OWL_GENIUS
 #include "GeniusParameterController.hpp"
+#elif defined OWL_PREENFM3
+#include "PreenFM3ParameterController.hpp"
 #else
 #include "ParameterController.hpp"
 #endif

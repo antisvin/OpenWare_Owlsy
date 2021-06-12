@@ -15,9 +15,9 @@ CPP_SRC += $(OPENWARE)/Source/uart_midi.cpp
 #CPP_SRC += $(OPENWARE)/Source/DigitalBusHandler.cpp
 #CPP_SRC += $(OPENWARE)/Source/DigitalBusReader.cpp
 #CPP_SRC += $(OPENWARE)/Source/DigitalBusStreamReader.cpp
-#CPP_SRC += $(OPENWARE)/Source/ScreenBuffer.cpp
-#CPP_SRC += $(OPENWARE)/Source/ScreenBufferColour.cpp
-#CPP_SRC += $(OPENWARE)/Source/Graphics.cpp
+CPP_SRC += $(OPENWARE)/Source/ScreenBuffer.cpp
+CPP_SRC += $(OPENWARE)/Source/ScreenBufferColour.cpp
+CPP_SRC += $(OPENWARE)/Source/Graphics.cpp
 CPP_SRC += $(OPENWARE)/Source/MidiStreamReader.cpp
 
 include $(OPENWARE)/Hardware/sources.mk

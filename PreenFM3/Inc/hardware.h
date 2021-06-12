@@ -8,22 +8,24 @@
 /* #define NO_EXTERNAL_RAM */
 /* #define NO_CCM_RAM */
 #define DMA_RAM                      __attribute__ ((section (".dmadata")))
+#define GRAPHICS_RAM                 __attribute__ ((section (".graphics")))
 
 //#define USE_PLUS_RAM
-//#define USE_ICACHE
-//#define USE_DCACHE
+#define USE_ICACHE
+#define USE_DCACHE
 
 #define MAX_SYSEX_PROGRAM_SIZE      (512*1024)
 
 #define hdac hdac1
 
-//#define USE_SCREEN
-#define SSD1309
+#define USE_SCREEN
+#define ILI9341
 
-/* #define OLED_DMA */
+#define OLED_DMA
 #define OLED_SOFT_CS
-#define OLED_SPI hspi2
-#define OLED_UPSIDE_DOWN
+#define OLED_SPI hspi1
+#define SCREEN_BUFFER_OFFSET (240 * 40 * 2)
+#define SCREEN_HEIGHT_OFFSET 100 // 40 px top + 60 px bottom
 #define USE_CODEC
 #define MULTI_CODEC
 #define USE_CS4344
@@ -41,7 +43,7 @@
 #define AUDIO_INT32_TO_SAMPLE(x)    ((x)>>8)
 #define AUDIO_SAMPLE_TO_INT32(x)    ((int32_t)(x)<<8)
 
-#define MAIN_LOOP_SLEEP_MS          20
+#define MAIN_LOOP_SLEEP_MS          1
 #define ARM_CYCLES_PER_SAMPLE       (480000000/AUDIO_SAMPLINGRATE) /* 480MHz / 48kHz */
 
 #define USE_USBD_AUDIO
@@ -65,6 +67,7 @@
 
 #define NOF_PARAMETERS               40
 #define NOF_BUTTONS                  (4+6)
+#define NOF_ENCODERS                 6
 
 #define PFM_SET_PIN(x, y)   x->BSRR = y
 #define PFM_CLEAR_PIN(x, y)  x->BSRR = (uint32_t)y << 16

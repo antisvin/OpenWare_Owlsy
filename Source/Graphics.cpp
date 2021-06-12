@@ -7,7 +7,7 @@ void Graphics::begin(SPI_HandleTypeDef *spi) {
   oled_init(spi);
   screen.setBuffer(pixelbuffer);
   screen.clear();
-  display();
+//  display();
 }
 
 void Graphics::display(){
