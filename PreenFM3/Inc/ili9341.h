@@ -5,7 +5,7 @@
 #include "fonts.h"
 #include <stdbool.h>
 #include "device.h"
-//#include "preenfm3_pins.h"
+#include "gpio.h"
 
 #define ILI9341_MADCTL_MY  0x80
 #define ILI9341_MADCTL_MX  0x40
@@ -46,7 +46,7 @@
 //#include "gpio.h"
 
 // Color definitions
-#define COLOR565(r, g, b) (((r & 0xF8) << 8) | ((g & 0xFC) << 3) | ((b & 0xF8) >> 3))
+//#define COLOR565(r, g, b) (((r & 0xF8) << 8) | ((g & 0xFC) << 3) | ((b & 0xF8) >> 3))
 
 
 #ifdef __cplusplus
@@ -57,8 +57,8 @@ extern "C" {
 
 //#define ILI9341_Select() setPin(OLED_CS_GPIO_Port, OLED_CS_Pin)
 //#define ILI9341_Unselect() clearPin(OLED_CS_GPIO_Port, OLED_CS_Pin)
-#define ILI9341_Select() PFM_CLEAR_PIN(OLED_CS_GPIO_Port, OLED_CS_Pin)
-#define ILI9341_Unselect() PFM_SET_PIN(OLED_CS_GPIO_Port, OLED_CS_Pin)
+#define ILI9341_Select() clearPin(OLED_CS_GPIO_Port, OLED_CS_Pin)
+#define ILI9341_Unselect() setPin(OLED_CS_GPIO_Port, OLED_CS_Pin)
 
 
 void ILI9341_Init(void);

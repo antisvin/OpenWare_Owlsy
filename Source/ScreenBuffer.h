@@ -31,14 +31,20 @@ typedef uint16_t Colour;
 #define WHITE           0xFFFF
 #elif defined ILI9341
 typedef uint16_t Colour;
-#define	BLACK   0x0000
-#define	BLUE    0x001F
-#define	RED     0xF800
-#define	GREEN   0x07E0
-#define CYAN    0x07FF
-#define MAGENTA 0xF81F
-#define YELLOW  0xFFE0
-#define WHITE   0xFFFF
+#define COLOR565(r, g, b) ((uint16_t(r & 0xF8) << 8) | (uint16_t(g & 0xFC) << 3) | (uint16_t(b & 0xF8) >> 3))
+//#define COLOR565(r, g, b) (((r & 0xF8) << 8) | ((g & 0xFC) << 3) | ((b & 0xF8) >> 3))
+//#define COLOR565(x) ((x & 0xf80000) >> 8) + ((x & 0xfc00) >> 5) + ((x & 0xf8) >> 3)
+//#define COLOR565(x) (((x & 0xe00000) >> 21) << 10) + (((x & 0x180000) >> 19) << 6) + (((x & 0xe000) >> 13) << 3) + (((x & 0x1c00) >> 10) << 21) + (((x & 0xc0) >> 6) << 19) + (((x & 0x38) >> 3) << 13)
+
+// ILI9341 color: RRRRR GGGGGG BBBBB
+#define	BLACK           COLOR565(0x00, 0x00, 0x00)
+#define	RED             COLOR565(0xff, 0x00, 0x00)
+#define	GREEN           COLOR565(0x00, 0xff, 0x00)
+#define	BLUE            COLOR565(0x00, 0x00, 0xff)
+#define CYAN            COLOR565(0x00, 0xff, 0xff)
+#define MAGENTA         COLOR565(0xff, 0x00, 0xff)
+#define YELLOW          COLOR565(0xff, 0xff, 0x00)
+#define WHITE           COLOR565(0xff, 0xff, 0xff)
 #else
 #error "Invalid configuration"
 #endif

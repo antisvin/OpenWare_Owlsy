@@ -16,17 +16,17 @@ static void ILI9341_Reset() {
   HAL_Delay(5);
   ILI9341_Select();
   HAL_GPIO_WritePin(OLED_RST_GPIO_Port, OLED_RST_Pin, GPIO_PIN_SET);
-//  windowLastX = 9999;
+  windowLastX = 9999;
 }
 
 static HAL_StatusTypeDef ILI9341_WriteCommand(uint8_t cmd) {
-  PFM_CLEAR_PIN(OLED_DC_GPIO_Port, OLED_DC_Pin);
+  clearPin(OLED_DC_GPIO_Port, OLED_DC_Pin);
   return HAL_SPI_TransmitReceive(OLED_SPIInst, &cmd, dummyDataIn, 1,
                                  HAL_MAX_DELAY);
 }
 
 static HAL_StatusTypeDef ILI9341_WriteData(uint8_t *buff, size_t buff_size) {
-  PFM_SET_PIN(OLED_DC_GPIO_Port, OLED_DC_Pin);
+  setPin(OLED_DC_GPIO_Port, OLED_DC_Pin);
   return HAL_SPI_TransmitReceive(OLED_SPIInst, buff, dummyDataIn, buff_size,
                                  HAL_MAX_DELAY);
 }
@@ -36,7 +36,7 @@ HAL_StatusTypeDef ILI9341_ReadPowerMode(uint8_t buff[2]) {
 
   ILI9341_Select();
   // We send a command
-  PFM_CLEAR_PIN(OLED_DC_GPIO_Port, OLED_DC_Pin);
+  clearPin(OLED_DC_GPIO_Port, OLED_DC_Pin);
   HAL_StatusTypeDef ret = HAL_SPI_TransmitReceive(
       OLED_SPIInst, readPowerModeCommand, buff, 2, HAL_MAX_DELAY);
   ILI9341_Unselect();
@@ -48,7 +48,7 @@ HAL_StatusTypeDef ILI9341_ReadDisplayStatus(uint8_t buff[2]) {
 
   ILI9341_Select();
   // We send a command
-  PFM_CLEAR_PIN(OLED_DC_GPIO_Port, OLED_DC_Pin);
+  clearPin(OLED_DC_GPIO_Port, OLED_DC_Pin);
   HAL_StatusTypeDef ret = HAL_SPI_TransmitReceive(
       OLED_SPIInst, readPowerModeCommand, buff, 5, HAL_MAX_DELAY);
   ILI9341_Unselect();
@@ -60,7 +60,7 @@ HAL_StatusTypeDef ILI9341_ReadPixelFormat(uint8_t buff[3]) {
 
   ILI9341_Select();
   // We send a command
-  PFM_CLEAR_PIN(OLED_DC_GPIO_Port, OLED_DC_Pin);
+  clearPin(OLED_DC_GPIO_Port, OLED_DC_Pin);
   HAL_StatusTypeDef ret = HAL_SPI_TransmitReceive(
       OLED_SPIInst, readPixelFormatCommand, buff, 3, HAL_MAX_DELAY);
   ILI9341_Unselect();
@@ -70,7 +70,8 @@ HAL_StatusTypeDef ILI9341_ReadPixelFormat(uint8_t buff[3]) {
 HAL_StatusTypeDef ILI9341_SetAddressWindow(uint16_t y0, uint16_t y1) {
   static uint8_t dataX[] = {0, 0, 0, 239};
   // column address set
-  if (windowLastX != 0) {
+  if (true) {
+//  if (windowLastX != 0) {
     windowLastX = 0;
     if (ILI9341_WriteCommand(0x2A) != HAL_OK) {
       return HAL_ERROR;
@@ -103,7 +104,7 @@ void ILI9341_Init() {
   // SOFTWARE RESET
   ILI9341_WriteCommand(0x01);
   ILI9341_Unselect();
-  HAL_Delay(10);
+  HAL_Delay(500);
   ILI9341_Select();
 
   // POWER CONTROL A
@@ -168,6 +169,7 @@ void ILI9341_Init() {
     uint8_t data[] = {0x3E, 0x28};
     ILI9341_WriteData(data, sizeof(data));
   }
+  HAL_Delay(50);
 
   // VCM CONTROL 2
   ILI9341_WriteCommand(0xC7);
@@ -175,6 +177,23 @@ void ILI9341_Init() {
     uint8_t data[] = {0x86};
     ILI9341_WriteData(data, sizeof(data));
   }
+  HAL_Delay(50);
+
+  // MADCTL
+  ILI9341_WriteCommand(0x36);
+  {
+    uint8_t data[] = {ILI9341_MADCTL_MX | ILI9341_MADCTL_RGB};
+    ILI9341_WriteData(data, sizeof(data));
+  }
+
+  /*
+  // INTERFACE CONTROL
+  ILI9341_WriteCommand(0xF6);
+  {
+    uint8_t data[] = {0x00, 0x00, 0x20};
+    ILI9341_WriteData(data, sizeof(data));
+  }
+  */
 
   // PIXEL FORMAT
   ILI9341_WriteCommand(0x3A);
@@ -182,6 +201,7 @@ void ILI9341_Init() {
     uint8_t data[] = {0x55};
     ILI9341_WriteData(data, sizeof(data));
   }
+  HAL_Delay(50);
 
   // FRAME RATIO CONTROL, STANDARD RGB COLOR
   ILI9341_WriteCommand(0xB1);
@@ -226,24 +246,17 @@ void ILI9341_Init() {
                       0x48, 0x08, 0x0F, 0x0C, 0x31, 0x36, 0x0F};
     ILI9341_WriteData(data, sizeof(data));
   }
-
+  
   // EXIT SLEEP
   ILI9341_WriteCommand(0x11);
-  ILI9341_Unselect();
+  //ILI9341_Unselect();
   HAL_Delay(120);
-  ILI9341_Select();
+  //ILI9341_Select();
 
   // TURN ON DISPLAY
   ILI9341_WriteCommand(0x29);
-
-  // MADCTL
-  ILI9341_WriteCommand(0x36);
-  {
-    uint8_t data[] = {ILI9341_MADCTL_MX | ILI9341_MADCTL_BGR};
-    ILI9341_WriteData(data, sizeof(data));
-  }
-
-  ILI9341_Unselect();
+  //ILI9341_Unselect();
+  HAL_Delay(50);
 }
 
 void oled_init(SPI_HandleTypeDef *spi) {
@@ -285,18 +298,20 @@ void oled_write(const uint8_t *data, uint32_t length) {
   int p;
   for (p = 0; p < TFT_NUMBER_OF_PARTS; p++) {
     if ((tftDirtyBits & (1UL << tftPart)) > 0) {
-      // Update TFT part
-      ILI9341_Select();
-
       uint16_t height = areaHeight[tftPart];
       uint16_t y = areaY[tftPart];
 
-      if (ILI9341_SetAddressWindow(y, y + height - 1) == HAL_OK) {
+      // Update TFT part
+      ILI9341_Select();
 
+      if (ILI9341_SetAddressWindow(y, y + height) == HAL_OK) {
         pushToTftInProgress = true;
-        PFM_SET_PIN(OLED_DC_GPIO_Port, OLED_DC_Pin);
-        //        setPin(OLED_DC_GPIO_Port, OLED_DC_Pin);
 
+        setPin(OLED_DC_GPIO_Port, OLED_DC_Pin);
+          //setPin(OLED_DC_GPIO_Port, OLED_DC_Pin);
+
+
+        SPI1->CFG2 |= SPI_CFG2_LSBFRST;
 #ifdef OLED_DMA
         if (HAL_OK == HAL_SPI_Transmit_DMA(OLED_SPIInst,
                                            (uint8_t *)data + (y * 240 * 2),
@@ -306,12 +321,12 @@ void oled_write(const uint8_t *data, uint32_t length) {
           pushToTftInProgress = false;
         }
 #else
-        // Not tested and would be too slow even if it works!
         if (HAL_OK == HAL_SPI_Transmit(OLED_SPIInst,
                                        (uint8_t *)data + (y * 240 * 2),
                                        height * 240 * 2, 1000)) {
           tftDirtyBits &= ~(1UL << tftPart);
         }
+        SPI1->CFG2 &= ~SPI_CFG2_LSBFRST;
         pushToTftInProgress = false;
 #endif
       }
@@ -336,6 +351,7 @@ void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi) {
 
 void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi) {
   if (hspi == OLED_SPIInst) {
+    SPI1->CFG2 &= ~SPI_CFG2_LSBFRST;
     ILI9341_Unselect();
     pushToTftInProgress = false;
   }

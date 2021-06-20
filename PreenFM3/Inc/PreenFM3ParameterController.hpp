@@ -7,6 +7,7 @@
 #include "VersionToken.h"
 #include "device.h"
 #include "errorhandlers.h"
+#include "FlashStorage.h"
 #include <stdint.h>
 #include <string.h>
 #ifdef USE_DIGITALBUS
@@ -78,9 +79,9 @@ public:
   }
 
   void draw(ScreenBuffer &screen) {
-    tftDirtyBits |= 0b1111;
+    tftDirtyBits |= 0b1111;    
     screen.clear();
-    screen.setTextColour(GREEN);
+    screen.setTextColour(BLUE);
     if (sw1()) {
       drawStats(screen);
       // todo: show patch name and next/previous patch
@@ -91,12 +92,33 @@ public:
       screen.setTextSize(1);
       screen.print(2, 20, getErrorMessage());
     } else {
+      drawStats(screen);
       drawCallback(screen.getBuffer() + SCREEN_BUFFER_OFFSET, screen.getWidth(),
                    screen.getHeight() - SCREEN_HEIGHT_OFFSET);
-
       drawParameter(screen);
       drawParameterValues(screen);
       drawButtonValues(screen);
+
+      screen.setTextSize(2);
+      screen.setCursor(0, 60);
+      screen.setTextColour(RED);
+      screen.print("RED");
+      screen.setCursor(0, 90);
+      screen.setTextColour(GREEN);
+      screen.print("GREEN");
+      screen.setCursor(0, 120);
+      screen.setTextColour(BLUE);
+      screen.print("BLUE");
+      screen.setCursor(0, 150);
+      screen.setTextColour(CYAN);
+      screen.print("CYAN");
+      screen.setCursor(0, 180);
+      screen.setTextColour(MAGENTA);
+      screen.print("MAGENTA");
+      screen.setCursor(0, 210);
+      screen.setTextColour(YELLOW);
+      screen.print("YELLOW");
+      screen.setTextSize(1);
     }
   }
 
@@ -147,17 +169,17 @@ public:
 
   void drawButtonValues(ScreenBuffer& screen) {
     int x = 120;
-    screen.setCursor(120 + 20, 260);
+    screen.setCursor(120 + 11, 260);
     screen.print("Buttons:");
     for (int i = 0; i < 3; i++) {
       int y = 320 - 60;
       screen.setCursor(x + 3, y + 9);
       screen.print((int)i * 2 + 1);
-      screen.drawRectangle(x + 11, y + 2, 28, 7, WHITE);
+      screen.drawRectangle(x + 11, y + 2, 28, 7, YELLOW);
       y += 11;
       screen.setCursor(x + 3, y + 8);
       screen.print((int)i * 2 + 2);
-      screen.drawRectangle(x + 11, y, 28, 7, WHITE);
+      screen.drawRectangle(x + 11, y, 28, 7, YELLOW);
       x += 40;
     }
   }
@@ -191,15 +213,45 @@ public:
     ProgramVector *pv = getProgramVector();
     if (pv->message != NULL)
       screen.print(2, 16, pv->message);
-    screen.print(2, 26, "cpu/mem: ");
+    screen.print(2, 26, "cpu: ");
     float percent = (pv->cycles_per_block / pv->audio_blocksize) /
                     (float)ARM_CYCLES_PER_SAMPLE;
     screen.print((int)(percent * 100));
-    screen.print("% ");
+    screen.print("%");
+    screen.print(60, 26, "mem: ");
     screen.print((int)(pv->heap_bytes_used) / 1024);
     screen.print("kB");
 
+    // draw flash usage
+    screen.setTextColour(RED);
+    int flash_used = storage.getWrittenSize() / 1024;
+    int flash_total = storage.getTotalAllocatedSize() / 1024;
+    screen.print(120, 26, "flash: ");
+    screen.print(flash_used * 100 / flash_total);
+    screen.print("% ");
+    if (flash_used > 999) {
+      screen.print(flash_used / 1024);
+      screen.print(".");
+      screen.print((int)((flash_used  % 1024) * 10 / 1024));
+      screen.print("M/");
+    }
+    else {
+      screen.print(flash_used);
+      screen.print("k/");
+    }
+    if (flash_total > 999) {
+      screen.print(flash_total / 1024);
+      screen.print(".");
+      screen.print((int)((flash_total  % 1024) * 10 / 1024));
+      screen.print("M");
+    }
+    else {
+      screen.print(flash_total);
+      screen.print("k");
+    }
+
     // draw firmware version
+    screen.setTextColour(GREEN);
     screen.print(1, 36, getFirmwareVersion());
     if (bootloader_token->magic == BOOTLOADER_MAGIC) {
       screen.print(" bt.");
@@ -219,6 +271,7 @@ public:
       screen.print(" peers");
     }
 #endif
+    screen.drawHorizontalLine(0, 40, 240, CYAN);
   }
 
   void encoderChanged(uint8_t encoder, int32_t delta) {

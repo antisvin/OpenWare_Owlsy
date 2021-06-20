@@ -124,7 +124,7 @@ void loop(void) {
     graphics.draw();
     //debugMessage("The OWL spreads its wings");
     graphics.display();
-    nextDrawTime += 20;
+    nextDrawTime += 100;
   }
   else if (!tftPushed && !pushToTftInProgress) {
     graphics.display();

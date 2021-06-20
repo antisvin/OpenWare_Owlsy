@@ -842,7 +842,8 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOE, SD_CS_Pin|LED_TEST_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOD, OLED_DC_Pin|OLED_RST_Pin|OLED_CS_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOD, OLED_DC_Pin|OLED_CS_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOD, OLED_RST_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pins : HC165_CLK_Pin HC165_LOAD_Pin */
   GPIO_InitStruct.Pin = HC165_CLK_Pin|HC165_LOAD_Pin;

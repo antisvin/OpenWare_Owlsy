@@ -69,6 +69,6 @@
 #define NOF_BUTTONS                  (4+6)
 #define NOF_ENCODERS                 6
 
-#define PFM_SET_PIN(x, y)   x->BSRR = y
-#define PFM_CLEAR_PIN(x, y)  x->BSRR = (uint32_t)y << 16
+//#define PFM_SET_PIN(x, y)   x->BSRR = y
+//#define PFM_CLEAR_PIN(x, y)  x->BSRR = (uint32_t)y << 16
 #define PREENFM_FREQUENCY 47916.0f
