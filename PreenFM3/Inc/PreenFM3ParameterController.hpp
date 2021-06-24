@@ -132,20 +132,23 @@ public:
             (uint32_t*)(&current_state.cpu_load) != (uint32_t*)(&prev_state.cpu_load))
             dirty |= 2;
         if (strncmp(current_state.message, prev_state.message, 100) != 0)
-        //if (message != other.message)
+            // if (message != other.message)
             dirty |= 4;
-        if (current_state.custom_callback || current_state.menu_dirty || current_state.menu != prev_state.menu)
+        if (current_state.custom_callback || current_state.menu_dirty ||
+            current_state.menu != prev_state.menu)
             dirty |= 24;
-        if (memcmp((void*)&current_state.active_buttons, (void*)&prev_state.active_buttons, 17) != 0)
+        if (memcmp((void*)&current_state.active_buttons,
+                (void*)&prev_state.active_buttons, 17) != 0)
             dirty |= 32;
-        if (memcmp((void*)current_state.params, (void*)prev_state.params, sizeof(current_state.params) + sizeof(current_state.blocks)) != 0)
+        if (memcmp((void*)current_state.params, (void*)prev_state.params,
+                sizeof(current_state.params) + sizeof(current_state.blocks)) != 0)
             dirty |= 64;
     }
 
     void updateState() {
         findChanges();
         prev_state = current_state;
-        //memcpy((void*)&prev_state, (void*)&current_state,
+        // memcpy((void*)&prev_state, (void*)&current_state,
         //    sizeof(ControllerState<SIZE>));
         current_state.update();
     }
@@ -232,7 +235,7 @@ public:
         screen.print(1, 17, current_state.title);
 
         // draw firmware version
-        //screen.setTextColour(CYAN);
+        // screen.setTextColour(CYAN);
         screen.setTextSize(1);
         screen.setCursor(160, 10);
         screen.print(FIRMWARE_VERSION);
@@ -343,8 +346,9 @@ public:
             }
         }
         screen.print(current_value);
-        screen.drawRectangle(1, 12, 116, 16, WHITE);
-        screen.fillRectangle(2, 13, current_state.active_param_value, 14, BLUE);
+        screen.fillRectangle(1, 12, 116, 16, YELLOW);
+        screen.fillRectangle(2 + current_state.active_param_value, 13,
+            114 - current_state.active_param_value, 14, BLACK);
 
         // buttons
         int x = 120;
@@ -377,8 +381,8 @@ public:
         // clear
         screen.fillRectangle(0, 0, 240, 40, BLACK);
 
-        //screen.setTextSize(1);
-        //screen.setTextColour(MAGENTA);
+        // screen.setTextSize(1);
+        // screen.setTextColour(MAGENTA);
 
         // Draw 6x4 levels on bottom 40px row
         //    int y = 63-7;
@@ -388,9 +392,15 @@ public:
             int y = 0;
             uint8_t active = current_state.blocks[i];
             for (int j = 0; j < 4; j++) {
-                screen.drawRectangle(x + 2, y + 2, 36, 6, WHITE);
-                screen.fillRectangle(x + 3, y + 3, current_state.params[j * 6 + i],
-                    4, (active == j) ? BLUE : WHITE);
+                int val = current_state.params[j * 6 + i];
+                if (active == j) {
+                    screen.fillRectangle(x + 1, y + 1, 38, 8, YELLOW);
+                    screen.fillRectangle(x + 3 + val, y + 3, 34 - val, 4, BLACK);
+                }
+                else {
+                    screen.fillRectangle(x + 2, y + 2, 36, 6, WHITE);
+                    screen.fillRectangle(x + 3 + val, y + 3, 34 - val, 4, BLACK);
+                }
                 y += 10;
                 // if(i == selectedPid[block])
                 // screen.fillRectangle(x + 2, y , max(1, min(16,
@@ -433,12 +443,12 @@ public:
     }
 
     void drawMessage(int16_t y, ScreenBuffer& screen) {
-      drawMessage(screen);
+        drawMessage(screen);
     }
 
     void setValue(uint8_t ch, int16_t value) {
         parameters[ch] = value;
-        current_state.params[ch] = clamp(value / 120, 0, 33);
+        current_state.params[ch] = clamp(value / 120, 0, 34);
         if (ch == current_state.active_param_id) {
             updateActiveParameter(ch, value);
         }
