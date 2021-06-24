@@ -24,8 +24,7 @@
 #define OLED_DMA
 #define OLED_SOFT_CS
 #define OLED_SPI hspi1
-#define SCREEN_BUFFER_OFFSET (240 * 40 * 2)
-#define SCREEN_HEIGHT_OFFSET 100 // 40 px top + 60 px bottom
+
 #define USE_CODEC
 #define MULTI_CODEC
 #define USE_CS4344
@@ -66,6 +65,7 @@
 /* #define BUS_HUART huart2 */
 
 #define NOF_PARAMETERS               40
+#define NOF_VISIBLE_PARAMETERS       24
 #define NOF_BUTTONS                  (4+6)
 #define NOF_ENCODERS                 6
 

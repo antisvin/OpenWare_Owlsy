@@ -7,7 +7,6 @@ include $(OPENWARE)/Hardware/preenfm3.mk
 
 C_SRC = $(wildcard Src/*.c)
 CPP_SRC = $(wildcard Src/*.cpp)
-C_SRC += $(OPENWARE)/Source/sdram.c
 C_SRC += $(OPENWARE)/Source/usbd_audio.c
 CPP_SRC += $(OPENWARE)/Source/uart.cpp
 CPP_SRC += $(OPENWARE)/Source/uart_midi.cpp

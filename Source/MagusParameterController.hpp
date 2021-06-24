@@ -716,7 +716,7 @@ public:
         }
         break;
       case STATUS:
-        setErrorStatus(NO_ERROR);
+        setErrorStatus(OR);
         break;
       case PRESET:
         // load preset

@@ -75,7 +75,7 @@
 #define OLED_BUFFER_SIZE             (OLED_WIDTH*OLED_HEIGHT/8)
 #elif defined ILI9341
 #define OLED_WIDTH 240
-#define OLED_HEIGHT 320
+#define OLED_HEIGHT 210
 #define OLED_BUFFER_SIZE             (OLED_WIDTH*OLED_HEIGHT*sizeof(uint16_t))
 #endif
 
