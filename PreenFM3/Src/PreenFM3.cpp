@@ -150,13 +150,12 @@ void loop(void) {
         // Poll button states - callbacks only get called when they'll be released
     }
     else {
-      tftPushed = true;
+        tftPushed = true;
     }
-
-#endif /* USE_SCREEN */
-
     encoders.checkStatus(1, 1);
     encoders.processActions();
+
+#endif /* USE_SCREEN */
 
     owl.loop();
 }

@@ -187,24 +187,29 @@ void Encoders::checkStatus(uint8_t encoderType, uint8_t encoderPush) {
                 if (firstButtonDown_ == -1) {
                     firstButtonDown_ = k;
                     buttonUsedFromSomethingElse_[k] = false;
+                    actions_.insert((EncoderAction){ ENCODER_BUTTON_PRESS_STARTED, 0, 0, k, 0});
                 } else {
                     actions_.insert((EncoderAction){ ENCODER_TWO_BUTTON_PRESSED, 0, 0, firstButtonDown_, k});
                     buttonUsedFromSomethingElse_[firstButtonDown_] = true;
                     buttonUsedFromSomethingElse_[k] = true;
                 }
-            } else {
+            }
+            #if 0
+            else {
                 if (buttonTimer_[k] > 350 && !buttonUsedFromSomethingElse_[k]) {
                     actions_.insert((EncoderAction){ ENCODER_LONG_BUTTON_PRESSED, 0, 0, k, 0});
                     buttonUsedFromSomethingElse_[k] = true;
                 }
             }
+            #endif
         } else {
             // Just unpressed ?
             if (unlikely(buttonPreviousState_[k])) {
                 if (firstButtonDown_ == k) {
                     firstButtonDown_ = -1;
                 }
-                if (buttonPreviousState_[k] && !buttonUsedFromSomethingElse_[k]) {
+                //if (buttonPreviousState_[k] && !buttonUsedFromSomethingElse_[k]) {
+                if (buttonPreviousState_[k]) {
                     // Just released
                     if (buttonTimer_[k] > 15) {
                         actions_.insert((EncoderAction){ ENCODER_BUTTON_PRESSED, 0, 0, k, 0});
@@ -228,6 +233,9 @@ void Encoders::processActions() {
 			break;
 		case ENCODER_TURNED_WHILE_BUTTON_PRESSED:
 			encoderTurnedWhileButtonPressed(ea.encoder, ea.ticks, ea.button1);
+			break;
+		case ENCODER_BUTTON_PRESS_STARTED:
+			buttonPressStarted(ea.button1);
 			break;
 		case ENCODER_BUTTON_PRESSED:
 			buttonPressed(ea.button1);

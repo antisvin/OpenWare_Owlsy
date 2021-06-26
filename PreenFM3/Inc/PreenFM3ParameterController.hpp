@@ -39,6 +39,7 @@ extern void pfmDefaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t hei
 
 enum Menu : uint8_t {
     MENU_MAIN,
+    MENU_PARAMS,
     MENU_PATCHES,
     MENU_DATA,
     MENU_SETTINGS,
@@ -59,7 +60,7 @@ public:
     const char* message = 0;
     // Section 4 + 5
     Menu menu = MENU_MAIN;
-    uint8_t menu_dirty;
+    uint8_t menu_key = 0;
     uint8_t custom_callback = 0;
     // Section 6
     uint8_t active_buttons = 0;
@@ -120,8 +121,13 @@ public:
         drawCallback = pfmDefaultDrawCallback;
         for (int i = 0; i < SIZE; ++i) {
             strncpy(names[i], "Parameter  ", 12);
-            names[i][10] = 'A' + i;
             parameters[i] = 0;
+            if (i < 8)
+                names[i][10] = 'A' + i;
+            else {
+                names[i][9] = 'A' - 1 + (i / 8);
+                names[i][10] = 'A' + (i & 0x7);
+            }
         }
     }
 
@@ -129,12 +135,13 @@ public:
         if (strncmp(current_state.title, prev_state.title, 12) != 0)
             dirty |= 1;
         if ( // Compare 4 bytes at once
-            (uint32_t*)(&current_state.cpu_load) != (uint32_t*)(&prev_state.cpu_load))
+            *(uint32_t*)(&current_state.cpu_load) != *(uint32_t*)(&prev_state.cpu_load))
             dirty |= 2;
         if (strncmp(current_state.message, prev_state.message, 100) != 0)
             // if (message != other.message)
             dirty |= 4;
-        if (current_state.custom_callback || current_state.menu_dirty ||
+        if (current_state.custom_callback ||
+            current_state.menu_key != prev_state.menu_key ||
             current_state.menu != prev_state.menu)
             dirty |= 24;
         if (memcmp((void*)&current_state.active_buttons,
@@ -176,9 +183,9 @@ public:
             dirty &= ~4;
         }
         else if (dirty & 24) { // 8 or 16
+            screen.fillRectangle(0, 0, 240, 210, BLACK);
             switch (current_state.menu) {
             case MENU_MAIN:
-                screen.fillRectangle(0, 0, 240, 210, BLACK);
                 screen.setTextSize(2);
                 screen.setCursor(0, 20);
                 screen.setTextColour(RED);
@@ -202,6 +209,9 @@ public:
                 screen.setTextColour(WHITE);
                 screen.print("WHITE");
                 screen.setTextSize(1);
+                break;
+            case MENU_PARAMS:
+                drawParamsMenu(screen);
                 break;
             case MENU_PATCHES:
                 break;
@@ -420,8 +430,49 @@ public:
         }
     }
 
+    void drawParamsMenu(ScreenBuffer& screen) {
+        screen.setTextSize(2);
+        screen.setTextColour(CYAN);
+
+        uint8_t first_param, last_param;
+        if (current_state.menu_key < 12) {
+            screen.fillRectangle(0, current_state.menu_key * 16, 240, 16, MAGENTA);
+            first_param = 0;
+            last_param = 11;
+        }
+        else if (current_state.menu_key < SIZE - 2) {
+            screen.fillRectangle(0, 11 * 16, 240, 16, MAGENTA);
+            first_param = current_state.menu_key - 10;
+            last_param = current_state.menu_key;
+        }
+        else if (current_state.menu_key < SIZE - 1) {
+            screen.fillRectangle(0, 11 * 16, 240, 16, MAGENTA);
+            first_param = current_state.menu_key - 10;
+            last_param = current_state.menu_key + 1;
+        }
+        else { // Last param
+            screen.fillRectangle(0, 12 * 16, 240, 16, MAGENTA);
+            first_param = current_state.menu_key - 11;
+            last_param = current_state.menu_key;
+        }
+
+        if (current_state.menu_key > 0)
+            screen.print(1, 0, names[current_state.menu_key - 1]);
+
+        uint8_t y = first_param == 0 ? 16 : 32;
+        if (current_state.menu_key > 11)
+            screen.print(1, 16, " ...");
+        if (current_state.menu_key < SIZE - 2)
+            screen.print(1, 16 * 13, " ...");
+        for (uint8_t i = first_param; i <= last_param; i++) {
+            screen.print(1, y, names[i]);
+            y += 16;
+        }
+    }
+
     void encoderChanged(uint8_t encoder, int32_t delta) {
         if (encoder == 0) {
+#if 0
             if (sw2()) {
                 if (delta > 1)
                     selected = min(SIZE - 1, selected + 1);
@@ -432,6 +483,7 @@ public:
                 parameters[selected] += delta * 10;
                 parameters[selected] = min(4095, max(0, parameters[selected]));
             }
+#endif
         } // todo: change patch with enc1/sw1
     }
     void setName(uint8_t pid, const char* name) {
@@ -484,26 +536,85 @@ public:
         updateActiveParameter(active, parameters[active]);
     };
 
-    void buttonPressed(int button) override {
-        current_state.active_buttons |= 1 << uint8_t(button);
+    void buttonPressStarted(int button) override {
+        if (button < PFM_MENU_BUTTON) {
+            current_state.active_buttons |= 1 << uint8_t(button);
+        }
     };
 
-    void buttonLongPressed(int button) override {};
+    void buttonPressed(int button) override {
+        if (button < PFM_MENU_BUTTON) {
+            current_state.active_buttons &= ~(1 << uint8_t(button));
+        }
+        else {
+            switch (current_state.menu) {
+            case MENU_MAIN:
+                switch (button) {
+                case PFM_MENU_BUTTON:
+                    current_state.menu = MENU_PARAMS;
+                    current_state.menu_key = current_state.active_param_id;
+                    dirty |= 24;
+                    break;
+                default:
+                    break;
+                }
+                break;
+            case MENU_PARAMS:
+                switch (button) {
+                case PFM_MENU_BUTTON:
+                    current_state.menu = MENU_MAIN;
+                    current_state.active_param_id = current_state.menu_key;
+                    break;
+                case PFM_MINUS_BUTTON:
+                    if (current_state.menu_key > 0)
+                        current_state.menu_key -= 1;
+                    else
+                        current_state.menu_key = SIZE - 1;
+                    current_state.active_param_id = current_state.menu_key;
+                    updateActiveParameter(
+                        current_state.active_param_id, parameters[current_state.active_param_id]);                        
+                    //updateActiveParameter(current_state.menu_key,
+                    //    parameters[current_state.active_param_id]);
+                    //dirty |= 24;
+                    break;
+                case PFM_PLUS_BUTTON:
+                    if (current_state.menu_key < SIZE - 1)
+                        current_state.menu_key += 1;
+                    else
+                        current_state.menu_key = 0;
+                    current_state.active_param_id = current_state.menu_key;
+                    updateActiveParameter(
+                        current_state.active_param_id, parameters[current_state.active_param_id]);
+                    //updateActiveParameter(current_state.active_param_id,
+                    //    parameters[current_state.active_param_id]);
+                    //dirty |= 24;
+                    break;
+                default:
+                    break;
+                }
+            default:
+                break;
+            }
+        }
+    }
 
-    void twoButtonsPressed(int button1, int button2) override {};
+    void buttonLongPressed(int button) override {
+        if (button < PFM_MENU_BUTTON) {
+            current_state.active_buttons &= ~(1 << uint8_t(button));
+        }
+    };
+
+    void twoButtonsPressed(int button1, int button2) override {
+        if (button1 < PFM_MENU_BUTTON) {
+            current_state.active_buttons |= 1 << uint8_t(button1);
+        }
+        if (button2 < PFM_MENU_BUTTON) {
+            current_state.active_buttons |= 1 << uint8_t(button2);
+        }
+    };
 
 private:
     void (*drawCallback)(uint8_t*, uint16_t, uint16_t);
-    bool sw1() {
-        return false;
-        //    return HAL_GPIO_ReadPin(ENC1_SW_GPIO_Port, ENC1_SW_Pin) !=
-        //    GPIO_PIN_SET;
-    }
-    bool sw2() {
-        return false;
-        //    return HAL_GPIO_ReadPin(ENC2_SW_GPIO_Port, ENC2_SW_Pin) !=
-        //    GPIO_PIN_SET;
-    }
 };
 
 #endif // __ParameterController_hpp__

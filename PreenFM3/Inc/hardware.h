@@ -72,3 +72,7 @@
 //#define PFM_SET_PIN(x, y)   x->BSRR = y
 //#define PFM_CLEAR_PIN(x, y)  x->BSRR = (uint32_t)y << 16
 #define PREENFM_FREQUENCY 47916.0f
+
+#define PFM_MENU_BUTTON   6
+#define PFM_MINUS_BUTTON  7
+#define PFM_PLUS_BUTTON   8

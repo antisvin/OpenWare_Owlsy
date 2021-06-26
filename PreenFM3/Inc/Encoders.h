@@ -36,6 +36,7 @@ enum EncoderActionType {
 	ENCODER_TURNED = 0,
 	ENCODER_TURNED_WHILE_BUTTON_PRESSED,
 	ENCODER_BUTTON_PRESSED,
+	ENCODER_BUTTON_PRESS_STARTED,
 	ENCODER_TWO_BUTTON_PRESSED,
 	ENCODER_LONG_BUTTON_PRESSED
 };
@@ -87,6 +88,12 @@ public:
     void buttonPressed(int button) {
         for (EncodersListener *listener = firstListener; listener != 0; listener = listener->nextListener) {
             listener->buttonPressed(button);
+        }
+    }
+
+    void buttonPressStarted(int button) {
+        for (EncodersListener *listener = firstListener; listener != 0; listener = listener->nextListener) {
+            listener->buttonPressStarted(button);
         }
     }
 
