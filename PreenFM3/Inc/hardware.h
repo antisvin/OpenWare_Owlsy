@@ -21,6 +21,7 @@
 #define USE_SCREEN
 #define ILI9341
 
+#define USE_DMA2D
 #define OLED_DMA
 #define OLED_SOFT_CS
 #define OLED_SPI hspi1

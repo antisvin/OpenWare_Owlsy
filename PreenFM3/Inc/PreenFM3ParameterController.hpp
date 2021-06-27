@@ -110,8 +110,7 @@ public:
         nextListener = 0;
         dirty = 0;
         reset();
-        debugMessage(
-            "To debug or not to debug? That's not\neven the question.");
+        debugMessage("Das also war des Pudels Kern!");
     }
     void setTitle(const char* str) {
         strncpy(current_state.title, str, 12);
@@ -181,33 +180,36 @@ public:
             drawMessage(screen);
             tftDirtyBits |= 4;
             dirty &= ~4;
-        }
+        }        
         else if (dirty & 24) { // 8 or 16
-            screen.fillRectangle(0, 0, 240, 210, BLACK);
+            screen.fillRectangle(0, 0, 240, 214, BLACK);
             switch (current_state.menu) {
             case MENU_MAIN:
                 screen.setTextSize(2);
                 screen.setCursor(0, 20);
                 screen.setTextColour(RED);
                 screen.print("RED");
-                screen.setCursor(0, 50);
+                screen.setCursor(0, 40);
                 screen.setTextColour(GREEN);
                 screen.print("GREEN");
-                screen.setCursor(0, 80);
+                screen.setCursor(0, 60);
                 screen.setTextColour(BLUE);
                 screen.print("BLUE");
-                screen.setCursor(0, 110);
+                screen.setCursor(0, 80);
                 screen.setTextColour(CYAN);
                 screen.print("CYAN");
-                screen.setCursor(0, 140);
+                screen.setCursor(0, 100);
                 screen.setTextColour(MAGENTA);
                 screen.print("MAGENTA");
-                screen.setCursor(0, 170);
+                screen.setCursor(0, 120);
                 screen.setTextColour(YELLOW);
                 screen.print("YELLOW");
-                screen.setCursor(0, 200);
+                screen.setCursor(0, 140);
                 screen.setTextColour(WHITE);
                 screen.print("WHITE");
+                screen.setCursor(0, 160);
+                screen.setTextColour(BLACK);
+                screen.print("BLACK");
                 screen.setTextSize(1);
                 break;
             case MENU_PARAMS:
@@ -242,12 +244,12 @@ public:
         // draw title
         screen.setTextColour(CYAN);
         screen.setTextSize(2);
-        screen.print(1, 17, current_state.title);
+        screen.print(1, 16, current_state.title);
 
         // draw firmware version
         // screen.setTextColour(CYAN);
         screen.setTextSize(1);
-        screen.setCursor(160, 10);
+        screen.setCursor(160, 12);
         screen.print(FIRMWARE_VERSION);
 
         // bootloader string
@@ -259,22 +261,22 @@ public:
 
     void drawStats(ScreenBuffer& screen) {
         // clear
-        screen.fillRectangle(0, 0, 240, 8, BLACK);
+        screen.fillRectangle(0, 0, 240, 10, BLACK);
 
         // cpu / mem stats
         screen.setTextSize(1);
         screen.setTextColour(GREEN);
-        screen.print(2, 8, "cpu: ");
+        screen.print(2, 10, "cpu: ");
         screen.print((int)current_state.cpu_load);
         screen.print("%");
-        screen.print(60, 8, "mem: ");
+        screen.print(60, 10, "mem: ");
         screen.print((int)current_state.mem_kbytes_used);
         screen.print("kB");
 
         // draw flash usage
         int flash_used = current_state.flash_used;
         int flash_total = storage.getTotalAllocatedSize() / 1024;
-        screen.print(120, 8, "flash: ");
+        screen.print(120, 10, "flash: ");
         screen.print(flash_used * 100 / flash_total);
         screen.print("% ");
         if (flash_used > 999) {
@@ -316,7 +318,7 @@ public:
 
     void drawMessage(ScreenBuffer& screen) {
         // clear
-        screen.fillRectangle(0, 0, 240, 16, BLACK);
+        screen.fillRectangle(0, 0, 240, 20, BLACK);
 
         // draw message if necessary
         ProgramVector* pv = getProgramVector();
@@ -328,10 +330,9 @@ public:
             else {
                 screen.setTextColour(RED);
             }
-            screen.setTextSize(1);
             screen.setTextWrap(true);
 
-            screen.print(2, 8, pv->message);
+            screen.print(2, 10, pv->message);
             screen.setTextWrap(false);
         }
     }
@@ -470,22 +471,6 @@ public:
         }
     }
 
-    void encoderChanged(uint8_t encoder, int32_t delta) {
-        if (encoder == 0) {
-#if 0
-            if (sw2()) {
-                if (delta > 1)
-                    selected = min(SIZE - 1, selected + 1);
-                else if (delta < 1)
-                    selected = max(0, selected - 1);
-            }
-            else {
-                parameters[selected] += delta * 10;
-                parameters[selected] = min(4095, max(0, parameters[selected]));
-            }
-#endif
-        } // todo: change patch with enc1/sw1
-    }
     void setName(uint8_t pid, const char* name) {
         if (pid < SIZE)
             strncpy(names[pid], name, 11);
@@ -573,9 +558,6 @@ public:
                     current_state.active_param_id = current_state.menu_key;
                     updateActiveParameter(
                         current_state.active_param_id, parameters[current_state.active_param_id]);                        
-                    //updateActiveParameter(current_state.menu_key,
-                    //    parameters[current_state.active_param_id]);
-                    //dirty |= 24;
                     break;
                 case PFM_PLUS_BUTTON:
                     if (current_state.menu_key < SIZE - 1)
@@ -585,9 +567,6 @@ public:
                     current_state.active_param_id = current_state.menu_key;
                     updateActiveParameter(
                         current_state.active_param_id, parameters[current_state.active_param_id]);
-                    //updateActiveParameter(current_state.active_param_id,
-                    //    parameters[current_state.active_param_id]);
-                    //dirty |= 24;
                     break;
                 default:
                     break;

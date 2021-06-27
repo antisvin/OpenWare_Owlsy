@@ -268,9 +268,9 @@ uint32_t tftDirtyBits = 0;
 uint8_t tftPart = 0;
 bool tftPushed = false;
 bool pushToTftInProgress = false;
-static uint16_t areaHeight[TFT_NUMBER_OF_PARTS] = { 16, 8, 16, 105, 105, 30, 40 };
-static uint16_t screenY[TFT_NUMBER_OF_PARTS] = { 0, 16, 24, 40, 145, 250, 280 };
-static uint16_t areaY[TFT_NUMBER_OF_PARTS] = { 0, 0, 0, 0, 105, 0, 0 };
+static uint16_t areaHeight[TFT_NUMBER_OF_PARTS] = { 16, 10, 10, 107, 107, 30, 40 };
+static uint16_t screenY[TFT_NUMBER_OF_PARTS] = { 0, 16, 26, 36, 143, 250, 280 };
+static uint16_t areaY[TFT_NUMBER_OF_PARTS] = { 0, 0, 0, 0, 107, 0, 0 };
 
 void oled_write(const uint8_t* data, uint32_t length) {
 #if 0

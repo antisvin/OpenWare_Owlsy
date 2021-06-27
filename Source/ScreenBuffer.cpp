@@ -4,6 +4,20 @@
 #include "font.c"
 #include "message.h"
 
+#ifdef USE_DMA2D
+#include "stm32h7xx_hal.h"
+extern DMA2D_HandleTypeDef hdma2d;
+#define DMA2D_POSITION_NLR_PL         (uint32_t)POSITION_VAL(DMA2D_NLR_PL)        /*!< Required left shift to set pixels per lines value */
+#define IS_DMA2D_READY() (hdma2d.Instance->CR & DMA2D_CR_START) == 0
+#define START_DMA2D() hdma2d.Instance->CR |= DMA2D_CR_START
+#define DMA2D_POSITION_FGPFCCR_AI (uint32_t)POSITION_VAL(DMA2D_FGPFCCR_AI)
+//#define DMA2D_POSITION_FGPFCCR_RBS (uint32_t)POSITION_VAL(DMA2D_FGPFCCR_RBS)
+
+#include "font.h"
+extern const tFont Font6x10;
+extern const tFont Font10x16;
+#endif
+
 #define swap(a, b) { int16_t t = a; a = b; b = t; }
 #ifndef min
 #define min(a,b) ((a)<(b)?(a):(b))
@@ -41,26 +55,48 @@ void ScreenBuffer::print(int x, int y, const char* text){
 
 void ScreenBuffer::drawVerticalLine(int x, int y,
 				    int length, Colour c){
+#ifdef USE_DMA2D
+  fillRectangle(x, y, 1, length, c);
+#else
   // drawLine(x, y, x, y+length-1, c);
   length += y;
   while(y < length)
     setPixel(x, y++, c);
+#endif
 }
 
 void ScreenBuffer::drawHorizontalLine(int x, int y,
 				      int length, Colour c){
+#ifdef USE_DMA2D
+  fillRectangle(x, y, length, 1, c);
+#else
   // drawLine(x, y, x+length-1, y, c);
   length += x;
   while(x < length)
     setPixel(x++, y, c);
+#endif
 }
 
 void ScreenBuffer::fillRectangle(int x, int y, int w, int h,
 				 Colour c) {
+#ifdef USE_DMA2D
+    while (!IS_DMA2D_READY()) {}
+
+    MODIFY_REG(hdma2d.Instance->CR, DMA2D_CR_MODE, DMA2D_R2M);
+    WRITE_REG(hdma2d.Instance->OCOLR, c);
+
+    uint32_t offset = x + y * 240;
+
+    MODIFY_REG(hdma2d.Instance->OOR, DMA2D_OOR_LO, 240 - w);
+    MODIFY_REG(hdma2d.Instance->NLR, (DMA2D_NLR_NL|DMA2D_NLR_PL), (h | (w << DMA2D_POSITION_NLR_PL)));
+    WRITE_REG(hdma2d.Instance->OMAR, (uint32_t )(pixels + offset));
+    START_DMA2D();  
+#else
   // for(int i=x; i<x+w; i++)
   //   drawVerticalLine(i, y, h, c);
   for(int i=y; i<y+h; i++)
     drawHorizontalLine(x, i, w, c);
+#endif
 }
 
 void ScreenBuffer::drawRectangle(int x, int y, int w, int h,
@@ -194,6 +230,42 @@ void ScreenBuffer::setTextWrap(bool w) {
 // Draw a character
 void ScreenBuffer::drawChar(uint16_t x, uint16_t y, unsigned char ch,
                             Colour c, Colour bg, uint8_t size) {
+#ifdef USE_DMA2D
+  while (!IS_DMA2D_READY()) {}
+
+  MODIFY_REG(hdma2d.Instance->FGPFCCR, (DMA2D_FGPFCCR_CM | DMA2D_FGPFCCR_AI), (DMA2D_INPUT_A4 | (1 << DMA2D_POSITION_FGPFCCR_AI))); // A4 + alpha inverted
+  //MODIFY_REG(hdma2d.Instance->FGPFCCR, (DMA2D_FGPFCCR_CM | DMA2D_FGPFCCR_AI | DMA2D_FGPFCCR_RBS), (DMA2D_INPUT_A4 | (1 << DMA2D_POSITION_FGPFCCR_AI) | (1 << DMA2D_POSITION_FGPFCCR_RBS))); // A4 + alpha inverted + RBS
+  //MODIFY_REG(hdma2d.Instance->FGPFCCR, DMA2D_FGPFCCR_AI, DMA2D_INVERTED_ALPHA); // Alpha inverted
+  //MODIFY_REG(hdma2d.Instance->FGPFCCR, DMA2D_FGPFCCR_CM, 0x0a); // A4
+  WRITE_REG(
+    hdma2d.Instance->FGCOLR,
+    (
+      ((((c & 0xF800) >> 11) * 255 / 31) << 16)
+    | ((((c & 0x07e0) >> 5) * 255 / 63) << 8)
+    | (((c & 0x001f)) * 255 / 31))); 
+  //WRITE_REG(hdma2d.Instance->BGCOLR, BLACK);
+  MODIFY_REG(hdma2d.Instance->CR, DMA2D_CR_MODE, DMA2D_M2M_BLEND);  
+  uint32_t offset = y * 240 + x;
+
+  MODIFY_REG(hdma2d.Instance->BGOR, DMA2D_OOR_LO, 0);
+
+  if (size == 1) {
+    offset -= 240 * 10;
+    MODIFY_REG(hdma2d.Instance->OOR, DMA2D_OOR_LO, 240 - 6);
+    MODIFY_REG(hdma2d.Instance->NLR, (DMA2D_NLR_NL|DMA2D_NLR_PL), (10 | (6 << DMA2D_POSITION_NLR_PL)));
+    WRITE_REG(hdma2d.Instance->FGMAR, (uint32_t)(Font6x10.chars[ch - 32].image->data));
+    
+  }
+  else {
+    offset -= 240 * 16;
+    MODIFY_REG(hdma2d.Instance->OOR, DMA2D_OOR_LO, 240 - 10);
+    MODIFY_REG(hdma2d.Instance->NLR, (DMA2D_NLR_NL|DMA2D_NLR_PL), (16 | (10 << DMA2D_POSITION_NLR_PL)));
+    WRITE_REG(hdma2d.Instance->FGMAR, (uint32_t)(Font10x16.chars[ch - 32].image->data));
+  }
+  WRITE_REG(hdma2d.Instance->BGMAR, (uint32_t)(pixels + offset));
+  WRITE_REG(hdma2d.Instance->OMAR, (uint32_t)(pixels + offset));
+  START_DMA2D();
+#else
   // if((x >= width)            || // Clip right
   //    (y >= height)           || // Clip bottom
   //    ((x + 6 * size - 1) < 0) || // Clip left
@@ -223,6 +295,7 @@ void ScreenBuffer::drawChar(uint16_t x, uint16_t y, unsigned char ch,
       line >>= 1;
     }
   }
+#endif
 }
 
 // Draw a character rotated 90 degrees
@@ -273,6 +346,22 @@ void ScreenBuffer::invert(int x, int y, int w, int h){
 }
 
 void ScreenBuffer::write(uint8_t c) {
+#ifdef USE_DMA2D
+  // Different font size on PreenFM
+  if (c == '\n') {
+    cursor_y += ((textsize == 1) ? 10 : 16);
+    cursor_x  = 0;
+  } else if (c == '\r') {
+    // skip em
+  } else if (c >= 32 && c < 128){
+    drawChar(cursor_x, cursor_y, c, textcolor, textbgcolor, textsize);
+    cursor_x += ((textsize == 1) ? 6 : 10);
+    if(wrap && (cursor_x > (width - ((textsize == 1) ? 6 : 10)))){
+      cursor_y += ((textsize == 1) ? 10 : 16);
+      cursor_x = 0;
+    }
+  }
+#else
   if (c == '\n') {
     cursor_y += textsize*8;
     cursor_x  = 0;
@@ -286,4 +375,5 @@ void ScreenBuffer::write(uint8_t c) {
       cursor_x = 0;
     }
   }
+#endif
 }
