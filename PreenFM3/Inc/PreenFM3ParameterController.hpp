@@ -436,30 +436,43 @@ public:
         screen.setTextSize(2);
         screen.setTextColour(CYAN);
 
-        uint8_t first_param, last_param;
+        uint8_t first_param, last_param, highlight_pos;
         if (current_state.menu_key < 12) {
-            screen.fillRectangle(0, current_state.menu_key * 16, 240, 16, MAGENTA);
+            highlight_pos = current_state.menu_key;
             first_param = 0;
             last_param = 11;
         }
         else if (current_state.menu_key < SIZE - 2) {
-            screen.fillRectangle(0, 11 * 16, 240, 16, MAGENTA);
+            highlight_pos = 11;
             first_param = current_state.menu_key - 10;
             last_param = current_state.menu_key;
         }
         else if (current_state.menu_key < SIZE - 1) {
-            screen.fillRectangle(0, 11 * 16, 240, 16, MAGENTA);
+            highlight_pos = 11;
             first_param = current_state.menu_key - 10;
             last_param = current_state.menu_key + 1;
         }
         else { // Last param
-            screen.fillRectangle(0, 12 * 16, 240, 16, MAGENTA);
+            highlight_pos = 12;
             first_param = current_state.menu_key - 11;
             last_param = current_state.menu_key;
         }
+        screen.fillRectangle(0, 16 * highlight_pos, 240, 16, MAGENTA);
 
         if (current_state.menu_key > 0)
             screen.print(1, 0, names[current_state.menu_key - 1]);
+
+        screen.print(120, 16 * highlight_pos + 16, "0.");
+        int current_value = current_state.active_param_value_pct;
+        if (current_value > 0) {
+            if (current_value < 10) {
+                screen.print("00");
+            }
+            else if (current_value < 100) {
+                screen.print("0");
+            }
+        }
+        screen.print(current_value);
 
         uint8_t y = first_param == 0 ? 16 : 32;
         if (current_state.menu_key > 11)
@@ -498,6 +511,8 @@ public:
         current_state.active_param_value = clamp(parameters[ch] / 35, 0, 114);
         current_state.active_param_value_pct =
             int(clamp(parameters[ch], 0, 4095) * 1000 / 4096);
+        if (current_state.menu == MENU_PARAMS && ch == current_state.menu_key)
+            dirty |= 24;
     }
 
     void setCallback(void* callback) {
