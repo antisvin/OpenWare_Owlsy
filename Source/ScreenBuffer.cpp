@@ -234,24 +234,22 @@ void ScreenBuffer::drawChar(uint16_t x, uint16_t y, unsigned char ch,
   while (!IS_DMA2D_READY()) {}
 
   MODIFY_REG(hdma2d.Instance->FGPFCCR, (DMA2D_FGPFCCR_CM | DMA2D_FGPFCCR_AI), (DMA2D_INPUT_A4 | (1 << DMA2D_POSITION_FGPFCCR_AI))); // A4 + alpha inverted
-  //MODIFY_REG(hdma2d.Instance->FGPFCCR, (DMA2D_FGPFCCR_CM | DMA2D_FGPFCCR_AI | DMA2D_FGPFCCR_RBS), (DMA2D_INPUT_A4 | (1 << DMA2D_POSITION_FGPFCCR_AI) | (1 << DMA2D_POSITION_FGPFCCR_RBS))); // A4 + alpha inverted + RBS
-  //MODIFY_REG(hdma2d.Instance->FGPFCCR, DMA2D_FGPFCCR_AI, DMA2D_INVERTED_ALPHA); // Alpha inverted
-  //MODIFY_REG(hdma2d.Instance->FGPFCCR, DMA2D_FGPFCCR_CM, 0x0a); // A4
   WRITE_REG(
     hdma2d.Instance->FGCOLR,
     (
       ((((c & 0xF800) >> 11) * 255 / 31) << 16)
     | ((((c & 0x07e0) >> 5) * 255 / 63) << 8)
     | (((c & 0x001f)) * 255 / 31))); 
+
   //WRITE_REG(hdma2d.Instance->BGCOLR, BLACK);
   MODIFY_REG(hdma2d.Instance->CR, DMA2D_CR_MODE, DMA2D_M2M_BLEND);  
   uint32_t offset = y * 240 + x;
 
-  MODIFY_REG(hdma2d.Instance->BGOR, DMA2D_OOR_LO, 0);
 
   if (size == 1) {
     offset -= 240 * 10;
     MODIFY_REG(hdma2d.Instance->OOR, DMA2D_OOR_LO, 240 - 6);
+    MODIFY_REG(hdma2d.Instance->BGOR, DMA2D_OOR_LO, 240 - 6);
     MODIFY_REG(hdma2d.Instance->NLR, (DMA2D_NLR_NL|DMA2D_NLR_PL), (10 | (6 << DMA2D_POSITION_NLR_PL)));
     WRITE_REG(hdma2d.Instance->FGMAR, (uint32_t)(Font6x10.chars[ch - 32].image->data));
     
@@ -259,6 +257,7 @@ void ScreenBuffer::drawChar(uint16_t x, uint16_t y, unsigned char ch,
   else {
     offset -= 240 * 16;
     MODIFY_REG(hdma2d.Instance->OOR, DMA2D_OOR_LO, 240 - 10);
+    MODIFY_REG(hdma2d.Instance->BGOR, DMA2D_OOR_LO, 240 - 10);
     MODIFY_REG(hdma2d.Instance->NLR, (DMA2D_NLR_NL|DMA2D_NLR_PL), (16 | (10 << DMA2D_POSITION_NLR_PL)));
     WRITE_REG(hdma2d.Instance->FGMAR, (uint32_t)(Font10x16.chars[ch - 32].image->data));
   }

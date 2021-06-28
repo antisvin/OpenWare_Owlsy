@@ -306,6 +306,12 @@ void oled_write(const uint8_t* data, uint32_t length) {
             if (ILI9341_SetAddressWindow(screen_y, screen_y + height) == HAL_OK) {
                 pushToTftInProgress = true;
 
+#ifdef USE_DMA2D
+                #include "stm32h7xx_hal.h"
+                extern DMA2D_HandleTypeDef hdma2d;
+                while( (hdma2d.Instance->CR & DMA2D_CR_START) != 0) {}
+#endif
+
                 setPin(OLED_DC_GPIO_Port, OLED_DC_Pin);
 
                 SPI1->CFG2 |= SPI_CFG2_LSBFRST;

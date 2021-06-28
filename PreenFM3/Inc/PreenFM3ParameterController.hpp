@@ -247,7 +247,6 @@ public:
         screen.print(1, 16, current_state.title);
 
         // draw firmware version
-        // screen.setTextColour(CYAN);
         screen.setTextSize(1);
         screen.setCursor(160, 12);
         screen.print(FIRMWARE_VERSION);
@@ -318,7 +317,7 @@ public:
 
     void drawMessage(ScreenBuffer& screen) {
         // clear
-        screen.fillRectangle(0, 0, 240, 20, BLACK);
+        screen.fillRectangle(0, 0, 240, 10, BLACK);
 
         // draw message if necessary
         ProgramVector* pv = getProgramVector();
@@ -330,10 +329,10 @@ public:
             else {
                 screen.setTextColour(RED);
             }
-            screen.setTextWrap(true);
-
+            //screen.setTextWrap(true);
+            // TODO: add scrolling here?
             screen.print(2, 10, pv->message);
-            screen.setTextWrap(false);
+            //screen.setTextWrap(false);
         }
     }
 

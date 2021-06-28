@@ -47,7 +47,6 @@
 #include "font.h"
 
 
-
 #if (0x0 == 0x0)
 static const uint8_t image_data_Font6x10_0x20[30] = {
     // ██████
