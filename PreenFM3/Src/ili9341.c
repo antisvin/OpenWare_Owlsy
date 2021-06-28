@@ -292,7 +292,6 @@ void oled_write(const uint8_t* data, uint32_t length) {
     status_[3] = status_[1];
 #endif
 
-    // 4 max - can break before
     int p;
     for (p = 0; p < TFT_NUMBER_OF_PARTS; p++) {
         if ((tftDirtyBits & (1UL << tftPart)) > 0) {

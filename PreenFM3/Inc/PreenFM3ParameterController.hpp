@@ -128,6 +128,8 @@ public:
                 names[i][10] = 'A' + (i & 0x7);
             }
         }
+        current_state.active_param_id = 0;
+        updateActiveParameter(0, 0);
     }
 
     void findChanges() {
@@ -356,8 +358,8 @@ public:
             }
         }
         screen.print(current_value);
-        screen.fillRectangle(1, 12, 116, 16, YELLOW);
-        screen.fillRectangle(2 + current_state.active_param_value, 13,
+        screen.fillRectangle(2, 12, 116, 16, YELLOW);
+        screen.fillRectangle(3 + current_state.active_param_value, 13,
             114 - current_state.active_param_value, 14, BLACK);
 
         // buttons
@@ -366,7 +368,7 @@ public:
         screen.print("Buttons:");
         for (uint8_t i = 0; i < 3; i++) {
             int y = 10;
-            screen.setCursor(x + 3, y + 9);
+            screen.setCursor(x + 3, y + 11);
             screen.print((int)i * 2 + 1);
             if (current_state.active_buttons & (1 << i)) {
                 screen.fillRectangle(x + 11, y + 2, 28, 7, YELLOW);
@@ -375,7 +377,7 @@ public:
                 screen.drawRectangle(x + 11, y + 2, 28, 7, YELLOW);
             }
             y += 11;
-            screen.setCursor(x + 3, y + 8);
+            screen.setCursor(x + 3, y + 10);
             screen.print((int)i * 2 + 2);
             if (current_state.active_buttons & (1 << (i + 3))) {
                 screen.fillRectangle(x + 11, y, 28, 7, YELLOW);
@@ -548,6 +550,7 @@ public:
                 case PFM_MENU_BUTTON:
                     current_state.menu = MENU_MAIN;
                     current_state.active_param_id = current_state.menu_key;
+                    dirty |= 24;
                     break;
                 case PFM_MINUS_BUTTON:
                     if (current_state.menu_key > 0)

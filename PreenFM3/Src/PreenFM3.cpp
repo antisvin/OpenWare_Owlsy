@@ -128,32 +128,31 @@ void loop(void) {
     // updateEncoders();
 
 #ifdef USE_SCREEN
-    if (pushToTftInProgress || ui_state == UI_POLL) {
-        // Poll buttons
-        ui_state = UI_DRAW;
+    if (!pushToTftInProgress) {
+        if (tftPushed && HAL_GetTick() >= nextDrawTime) {
+            tftPushed = false;
+            //    graphics.screen.clear();
+            graphics.params.updateState();
+            ui_state = UI_DRAW;
+            nextDrawTime += 20;
+        }
+        else if (graphics.params.dirty && !tftDirtyBits) {
+            graphics.draw();
+            graphics.display();
+            ui_state = UI_SEND;
+        }
+        else if (tftDirtyBits) {
+            graphics.display();
+            ui_state = UI_POLL;
+            // Poll button states - callbacks only get called when they'll be released
+        }
+        else {
+            tftPushed = true;
+        }
     }
-    else if (tftPushed && HAL_GetTick() >= nextDrawTime) {
-        tftPushed = false;
-        //    graphics.screen.clear();
-        graphics.params.updateState();
-        ui_state = UI_DRAW;
-        nextDrawTime += 20;
-    }
-    else if (graphics.params.dirty && !tftDirtyBits) {
-        graphics.draw();
-        graphics.display();
-        ui_state = UI_SEND;
-    }
-    else if (tftDirtyBits && !tftPushed) {
-        graphics.display();
-        ui_state = UI_POLL;
-        // Poll button states - callbacks only get called when they'll be released
-    }
-    else {
-        tftPushed = true;
-    }
+
     encoders.checkStatus(1, 1);
-    encoders.processActions();
+    encoders.processActions();    
 
 #endif /* USE_SCREEN */
 
