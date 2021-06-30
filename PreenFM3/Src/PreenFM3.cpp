@@ -57,9 +57,14 @@ enum UIState {
 extern bool tftPushed, pushToTftInProgress;
 
 void setup() {
+    owl.setup();
+
+    encoders.insertListener(&graphics.params);
+
 #ifdef USE_SCREEN
     // clearPin(OLED_RST_GPIO_Port, OLED_RST_Pin);
     // HAL_GPIO_WritePin(OLED_RST_GPIO_Port, OLED_RST_Pin, GPIO_PIN_RESET); // OLED off
+    //HAL_GPIO_WritePin(GPIOD, OLED_RST_Pin, GPIO_PIN_SET);    
     setPin(LED_TEST_GPIO_Port, LED_TEST_Pin);
     setPin(LED_CONTROL_GPIO_Port, LED_CONTROL_Pin);
     extern SPI_HandleTypeDef OLED_SPI;
@@ -71,7 +76,6 @@ void setup() {
     //    TIM1->CCR2 = tft_bl < 10 ? 10 : tft_bl;
     HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
 #endif
-    encoders.insertListener(&graphics.params);
 
     /*
       HAL_GPIO_WritePin(OLED_RST_GPIO_Port, OLED_RST_Pin, GPIO_PIN_RESET); //
@@ -82,8 +86,6 @@ void setup() {
       HAL_TIM_Encoder_Start_IT(&ENCODER_TIM1, TIM_CHANNEL_ALL);
       HAL_TIM_Encoder_Start_IT(&ENCODER_TIM2, TIM_CHANNEL_ALL);
     */
-    owl.setup();
-
     nextDrawTime = HAL_GetTick();
 }
 

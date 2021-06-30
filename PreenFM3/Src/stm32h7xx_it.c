@@ -61,9 +61,6 @@
 extern DMA_HandleTypeDef hdma_sai1_a;
 extern DMA_HandleTypeDef hdma_sai1_b;
 extern DMA_HandleTypeDef hdma_sai2_a;
-extern SAI_HandleTypeDef hsai_BlockA1;
-extern SAI_HandleTypeDef hsai_BlockB1;
-extern SAI_HandleTypeDef hsai_BlockA2;
 extern DMA_HandleTypeDef hdma_spi1_tx;
 extern SPI_HandleTypeDef hspi1;
 extern DMA_HandleTypeDef hdma_usart1_rx;
@@ -227,35 +224,6 @@ void DMA2_Stream0_IRQHandler(void)
   /* USER CODE BEGIN DMA2_Stream0_IRQn 1 */
 
   /* USER CODE END DMA2_Stream0_IRQn 1 */
-}
-
-/**
-  * @brief This function handles SAI1 global interrupt.
-  */
-void SAI1_IRQHandler(void)
-{
-  /* USER CODE BEGIN SAI1_IRQn 0 */
-
-  /* USER CODE END SAI1_IRQn 0 */
-  HAL_SAI_IRQHandler(&hsai_BlockA1);
-  HAL_SAI_IRQHandler(&hsai_BlockB1);
-  /* USER CODE BEGIN SAI1_IRQn 1 */
-
-  /* USER CODE END SAI1_IRQn 1 */
-}
-
-/**
-  * @brief This function handles SAI2 global interrupt.
-  */
-void SAI2_IRQHandler(void)
-{
-  /* USER CODE BEGIN SAI2_IRQn 0 */
-
-  /* USER CODE END SAI2_IRQn 0 */
-  HAL_SAI_IRQHandler(&hsai_BlockA2);
-  /* USER CODE BEGIN SAI2_IRQn 1 */
-
-  /* USER CODE END SAI2_IRQn 1 */
 }
 
 /**

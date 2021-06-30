@@ -2,7 +2,7 @@
 #define __ParameterController_hpp__
 
 #include "EncodersListener.h"
-#include "FlashStorage.h"
+#include "Storage.h"
 #include "Owl.h"
 #include "ProgramVector.h"
 #include "ScreenBuffer.h"
@@ -78,7 +78,7 @@ public:
             (float)ARM_CYCLES_PER_SAMPLE * 100.f;
         cpu_load = cpu_load_percent;
         mem_kbytes_used = (int)(pv->heap_bytes_used) / 1024;
-        flash_used = storage.getWrittenSize() / 1024;
+        flash_used = storage.getUsedSize() / 1024;
         message = pv->message;
     }
 };
@@ -276,7 +276,7 @@ public:
 
         // draw flash usage
         int flash_used = current_state.flash_used;
-        int flash_total = storage.getTotalAllocatedSize() / 1024;
+        int flash_total = storage.getTotalCapacity() / 1024;
         screen.print(120, 10, "flash: ");
         screen.print(flash_used * 100 / flash_total);
         screen.print("% ");

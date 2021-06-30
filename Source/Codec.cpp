@@ -6,7 +6,7 @@
 #include <cstring>
 #include "ProgramManager.h"
 
-#ifdef USE_CS4271
+#if defined USE_CS4271 || defined USE_CS4344
 #define HSAI_RX hsai_BlockB1
 #define HSAI_TX hsai_BlockA1
 #define HDMA_RX hdma_sai1_b
@@ -27,6 +27,8 @@ extern "C" {
   uint16_t codec_blocksize = AUDIO_BLOCK_SIZE;
   int32_t codec_rxbuf[CODEC_BUFFER_SIZE] DMA_RAM;
   int32_t codec_txbuf[CODEC_BUFFER_SIZE] DMA_RAM;
+  int32_t codec_txbuf2[CODEC_BUFFER_SIZE] DMA_RAM;
+  int32_t codec_txbuf3[CODEC_BUFFER_SIZE] DMA_RAM;
   extern DMA_HandleTypeDef HDMA_TX;
   extern DMA_HandleTypeDef HDMA_RX;
 #if defined USE_CS4271 || defined USE_PCM3168A
@@ -253,15 +255,28 @@ extern "C"{
 }
 #endif /* USE_WM8731 */
 
-#if defined USE_CS4271 || defined USE_PCM3168A
+#if defined USE_CS4271 || defined USE_PCM3168A || defined USE_CS4344
 
 extern "C" {
+  extern SAI_HandleTypeDef HSAI_RX;
+  extern SAI_HandleTypeDef HSAI_TX;
+#if defined USE_CS4344
+  void HAL_SAI_TxHalfCpltCallback(SAI_HandleTypeDef *hsai){
+    if (hsai == &HSAI_TX)
+      audioCallback(codec_rxbuf, codec_txbuf, codec_blocksize);
+  }
+  void HAL_SAI_TxCpltCallback(SAI_HandleTypeDef *hsai){
+    if (hsai == &HSAI_TX)
+      audioCallback(codec_rxbuf+codec_blocksize*AUDIO_CHANNELS, codec_txbuf+codec_blocksize*AUDIO_CHANNELS, codec_blocksize);
+  }
+#else
   void HAL_SAI_TxHalfCpltCallback(SAI_HandleTypeDef *hsai){
     audioCallback(codec_rxbuf, codec_txbuf, codec_blocksize);
   }
   void HAL_SAI_TxCpltCallback(SAI_HandleTypeDef *hsai){
     audioCallback(codec_rxbuf+codec_blocksize*AUDIO_CHANNELS, codec_txbuf+codec_blocksize*AUDIO_CHANNELS, codec_blocksize);
   }
+#endif
   void HAL_SAI_ErrorCallback(SAI_HandleTypeDef *hsai){
     error(CONFIG_ERROR, "SAI DMA Error");
   }
@@ -286,6 +301,11 @@ void Codec::start(){
   ret = HAL_SAI_Receive_DMA(&HSAI_RX, (uint8_t*)codec_rxbuf, codec_blocksize*AUDIO_CHANNELS*2);
   if(ret == HAL_OK)
     ret = HAL_SAI_Transmit_DMA(&HSAI_TX, (uint8_t*)codec_txbuf, codec_blocksize*AUDIO_CHANNELS*2);
+#elif defined USE_CS4344
+  extern SAI_HandleTypeDef hsai_BlockB1, hsai_BlockA2;
+  ret = HAL_SAI_Transmit_DMA(&hsai_BlockA2, (uint8_t*)codec_txbuf3, codec_blocksize*AUDIO_CHANNELS*2);
+  ret = HAL_SAI_Transmit_DMA(&hsai_BlockB1, (uint8_t*)codec_txbuf2, codec_blocksize*AUDIO_CHANNELS*2);
+  ret = HAL_SAI_Transmit_DMA(&HSAI_TX, (uint8_t*)codec_txbuf, codec_blocksize*AUDIO_CHANNELS*2);
 #else // PCM3168A
   // start slave first (Noctua)
   ret = HAL_SAI_Transmit_DMA(&HSAI_TX, (uint8_t*)codec_txbuf, codec_blocksize*AUDIO_CHANNELS*2);
