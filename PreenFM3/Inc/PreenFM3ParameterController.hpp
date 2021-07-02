@@ -1,6 +1,7 @@
 #ifndef __ParameterController_hpp__
 #define __ParameterController_hpp__
 
+#include <algorithm>
 #include "EncodersListener.h"
 #include "Storage.h"
 #include "Owl.h"
@@ -19,17 +20,8 @@
 extern DigitalBusReader bus;
 #endif
 
-#ifndef min
-#define min(a, b) ((a) < (b) ? (a) : (b))
-#endif
-#ifndef max
-#define max(a, b) ((a) > (b) ? (a) : (b))
-#endif
-#ifndef abs
-#define abs(x) ((x) > 0 ? (x) : -(x))
-#endif
 #ifndef clamp
-#define clamp(x, a, b) min(b, max(a, x))
+#define clamp(x, a, b) (((x) > (b)) ? (b) : (((x) < (a)) ? (a) : (x)))
 #endif
 #define ENC_MULTIPLIER 6 // shift left by this many steps
 
@@ -395,12 +387,7 @@ public:
     void drawParameterValues(ScreenBuffer& screen) {
         // clear
         screen.fillRectangle(0, 0, 240, 40, BLACK);
-
-        // screen.setTextSize(1);
-        // screen.setTextColour(MAGENTA);
-
-        // Draw 6x4 levels on bottom 40px row
-        //    int y = 63-7;
+        // draw blocks
         int block = 2;
         int x = 0;
         for (int i = 0; i < 6; i++) {
@@ -417,32 +404,19 @@ public:
                     screen.fillRectangle(x + 3 + val, y + 3, 34 - val, 4, BLACK);
                 }
                 y += 10;
-                // if(i == selectedPid[block])
-                // screen.fillRectangle(x + 2, y , max(1, min(16,
-                // parameters[i]/255)), 4, WHITE); else screen.drawRectangle(x,
-                // y, max(1, min(16, parameters[i]/255)), 4, WHITE);
             }
             x += 40;
-            /*
-            if(i & 0x01)
-              block++;
-            if(i == 7){
-              x = 0;
-              y += 3;
-              block = 0;
-            }
-            */
         }
     }
 
     void drawParamsMenu(ScreenBuffer& screen) {
+        // clear
         screen.setTextSize(2);
-
+        // header
         screen.setTextColour(WHITE);
         screen.print(20, 16, "Patch Parameters:");
-
+        // draw menu
         screen.setTextColour(CYAN);
-
         uint8_t first_item, last_item, highlight_pos;
         if (current_state.menu_key < 11) {
             highlight_pos = current_state.menu_key;
@@ -500,37 +474,45 @@ public:
         uint32_t size = registry.getNumberOfPatches();
 
         uint8_t first_item, last_item, highlight_pos;
-        if (current_state.menu_key < 11) {
-            highlight_pos = current_state.menu_key;
+        if (size > 12) {
+            if (current_state.menu_key < 11) {
+                highlight_pos = current_state.menu_key;
+                first_item = 0;
+                last_item = std::min<uint8_t>(size - 1, 10);
+            }
+            else if (current_state.menu_key + 2 < size) {
+                highlight_pos = 10;
+                first_item = current_state.menu_key - 9;
+                last_item = current_state.menu_key;
+            }
+            else if (current_state.menu_key + 1 < size) {
+                highlight_pos = 10;
+                first_item = current_state.menu_key - 9;
+                last_item = current_state.menu_key + 1;
+            }
+            else {
+                highlight_pos = 11;
+                first_item = current_state.menu_key - 10;
+                last_item = current_state.menu_key;
+            }
+            if (current_state.menu_key > 10)
+                screen.print(1, 32, " ...");
+            if (current_state.menu_key + 2 < size)
+                screen.print(1, 16 * 13, " ...");
+        }
+        else {
             first_item = 0;
-            last_item = 10;
-        }
-        else if (current_state.menu_key + 2 < size) {
-            highlight_pos = 10;
-            first_item = current_state.menu_key - 9;
-            last_item = current_state.menu_key;
-        }
-        else if (current_state.menu_key + 1 < size) {
-            highlight_pos = 10;
-            first_item = current_state.menu_key - 9;
-            last_item = current_state.menu_key + 1;
-        }
-        else { // Last param
-            highlight_pos = 11;
-            first_item = current_state.menu_key - 10;
-            last_item = current_state.menu_key;
+            last_item = size - 1;
+            highlight_pos = current_state.menu_key;
         }
         screen.fillRectangle(0, 16 * highlight_pos + 16, 240, 16, MAGENTA);
 
         screen.print(180, 16 * highlight_pos + 32, "Load");
 
         uint8_t y = first_item == 0 ? 32 : 48;
-        if (current_state.menu_key > 10)
-            screen.print(1, 32, " ...");
-        if (current_state.menu_key + 2 < size)
-            screen.print(1, 16 * 13, " ...");
+
         for (uint8_t i = first_item; i <= last_item; i++) {
-            screen.setCursor(0, 32 + 16 * i);
+            screen.setCursor(0, y);
             screen.print((int)i);
             screen.print(" ");
             screen.print(registry.getPatchName(i));
@@ -641,9 +623,20 @@ public:
                     setValue(current_state.active_param_id,
                         parameters[current_state.active_param_id] + encoderSensitivity);
                     break;
+                case PFM_PATCHES_BUTTON:
+                    current_state.menu_key--;
+                    if (current_state.menu_key >= 40)
+                        current_state.menu_key = 39;
+                    break;
+                case PFM_SETTINGS_BUTTON:
+                    current_state.menu_key++;
+                    if (current_state.menu_key >= 40)
+                        current_state.menu_key = 0;
+                    break;
                 default:
                     break;
                 }
+                break;
             case MENU_PATCHES:
                 switch (button) {
                 case PFM_MENU_BUTTON:
@@ -652,10 +645,11 @@ public:
                     break;
                 case PFM_MINUS_BUTTON:
                 case PFM_PATCHES_BUTTON: {
-                    current_state.menu_key -= 1;
+                    current_state.menu_key--;
                     uint32_t num_patches = registry.getNumberOfPatches();
-                    if (current_state.menu_key >= registry.getNumberOfPatches())
+                    if (current_state.menu_key >= num_patches)
                         current_state.menu_key = num_patches - 1;
+                    dirty |= 24;
                     break;
                 }
                 case PFM_RESOURCES_BUTTON:
@@ -666,15 +660,18 @@ public:
                     break;
                 case PFM_PLUS_BUTTON:
                 case PFM_SETTINGS_BUTTON: {
-                    current_state.menu_key += 1;
-                    uint32_t num_patches = registry.getNumberOfPatches();
-                    if (current_state.menu_key >= registry.getNumberOfPatches())
+                    current_state.menu_key++;
+                    uint32_t num_patches = registry.getNumberOfPatches() - 1;
+                    if (current_state.menu_key > num_patches)
                         current_state.menu_key = 0;
                     break;
                 }
                 default:
                     break;
                 }
+                break;
+            default:
+                break;
             }
         }
     }
