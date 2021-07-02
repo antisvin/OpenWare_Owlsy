@@ -5,6 +5,7 @@
 #include "EncodersListener.h"
 #include "Storage.h"
 #include "Owl.h"
+#include "OpenWareMidiControl.h"
 #include "ProgramVector.h"
 #include "PatchRegistry.h"
 #include "ProgramManager.h"
@@ -575,12 +576,18 @@ public:
     void buttonPressStarted(int button) override {
         if (button < PFM_MENU_BUTTON) {
             current_state.active_buttons |= 1 << uint8_t(button);
+            setButtonValue(BUTTON_A + button, 1);
+            if (button == 0)
+                setButtonValue(PUSHBUTTON, 1);
         }
     };
 
     void buttonPressed(int button) override {
         if (button < PFM_MENU_BUTTON) {
             current_state.active_buttons &= ~(1 << uint8_t(button));
+            setButtonValue(BUTTON_A + button, 0);
+            if (button == 0)
+                setButtonValue(PUSHBUTTON, 0);
         }
         else {
             switch (current_state.menu) {
@@ -618,6 +625,7 @@ public:
                 case PFM_MINUS_BUTTON:
                     setValue(current_state.active_param_id,
                         parameters[current_state.active_param_id] - encoderSensitivity);
+                    dirty |= 24;
                     break;
                 case PFM_PLUS_BUTTON:
                     setValue(current_state.active_param_id,
@@ -627,11 +635,15 @@ public:
                     current_state.menu_key--;
                     if (current_state.menu_key >= 40)
                         current_state.menu_key = 39;
+                    current_state.active_param_id = current_state.menu_key;
+                    updateActiveParameter(current_state.menu_key, parameters[current_state.menu_key]);
                     break;
                 case PFM_SETTINGS_BUTTON:
                     current_state.menu_key++;
                     if (current_state.menu_key >= 40)
                         current_state.menu_key = 0;
+                    current_state.active_param_id = current_state.menu_key;
+                    updateActiveParameter(current_state.menu_key, parameters[current_state.menu_key]);
                     break;
                 default:
                     break;
