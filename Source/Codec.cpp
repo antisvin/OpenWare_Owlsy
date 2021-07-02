@@ -11,6 +11,33 @@
 #define HSAI_TX hsai_BlockA1
 #define HDMA_RX hdma_sai1_b
 #define HDMA_TX hdma_sai1_a
+#elif defined MULTI_CODEC
+#define HDMA_TX HDMA_TX1
+#define HDMA_RX HDMA_RX1
+  #if NOF_INPUT_CODECS > 0
+  extern DMA_HandleTypeDef HDMA_RX1;
+  #if NOF_INPUT_CODECS > 1
+  extern DMA_HandleTypeDef HDMA_RX2;
+  #endif
+  #if NOF_INPUT_CODECS > 2
+  extern DMA_HandleTypeDef HDMA_RX3;
+  #endif
+  #if NOF_INPUT_CODECS > 3
+  extern DMA_HandleTypeDef HDMA_RX4;
+  #endif
+  #endif
+  #if NOF_OUTPUT_CODECS > 0
+  extern DMA_HandleTypeDef HDMA_TX1;
+  #endif
+  #if NOF_OUTPUT_CODECS > 1
+  extern DMA_HandleTypeDef HDMA_TX2;
+  #endif
+  #if NOF_OUTPUT_CODECS > 2
+  extern DMA_HandleTypeDef HDMA_TX3;
+  #endif
+  #if NOF_OUTPUT_CODECS > 3
+  extern DMA_HandleTypeDef HDMA_TX4;
+  #endif
 #elif defined USE_PCM3168A
 #define HSAI_RX hsai_BlockA1
 #define HSAI_TX hsai_BlockB1
@@ -25,15 +52,20 @@
 
 extern "C" {
   uint16_t codec_blocksize = AUDIO_BLOCK_SIZE;
+#ifdef MULTI_CODEC
+  int32_t codec_rxbuf[CODEC_BUFFER_SIZE / 2];
+  int32_t codec_txbuf[CODEC_BUFFER_SIZE / 2];
+  #if NOF_INPUT_CODECS > 0
+  int32_t codec_rx[NOF_INPUT_CODECS][CODEC_BUFFER_SIZE] DMA_RAM;
+  #endif
+  #if NOF_OUTPUT_CODECS > 0
+  int32_t codec_tx[NOF_OUTPUT_CODECS][CODEC_BUFFER_SIZE / NOF_OUTPUT_CODECS] DMA_RAM;
+  #endif
+#else
   int32_t codec_rxbuf[CODEC_BUFFER_SIZE] DMA_RAM;
   int32_t codec_txbuf[CODEC_BUFFER_SIZE] DMA_RAM;
-  int32_t codec_txbuf2[CODEC_BUFFER_SIZE] DMA_RAM;
-  int32_t codec_txbuf3[CODEC_BUFFER_SIZE] DMA_RAM;
   extern DMA_HandleTypeDef HDMA_TX;
   extern DMA_HandleTypeDef HDMA_RX;
-#if defined USE_CS4271 || defined USE_PCM3168A
-  extern SAI_HandleTypeDef HSAI_RX;
-  extern SAI_HandleTypeDef HSAI_TX;
 #endif
 }
 
@@ -84,8 +116,13 @@ void Codec::reset(){
 }
 
 void Codec::ramp(uint32_t max){
+#ifdef MULTI_CODEC
+  uint32_t incr = max / CODEC_BUFFER_SIZE / 2;
+  for(int i = 0; i < CODEC_BUFFER_SIZE / 2; ++i)
+#else
   uint32_t incr = max/CODEC_BUFFER_SIZE;
   for(int i=0; i<CODEC_BUFFER_SIZE; ++i)
+#endif
     codec_txbuf[i] = i*incr;
 }
 
@@ -95,7 +132,11 @@ void Codec::clear(){
 
 int32_t Codec::getMin(){
   int32_t min = codec_txbuf[0];
+#ifdef MULTI_CODEC
+  for(int i = 1; i < CODEC_BUFFER_SIZE / 2; ++i)
+#else
   for(int i=1; i<CODEC_BUFFER_SIZE; ++i)
+#endif
     if(codec_txbuf[i] < min)
       min = codec_txbuf[i];
   return min;
@@ -103,7 +144,11 @@ int32_t Codec::getMin(){
 
 int32_t Codec::getMax(){
   int32_t max = codec_txbuf[0];
+#ifdef MULTI_CODEC
+  for(int i=1; i<CODEC_BUFFER_SIZE / 2; ++i)
+#else
   for(int i=1; i<CODEC_BUFFER_SIZE; ++i)
+#endif
     if(codec_txbuf[i] > max)
       max = codec_txbuf[i];
   return max;
@@ -111,13 +156,23 @@ int32_t Codec::getMax(){
 
 float Codec::getAvg(){
   float avg = 0;
+#ifdef MULTI_CODEC
+  for(int i=0; i<CODEC_BUFFER_SIZE / 2; ++i)
+    avg += codec_txbuf[i];
+  return avg / CODEC_BUFFER_SIZE * 2;
+#else
   for(int i=0; i<CODEC_BUFFER_SIZE; ++i)
     avg += codec_txbuf[i];
   return avg / CODEC_BUFFER_SIZE;
+#endif
 }
 
 void Codec::set(uint32_t value){
+#ifdef MULTI_CODEC
+  for(int i=0; i<CODEC_BUFFER_SIZE / 2; ++i){
+#else
   for(int i=0; i<CODEC_BUFFER_SIZE; ++i){
+#endif
     codec_txbuf[i] = value;
     codec_rxbuf[i] = value;
   }
@@ -258,18 +313,86 @@ extern "C"{
 #if defined USE_CS4271 || defined USE_PCM3168A || defined USE_CS4344
 
 extern "C" {
-  extern SAI_HandleTypeDef HSAI_RX;
-  extern SAI_HandleTypeDef HSAI_TX;
-#if defined USE_CS4344
-  void HAL_SAI_TxHalfCpltCallback(SAI_HandleTypeDef *hsai){
-    if (hsai == &HSAI_TX)
+#if defined MULTI_CODEC && NOF_OUTPUT_CODECS > 0 && NOF_INPUT_CODECS == 0
+  extern SAI_HandleTypeDef HSAI_TX1;
+  #if NOF_OUTPUT_CODECS > 1
+  extern SAI_HandleTypeDef HSAI_TX2;
+  #endif
+  #if NOF_OUTPUT_CODECS > 2
+  extern SAI_HandleTypeDef HSAI_TX3;
+  #endif
+  #if NOF_OUTPUT_CODECS > 3
+  extern SAI_HandleTypeDef HSAI_TX4;
+  #endif
+  void HAL_SAI_TxHalfCpltCallback(SAI_HandleTypeDef *hsai){    
+    if (hsai == &HSAI_TX1) {
+      int32_t* srct = codec_txbuf;
+      int32_t* dst1t = codec_tx[0];
+      #if NOF_OUTPUT_CODECS > 1
+      int32_t* dst2t = codec_tx[1];
+      #endif
+      #if NOF_OUTPUT_CODECS > 2
+      int32_t* dst3t = codec_tx[2];
+      #endif
+        #if NOF_OUTPUT_CODECS > 3
+      int32_t* dst4t = codec_tx[3];
+      #endif
+      int32_t* last = codec_txbuf + sizeof(codec_txbuf) / sizeof(uint32_t);
+      while (srct < last) {
+        *dst1t++ = *srct++;
+        *dst1t++ = *srct++;
+        #if NOF_OUTPUT_CODECS > 1
+        *dst2t++ = *srct++;
+        *dst2t++ = *srct++;
+        #endif
+        #if NOF_OUTPUT_CODECS > 2
+        *dst3t++ = *srct++;
+        *dst3t++ = *srct++;
+        #endif
+        #if NOF_OUTPUT_CODECS > 3
+        *dst4t++ = *srct++;
+        *dst4t++ = *srct++;
+        #endif
+      }
       audioCallback(codec_rxbuf, codec_txbuf, codec_blocksize);
+    }
   }
   void HAL_SAI_TxCpltCallback(SAI_HandleTypeDef *hsai){
-    if (hsai == &HSAI_TX)
-      audioCallback(codec_rxbuf+codec_blocksize*AUDIO_CHANNELS, codec_txbuf+codec_blocksize*AUDIO_CHANNELS, codec_blocksize);
+    if (hsai == &HSAI_TX1){
+      int32_t* srct = codec_txbuf;
+      int32_t* dst1t = codec_tx[0] + CODEC_BUFFER_SIZE / NOF_OUTPUT_CODECS / 2;
+      #if NOF_OUTPUT_CODECS > 1
+      int32_t* dst2t = codec_tx[1] + CODEC_BUFFER_SIZE / NOF_OUTPUT_CODECS / 2;
+      #endif
+      #if NOF_OUTPUT_CODECS > 2
+      int32_t* dst3t = codec_tx[2] + CODEC_BUFFER_SIZE / NOF_OUTPUT_CODECS / 2;
+      #endif
+      #if NOF_OUTPUT_CODECS > 3
+      int32_t* dst4t = codec_tx[3] + CODEC_BUFFER_SIZE / NOF_OUTPUT_CODECS / 2;
+      #endif
+      int32_t* last = codec_txbuf + sizeof(codec_txbuf) / sizeof(uint32_t);
+      while (srct < last) {
+        *dst1t++ = *srct++;
+        *dst1t++ = *srct++;
+        #if NOF_OUTPUT_CODECS > 1
+        *dst2t++ = *srct++;
+        *dst2t++ = *srct++;
+        #endif
+        #if NOF_OUTPUT_CODECS > 2
+        *dst3t++ = *srct++;
+        *dst3t++ = *srct++;
+        #endif
+        #if NOF_OUTPUT_CODECS > 3
+        *dst4t++ = *srct++;
+        *dst4t++ = *srct++;
+        #endif
+      }
+      audioCallback(codec_rxbuf, codec_txbuf, codec_blocksize);
+    }
   }
 #else
+  extern SAI_HandleTypeDef HSAI_RX;
+  extern SAI_HandleTypeDef HSAI_TX;
   void HAL_SAI_TxHalfCpltCallback(SAI_HandleTypeDef *hsai){
     audioCallback(codec_rxbuf, codec_txbuf, codec_blocksize);
   }
@@ -283,29 +406,110 @@ extern "C" {
 }
 
 void Codec::txrx(){
+#ifndef MULTI_CODEC
   HAL_SAI_DMAStop(&HSAI_RX);
   HAL_SAI_Transmit_DMA(&HSAI_RX, (uint8_t*)codec_rxbuf, codec_blocksize*AUDIO_CHANNELS*2);
+#endif
 }
 
 void Codec::stop(){
+#ifdef MULTI_CODEC
+  #if NOF_INPUT_CODECS > 0
+  HAL_SAI_DMAStop(&HSAI_RX1);
+  #endif
+  #if NOF_INPUT_CODECS > 1
+  HAL_SAI_DMAStop(&HSAI_RX2);
+  #endif
+  #if NOF_INPUT_CODECS > 2
+  HAL_SAI_DMAStop(&HSAI_RX3);
+  #endif
+  #if NOF_INPUT_CODECS > 3
+  HAL_SAI_DMAStop(&HSAI_RX4);
+  #endif
+  #if NOF_OUTPUT_CODECS > 0
+  HAL_SAI_DMAStop(&HSAI_TX1);
+  #endif
+  #if NOF_OUTPUT_CODECS > 1
+  HAL_SAI_DMAStop(&HSAI_TX2);
+  #endif
+  #if NOF_OUTPUT_CODECS > 2
+  HAL_SAI_DMAStop(&HSAI_TX3);
+  #endif
+  #if NOF_OUTPUT_CODECS > 3
+  HAL_SAI_DMAStop(&HSAI_TX4);
+  #endif
+#else
   HAL_SAI_DMAStop(&HSAI_RX);
   HAL_SAI_DMAStop(&HSAI_TX);
+#endif
 }
 
 void Codec::start(){
   setOutputGain(settings.audio_output_gain);
   // codec_blocksize = min(CODEC_BUFFER_SIZE/(AUDIO_CHANNELS*2), settings.audio_blocksize);
   codec_blocksize = CODEC_BUFFER_SIZE/(AUDIO_CHANNELS*2);
-  HAL_StatusTypeDef ret;
-#ifdef USE_CS4271
+  HAL_StatusTypeDef ret = HAL_OK;
+#ifdef MULTI_CODEC
+  #if NOF_INPUT_CODECS > 0
+  extern SAI_HandleTypeDef HSAI_RX1;
+  #endif
+  #if NOF_INPUT_CODECS > 1
+  extern SAI_HandleTypeDef HSAI_RX2;
+  #endif
+  #if NOF_INPUT_CODECS > 2
+  extern SAI_HandleTypeDef HSAI_RX3;
+  #endif
+  #if NOF_INPUT_CODECS > 3
+  extern SAI_HandleTypeDef HSAI_RX4;
+  #endif
+  #if NOF_OUTPUT_CODECS > 0
+  extern SAI_HandleTypeDef HSAI_TX1;
+  #endif
+  #if NOF_OUTPUT_CODECS > 1
+  extern SAI_HandleTypeDef HSAI_TX2;
+  #endif
+  #if NOF_OUTPUT_CODECS > 2
+  extern SAI_HandleTypeDef HSAI_TX3;
+  #endif
+  #if NOF_OUTPUT_CODECS > 3
+  extern SAI_HandleTypeDef HSAI_TX4;
+  #endif
+  #if NOF_INPUT_CODECS > 3
+  if (ret == HAL_OK)
+    ret = HAL_SAI_Receive_DMA(&HSAI_RX4, (uint8_t*)codec_rx[3], codec_blocksize * 4);
+  #endif
+  #if NOF_INPUT_CODECS > 2
+  if (ret == HAL_OK)
+    ret = HAL_SAI_Receive_DMA(&HSAI_RX3, (uint8_t*)codec_rx[2], codec_blocksize * 4);
+  #endif
+  #if NOF_INPUT_CODECS > 1
+  if (ret == HAL_OK)
+    ret = HAL_SAI_Receive_DMA(&HSAI_RX2, (uint8_t*)codec_rx[1], codec_blocksize * 4);
+  #endif
+  #if NOF_INPUT_CODECS > 0
+  if (ret == HAL_OK)
+    ret = HAL_SAI_Receive_DMA(&HSAI_RX1, (uint8_t*)codec_rx[0], codec_blocksize * 4);
+  #endif
+  #if NOF_OUTPUT_CODECS > 3
+  if (ret == HAL_OK)
+    ret = HAL_SAI_Transmit_DMA(&HSAI_TX4, (uint8_t*)codec_tx[3], codec_blocksize * 4);
+  #endif
+  #if NOF_OUTPUT_CODECS > 2
+  if (ret == HAL_OK)
+    ret = HAL_SAI_Transmit_DMA(&HSAI_TX3, (uint8_t*)codec_tx[2], codec_blocksize * 4);
+  #endif
+  #if NOF_OUTPUT_CODECS > 1
+  if (ret == HAL_OK)
+    ret = HAL_SAI_Transmit_DMA(&HSAI_TX2, (uint8_t*)codec_tx[1], codec_blocksize * 4);
+  #endif
+  #if NOF_OUTPUT_CODECS > 0
+  if (ret == HAL_OK)
+    ret = HAL_SAI_Transmit_DMA(&HSAI_TX1, (uint8_t*)codec_tx[0], codec_blocksize * 4);
+  #endif
+#elif defined USE_CS4271
   ret = HAL_SAI_Receive_DMA(&HSAI_RX, (uint8_t*)codec_rxbuf, codec_blocksize*AUDIO_CHANNELS*2);
   if(ret == HAL_OK)
     ret = HAL_SAI_Transmit_DMA(&HSAI_TX, (uint8_t*)codec_txbuf, codec_blocksize*AUDIO_CHANNELS*2);
-#elif defined USE_CS4344
-  extern SAI_HandleTypeDef hsai_BlockB1, hsai_BlockA2;
-  ret = HAL_SAI_Transmit_DMA(&hsai_BlockA2, (uint8_t*)codec_txbuf3, codec_blocksize*AUDIO_CHANNELS*2);
-  ret = HAL_SAI_Transmit_DMA(&hsai_BlockB1, (uint8_t*)codec_txbuf2, codec_blocksize*AUDIO_CHANNELS*2);
-  ret = HAL_SAI_Transmit_DMA(&HSAI_TX, (uint8_t*)codec_txbuf, codec_blocksize*AUDIO_CHANNELS*2);
 #else // PCM3168A
   // start slave first (Noctua)
   ret = HAL_SAI_Transmit_DMA(&HSAI_TX, (uint8_t*)codec_txbuf, codec_blocksize*AUDIO_CHANNELS*2);
@@ -316,13 +520,67 @@ void Codec::start(){
 }
 
 void Codec::pause(){
+#ifdef MULTI_CODEC
+  #if NOF_INPUT_CODECS > 0
+  HAL_SAI_DMAPause(&HSAI_RX1);
+  #endif
+  #if NOF_INPUT_CODECS > 1
+  HAL_SAI_DMAPause(&HSAI_RX2);
+  #endif
+  #if NOF_INPUT_CODECS > 2
+  HAL_SAI_DMAPause(&HSAI_RX3);
+  #endif
+  #if NOF_INPUT_CODECS > 3
+  HAL_SAI_DMAPause(&HSAI_RX4);
+  #endif
+  #if NOF_OUTPUT_CODECS > 0
+  HAL_SAI_DMAPause(&HSAI_TX1);
+  #endif
+  #if NOF_OUTPUT_CODECS > 1
+  HAL_SAI_DMAPause(&HSAI_TX2);
+  #endif
+  #if NOF_OUTPUT_CODECS > 2
+  HAL_SAI_DMAPause(&HSAI_TX3);
+  #endif
+  #if NOF_OUTPUT_CODECS > 3
+  HAL_SAI_DMAPause(&HSAI_TX4);
+  #endif
+#else
   HAL_SAI_DMAPause(&HSAI_RX);
   HAL_SAI_DMAPause(&HSAI_TX);
+#endif
 }
 
 void Codec::resume(){
+#ifdef MULTI_CODEC
+  #if NOF_INPUT_CODECS > 0
+  HAL_SAI_DMAResume(&HSAI_RX1);
+  #endif
+  #if NOF_INPUT_CODECS > 1
+  HAL_SAI_DMAResume(&HSAI_RX2);
+  #endif
+  #if NOF_INPUT_CODECS > 2
+  HAL_SAI_DMAResume(&HSAI_RX3);
+  #endif
+  #if NOF_INPUT_CODECS > 3
+  HAL_SAI_DMAResume(&HSAI_RX4);
+  #endif
+  #if NOF_OUTPUT_CODECS > 0
+  HAL_SAI_DMAResume(&HSAI_TX1);
+  #endif
+  #if NOF_OUTPUT_CODECS > 1
+  HAL_SAI_DMAResume(&HSAI_TX2);
+  #endif
+  #if NOF_OUTPUT_CODECS > 2
+  HAL_SAI_DMAResume(&HSAI_TX3);
+  #endif
+  #if NOF_OUTPUT_CODECS > 3
+  HAL_SAI_DMAResume(&HSAI_TX4);
+  #endif
+#else
   HAL_SAI_DMAResume(&HSAI_RX);
   HAL_SAI_DMAResume(&HSAI_TX);
+#endif
 }
 
 #endif /* USE_PCM3168A */

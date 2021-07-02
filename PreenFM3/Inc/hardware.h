@@ -10,7 +10,7 @@
 #define DMA_RAM                      __attribute__ ((section (".dmadata")))
 #define GRAPHICS_RAM                 __attribute__ ((section (".graphics")))
 
-//#define USE_PLUS_RAM
+#define USE_PLUS_RAM
 #define USE_ICACHE
 #define USE_DCACHE
 
@@ -28,18 +28,21 @@
 
 #define USE_CODEC
 #define MULTI_CODEC
+#define NOF_INPUT_CODECS            0
+#define NOF_OUTPUT_CODECS           3
 #define USE_CS4344
 #define HSAI_TX1 hsai_BlockA1
 #define HSAI_TX2 hsai_BlockB1
 #define HSAI_TX3 hsai_BlockA2
-#define HSAI_TX_NUMBER              3
-
+#define HDMA_TX1 hdma_sai1_a
+#define HDMA_TX2 hdma_sai1_b
+#define HDMA_TX3 hdma_sai2_a
 /* USB audio settings */
 #define AUDIO_BITS_PER_SAMPLE       16
 #define AUDIO_BYTES_PER_SAMPLE      (AUDIO_BITS_PER_SAMPLE/8)
-#define AUDIO_CHANNELS              2
+#define AUDIO_CHANNELS              (2 * NOF_OUTPUT_CODECS)
 #define USBD_AUDIO_RX_CHANNELS      0
-#define USBD_AUDIO_TX_CHANNELS      AUDIO_CHANNELS
+#define USBD_AUDIO_TX_CHANNELS      0 //AUDIO_CHANNELS
 #define AUDIO_INT32_TO_SAMPLE(x)    ((x)>>8)
 #define AUDIO_SAMPLE_TO_INT32(x)    ((int32_t)(x)<<8)
 
@@ -78,3 +81,4 @@
 #define PFM_MINUS_BUTTON  7
 #define PFM_PLUS_BUTTON   8
 #define USE_IWDG
+
