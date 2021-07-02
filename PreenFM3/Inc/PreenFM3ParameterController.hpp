@@ -182,7 +182,7 @@ public:
             drawMessage(screen);
             tftDirtyBits |= 4;
             dirty &= ~4;
-        }        
+        }
         else if (dirty & 24) { // 8 or 16
             screen.fillRectangle(0, 0, 240, 214, BLACK);
             switch (current_state.menu) {
@@ -331,10 +331,10 @@ public:
             else {
                 screen.setTextColour(RED);
             }
-            //screen.setTextWrap(true);
+            // screen.setTextWrap(true);
             // TODO: add scrolling here?
             screen.print(2, 10, pv->message);
-            //screen.setTextWrap(false);
+            // screen.setTextWrap(false);
         }
     }
 
@@ -434,38 +434,42 @@ public:
 
     void drawParamsMenu(ScreenBuffer& screen) {
         screen.setTextSize(2);
+
+        screen.setTextColour(WHITE);
+        screen.print(20, 16, "Patch Parameters:");
+
         screen.setTextColour(CYAN);
 
         uint8_t first_param, last_param, highlight_pos;
-        if (current_state.menu_key < 12) {
+        if (current_state.menu_key < 11) {
             highlight_pos = current_state.menu_key;
             first_param = 0;
-            last_param = 11;
+            last_param = 10;
         }
         else if (current_state.menu_key < SIZE - 2) {
-            highlight_pos = 11;
-            first_param = current_state.menu_key - 10;
+            highlight_pos = 10;
+            first_param = current_state.menu_key - 9;
             last_param = current_state.menu_key;
         }
         else if (current_state.menu_key < SIZE - 1) {
-            highlight_pos = 11;
-            first_param = current_state.menu_key - 10;
+            highlight_pos = 10;
+            first_param = current_state.menu_key - 9;
             last_param = current_state.menu_key + 1;
         }
         else { // Last param
-            highlight_pos = 12;
-            first_param = current_state.menu_key - 11;
+            highlight_pos = 11;
+            first_param = current_state.menu_key - 10;
             last_param = current_state.menu_key;
         }
-        screen.fillRectangle(0, 16 * highlight_pos, 240, 16, MAGENTA);
+        screen.fillRectangle(0, 16 * highlight_pos + 16, 240, 16, MAGENTA);
 
-        if (current_state.menu_key > 0)
-            screen.print(1, 0, names[current_state.menu_key - 1]);
+        // if (current_state.menu_key > 0)
+        //    screen.print(1, 16, names[current_state.menu_key - 1]);
 
-        screen.print(120, 16 * highlight_pos + 16, "0.");
+        screen.print(120, 16 * highlight_pos + 32, "0.");
         int current_value = current_state.active_param_value_pct;
         if (current_value > 0) {
-            if (current_value < 10) {
+            if (current_value < 8) {
                 screen.print("00");
             }
             else if (current_value < 100) {
@@ -474,9 +478,9 @@ public:
         }
         screen.print(current_value);
 
-        uint8_t y = first_param == 0 ? 16 : 32;
-        if (current_state.menu_key > 11)
-            screen.print(1, 16, " ...");
+        uint8_t y = first_param == 0 ? 32 : 48;
+        if (current_state.menu_key > 10)
+            screen.print(1, 32, " ...");
         if (current_state.menu_key < SIZE - 2)
             screen.print(1, 16 * 13, " ...");
         for (uint8_t i = first_param; i <= last_param; i++) {
@@ -556,6 +560,14 @@ public:
                     current_state.menu_key = current_state.active_param_id;
                     dirty |= 24;
                     break;
+                case PFM_MINUS_BUTTON:
+                    setValue(current_state.active_param_id,
+                        parameters[current_state.active_param_id] - encoderSensitivity);
+                    break;
+                case PFM_PLUS_BUTTON:
+                    setValue(current_state.active_param_id,
+                        parameters[current_state.active_param_id] + encoderSensitivity);
+                    break;
                 default:
                     break;
                 }
@@ -573,8 +585,8 @@ public:
                     else
                         current_state.menu_key = SIZE - 1;
                     current_state.active_param_id = current_state.menu_key;
-                    updateActiveParameter(
-                        current_state.active_param_id, parameters[current_state.active_param_id]);                        
+                    updateActiveParameter(current_state.active_param_id,
+                        parameters[current_state.active_param_id]);
                     break;
                 case PFM_PLUS_BUTTON:
                     if (current_state.menu_key < SIZE - 1)
@@ -582,8 +594,8 @@ public:
                     else
                         current_state.menu_key = 0;
                     current_state.active_param_id = current_state.menu_key;
-                    updateActiveParameter(
-                        current_state.active_param_id, parameters[current_state.active_param_id]);
+                    updateActiveParameter(current_state.active_param_id,
+                        parameters[current_state.active_param_id]);
                     break;
                 default:
                     break;
