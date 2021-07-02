@@ -5,6 +5,8 @@
 #include "Storage.h"
 #include "Owl.h"
 #include "ProgramVector.h"
+#include "PatchRegistry.h"
+#include "ProgramManager.h"
 #include "ScreenBuffer.h"
 #include "VersionToken.h"
 #include "device.h"
@@ -51,7 +53,7 @@ template <uint8_t SIZE>
 class ControllerState {
 public:
     // Section 1
-    char title[13] = "PreenFM3";
+    char title[17] = "PreenFM3";
     // Section 2
     uint8_t cpu_load = 0;
     uint8_t mem_kbytes_used = 0;
@@ -113,7 +115,7 @@ public:
         debugMessage("Das also war des Pudels Kern!");
     }
     void setTitle(const char* str) {
-        strncpy(current_state.title, str, 12);
+        strncpy(current_state.title, str, 16);
     }
     void reset() {
         dirty = 0b1111111;
@@ -218,6 +220,7 @@ public:
                 drawParamsMenu(screen);
                 break;
             case MENU_PATCHES:
+                drawPatchesMenu(screen);
                 break;
             case MENU_DATA:
                 break;
@@ -440,33 +443,30 @@ public:
 
         screen.setTextColour(CYAN);
 
-        uint8_t first_param, last_param, highlight_pos;
+        uint8_t first_item, last_item, highlight_pos;
         if (current_state.menu_key < 11) {
             highlight_pos = current_state.menu_key;
-            first_param = 0;
-            last_param = 10;
+            first_item = 0;
+            last_item = 10;
         }
         else if (current_state.menu_key < SIZE - 2) {
             highlight_pos = 10;
-            first_param = current_state.menu_key - 9;
-            last_param = current_state.menu_key;
+            first_item = current_state.menu_key - 9;
+            last_item = current_state.menu_key;
         }
         else if (current_state.menu_key < SIZE - 1) {
             highlight_pos = 10;
-            first_param = current_state.menu_key - 9;
-            last_param = current_state.menu_key + 1;
+            first_item = current_state.menu_key - 9;
+            last_item = current_state.menu_key + 1;
         }
         else { // Last param
             highlight_pos = 11;
-            first_param = current_state.menu_key - 10;
-            last_param = current_state.menu_key;
+            first_item = current_state.menu_key - 10;
+            last_item = current_state.menu_key;
         }
         screen.fillRectangle(0, 16 * highlight_pos + 16, 240, 16, MAGENTA);
 
-        // if (current_state.menu_key > 0)
-        //    screen.print(1, 16, names[current_state.menu_key - 1]);
-
-        screen.print(120, 16 * highlight_pos + 32, "0.");
+        screen.print(180, 16 * highlight_pos + 32, "0.");
         int current_value = current_state.active_param_value_pct;
         if (current_value > 0) {
             if (current_value < 8) {
@@ -478,13 +478,62 @@ public:
         }
         screen.print(current_value);
 
-        uint8_t y = first_param == 0 ? 32 : 48;
+        uint8_t y = first_item == 0 ? 32 : 48;
         if (current_state.menu_key > 10)
             screen.print(1, 32, " ...");
         if (current_state.menu_key < SIZE - 2)
             screen.print(1, 16 * 13, " ...");
-        for (uint8_t i = first_param; i <= last_param; i++) {
+        for (uint8_t i = first_item; i <= last_item; i++) {
             screen.print(1, y, names[i]);
+            y += 16;
+        }
+    }
+
+    void drawPatchesMenu(ScreenBuffer& screen) {
+        screen.setTextSize(2);
+
+        screen.setTextColour(WHITE);
+        screen.print(20, 16, "Patches:");
+
+        screen.setTextColour(CYAN);
+
+        uint32_t size = registry.getNumberOfPatches();
+
+        uint8_t first_item, last_item, highlight_pos;
+        if (current_state.menu_key < 11) {
+            highlight_pos = current_state.menu_key;
+            first_item = 0;
+            last_item = 10;
+        }
+        else if (current_state.menu_key + 2 < size) {
+            highlight_pos = 10;
+            first_item = current_state.menu_key - 9;
+            last_item = current_state.menu_key;
+        }
+        else if (current_state.menu_key + 1 < size) {
+            highlight_pos = 10;
+            first_item = current_state.menu_key - 9;
+            last_item = current_state.menu_key + 1;
+        }
+        else { // Last param
+            highlight_pos = 11;
+            first_item = current_state.menu_key - 10;
+            last_item = current_state.menu_key;
+        }
+        screen.fillRectangle(0, 16 * highlight_pos + 16, 240, 16, MAGENTA);
+
+        screen.print(180, 16 * highlight_pos + 32, "Load");
+
+        uint8_t y = first_item == 0 ? 32 : 48;
+        if (current_state.menu_key > 10)
+            screen.print(1, 32, " ...");
+        if (current_state.menu_key + 2 < size)
+            screen.print(1, 16 * 13, " ...");
+        for (uint8_t i = first_item; i <= last_item; i++) {
+            screen.setCursor(0, 32 + 16 * i);
+            screen.print((int)i);
+            screen.print(" ");
+            screen.print(registry.getPatchName(i));
             y += 16;
         }
     }
@@ -555,11 +604,6 @@ public:
             switch (current_state.menu) {
             case MENU_MAIN:
                 switch (button) {
-                case PFM_MENU_BUTTON:
-                    current_state.menu = MENU_PARAMS;
-                    current_state.menu_key = current_state.active_param_id;
-                    dirty |= 24;
-                    break;
                 case PFM_MINUS_BUTTON:
                     setValue(current_state.active_param_id,
                         parameters[current_state.active_param_id] - encoderSensitivity);
@@ -567,6 +611,16 @@ public:
                 case PFM_PLUS_BUTTON:
                     setValue(current_state.active_param_id,
                         parameters[current_state.active_param_id] + encoderSensitivity);
+                    break;
+                case PFM_MENU_BUTTON:
+                    current_state.menu = MENU_PARAMS;
+                    current_state.menu_key = current_state.active_param_id;
+                    dirty |= 24;
+                    break;
+                case PFM_PATCHES_BUTTON:
+                    current_state.menu = MENU_PATCHES;
+                    current_state.menu_key = program.getProgramIndex();
+                    dirty |= 24;
                     break;
                 default:
                     break;
@@ -580,28 +634,47 @@ public:
                     dirty |= 24;
                     break;
                 case PFM_MINUS_BUTTON:
-                    if (current_state.menu_key > 0)
-                        current_state.menu_key -= 1;
-                    else
-                        current_state.menu_key = SIZE - 1;
-                    current_state.active_param_id = current_state.menu_key;
-                    updateActiveParameter(current_state.active_param_id,
-                        parameters[current_state.active_param_id]);
+                    setValue(current_state.active_param_id,
+                        parameters[current_state.active_param_id] - encoderSensitivity);
                     break;
                 case PFM_PLUS_BUTTON:
-                    if (current_state.menu_key < SIZE - 1)
-                        current_state.menu_key += 1;
-                    else
-                        current_state.menu_key = 0;
-                    current_state.active_param_id = current_state.menu_key;
-                    updateActiveParameter(current_state.active_param_id,
-                        parameters[current_state.active_param_id]);
+                    setValue(current_state.active_param_id,
+                        parameters[current_state.active_param_id] + encoderSensitivity);
                     break;
                 default:
                     break;
                 }
-            default:
-                break;
+            case MENU_PATCHES:
+                switch (button) {
+                case PFM_MENU_BUTTON:
+                    current_state.menu = MENU_MAIN;
+                    dirty |= 24;
+                    break;
+                case PFM_MINUS_BUTTON:
+                case PFM_PATCHES_BUTTON: {
+                    current_state.menu_key -= 1;
+                    uint32_t num_patches = registry.getNumberOfPatches();
+                    if (current_state.menu_key >= registry.getNumberOfPatches())
+                        current_state.menu_key = num_patches - 1;
+                    break;
+                }
+                case PFM_RESOURCES_BUTTON:
+                    program.loadProgram(current_state.menu_key);
+                    program.resetProgram(false);
+                    current_state.menu = MENU_MAIN;
+                    dirty |= 24;
+                    break;
+                case PFM_PLUS_BUTTON:
+                case PFM_SETTINGS_BUTTON: {
+                    current_state.menu_key += 1;
+                    uint32_t num_patches = registry.getNumberOfPatches();
+                    if (current_state.menu_key >= registry.getNumberOfPatches())
+                        current_state.menu_key = 0;
+                    break;
+                }
+                default:
+                    break;
+                }
             }
         }
     }
