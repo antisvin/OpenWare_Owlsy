@@ -36,7 +36,7 @@ enum Menu : uint8_t {
     MENU_MAIN,
     MENU_PARAMS,
     MENU_PATCHES,
-    MENU_DATA,
+    MENU_RESOURCES,
     MENU_SETTINGS,
 };
 
@@ -182,6 +182,7 @@ public:
             screen.fillRectangle(0, 0, 240, 214, BLACK);
             switch (current_state.menu) {
             case MENU_MAIN:
+            /*
                 screen.setTextSize(2);
                 screen.setCursor(0, 20);
                 screen.setTextColour(RED);
@@ -208,6 +209,8 @@ public:
                 screen.setTextColour(BLACK);
                 screen.print("BLACK");
                 screen.setTextSize(1);
+            */
+                drawCallback(screen.getBuffer(), 240, 214);
                 break;
             case MENU_PARAMS:
                 drawParamsMenu(screen);
@@ -215,7 +218,8 @@ public:
             case MENU_PATCHES:
                 drawPatchesMenu(screen);
                 break;
-            case MENU_DATA:
+            case MENU_RESOURCES:
+                drawResourcesMenu(screen);
                 break;
             case MENU_SETTINGS:
                 break;
@@ -503,7 +507,7 @@ public:
         }
         else {
             first_item = 0;
-            last_item = size - 1;
+            last_item = size > 0 ? (size - 1) : 0;
             highlight_pos = current_state.menu_key;
         }
         screen.fillRectangle(0, 16 * highlight_pos + 16, 240, 16, MAGENTA);
@@ -517,6 +521,63 @@ public:
             screen.print((int)i);
             screen.print(" ");
             screen.print(registry.getPatchName(i));
+            y += 16;
+        }
+    }
+
+    void drawResourcesMenu(ScreenBuffer& screen) {
+        screen.setTextSize(2);
+
+        screen.setTextColour(WHITE);
+        screen.print(20, 16, "Resources:");
+
+        screen.setTextColour(CYAN);
+
+        uint32_t size = registry.getNumberOfResources();
+
+        uint8_t first_item, last_item, highlight_pos;
+        if (size > 12) {
+            if (current_state.menu_key < 11) {
+                highlight_pos = current_state.menu_key;
+                first_item = 0;
+                last_item = std::min<uint8_t>(size - 1, 10);
+            }
+            else if (current_state.menu_key + 2 < size) {
+                highlight_pos = 10;
+                first_item = current_state.menu_key - 9;
+                last_item = current_state.menu_key;
+            }
+            else if (current_state.menu_key + 1 < size) {
+                highlight_pos = 10;
+                first_item = current_state.menu_key - 9;
+                last_item = current_state.menu_key + 1;
+            }
+            else {
+                highlight_pos = 11;
+                first_item = current_state.menu_key - 10;
+                last_item = current_state.menu_key;
+            }
+            if (current_state.menu_key > 10)
+                screen.print(1, 32, " ...");
+            if (current_state.menu_key + 2 < size)
+                screen.print(1, 16 * 13, " ...");
+        }
+        else {
+            first_item = 0;
+            last_item = size > 0 ? (size - 1) : 0;
+            highlight_pos = current_state.menu_key;
+        }
+        screen.fillRectangle(0, 16 * highlight_pos + 16, 240, 16, MAGENTA);
+
+        screen.print(180, 16 * highlight_pos + 32, "Load");
+
+        uint8_t y = first_item == 0 ? 32 : 48;
+
+        for (uint8_t i = first_item; i <= last_item; i++) {
+            screen.setCursor(0, y);
+            screen.print((int)i);
+            screen.print(" ");
+            screen.print(registry.getResourceName(i));
             y += 16;
         }
     }
@@ -552,10 +613,14 @@ public:
     }
 
     void setCallback(void* callback) {
-        if (callback == NULL)
+        if (callback == NULL || callback == pfmDefaultDrawCallback) {
             drawCallback = pfmDefaultDrawCallback;
-        else
+            current_state.custom_callback = false;
+        }
+        else {
             drawCallback = (void (*)(uint8_t*, uint16_t, uint16_t))callback;
+            current_state.custom_callback = true;
+        }
     }
 
     void encoderTurned(int encoder, int ticks) override {
@@ -609,6 +674,11 @@ public:
                 case PFM_PATCHES_BUTTON:
                     current_state.menu = MENU_PATCHES;
                     current_state.menu_key = program.getProgramIndex();
+                    dirty |= 24;
+                    break;
+                case PFM_RESOURCES_BUTTON:
+                    current_state.menu = MENU_RESOURCES;
+                    current_state.menu_key = 0;
                     dirty |= 24;
                     break;
                 default:
