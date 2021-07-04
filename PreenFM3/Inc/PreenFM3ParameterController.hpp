@@ -51,19 +51,20 @@ public:
     uint8_t cpu_load = 0;
     uint8_t mem_kbytes_used = 0;
     uint16_t flash_used = 0;
+    uint8_t fps = 0;
     // Section 3
     const char* message = 0;
-    // Section 4 + 5
+    // Section 4
     Menu menu = MENU_MAIN;
     uint8_t menu_key = 0;
     uint8_t custom_callback = 0;
-    // Section 6
+    // Section 5
     uint8_t active_buttons = 0;
     uint8_t active_param_id = 0;
     char active_param_name[12];
     uint8_t active_param_value = 0;
     uint16_t active_param_value_pct = 0;
-    // Section 7
+    // Section 6
     uint8_t params[SIZE] = {};
     uint8_t blocks[NOF_ENCODERS] = {};
 
@@ -111,7 +112,7 @@ public:
         strncpy(current_state.title, str, 16);
     }
     void reset() {
-        dirty = 0b1111111;
+        dirty = 0b111111;
         drawCallback = pfmDefaultDrawCallback;
         for (int i = 0; i < SIZE; ++i) {
             strncpy(names[i], "Parameter  ", 12);
@@ -130,8 +131,8 @@ public:
     void findChanges() {
         if (strncmp(current_state.title, prev_state.title, 12) != 0)
             dirty |= 1;
-        if ( // Compare 4 bytes at once
-            *(uint32_t*)(&current_state.cpu_load) != *(uint32_t*)(&prev_state.cpu_load))
+        if (
+            memcmp((void*)(&current_state.cpu_load), (void*)(&prev_state.cpu_load), 5) != 0)
             dirty |= 2;
         if (strncmp(current_state.message, prev_state.message, 100) != 0)
             // if (message != other.message)
@@ -139,13 +140,13 @@ public:
         if (current_state.custom_callback ||
             current_state.menu_key != prev_state.menu_key ||
             current_state.menu != prev_state.menu)
-            dirty |= 24;
+            dirty |= 8;
         if (memcmp((void*)&current_state.active_buttons,
                 (void*)&prev_state.active_buttons, 17) != 0)
-            dirty |= 32;
+            dirty |= 16;
         if (memcmp((void*)current_state.params, (void*)prev_state.params,
                 sizeof(current_state.params) + sizeof(current_state.blocks)) != 0)
-            dirty |= 64;
+            dirty |= 32;
     }
 
     void updateState() {
@@ -178,7 +179,7 @@ public:
             tftDirtyBits |= 4;
             dirty &= ~4;
         }
-        else if (dirty & 24) { // 8 or 16
+        else if (dirty & 8) { // 8 or 16
             screen.fillRectangle(0, 0, 240, 214, BLACK);
             switch (current_state.menu) {
             case MENU_MAIN:
@@ -224,18 +225,18 @@ public:
             case MENU_SETTINGS:
                 break;
             }
-            tftDirtyBits |= 24;
-            dirty &= ~24;
+            tftDirtyBits |= 8;
+            dirty &= ~8;
+        }
+        else if (dirty & 16) {
+            drawParameter(screen);
+            tftDirtyBits |= 16;
+            dirty &= ~16;
         }
         else if (dirty & 32) {
-            drawParameter(screen);
+            drawParameterValues(screen);
             tftDirtyBits |= 32;
             dirty &= ~32;
-        }
-        else if (dirty & 64) {
-            drawParameterValues(screen);
-            tftDirtyBits |= 64;
-            dirty &= ~64;
         }
     }
 
@@ -250,7 +251,7 @@ public:
 
         // draw firmware version
         screen.setTextSize(1);
-        screen.setCursor(160, 12);
+        screen.setCursor(120, 12);
         screen.print(FIRMWARE_VERSION);
 
         // bootloader string
@@ -267,39 +268,32 @@ public:
         // cpu / mem stats
         screen.setTextSize(1);
         screen.setTextColour(GREEN);
-        screen.print(2, 10, "cpu: ");
+        screen.print(2, 10, "cpu:");
         screen.print((int)current_state.cpu_load);
         screen.print("%");
-        screen.print(60, 10, "mem: ");
+        screen.print(50, 10, "mem:");
         screen.print((int)current_state.mem_kbytes_used);
         screen.print("kB");
 
         // draw flash usage
         int flash_used = current_state.flash_used;
         int flash_total = storage.getTotalCapacity() / 1024;
-        screen.print(120, 10, "flash: ");
+        screen.print(110, 10, "flash:");
         screen.print(flash_used * 100 / flash_total);
         screen.print("% ");
         if (flash_used > 999) {
             screen.print(flash_used / 1024);
             screen.print(".");
             screen.print((int)((flash_used % 1024) * 10 / 1024));
-            screen.print("M/");
-        }
-        else {
-            screen.print(flash_used);
-            screen.print("k/");
-        }
-        if (flash_total > 999) {
-            screen.print(flash_total / 1024);
-            screen.print(".");
-            screen.print((int)((flash_total % 1024) * 10 / 1024));
             screen.print("M");
         }
         else {
-            screen.print(flash_total);
+            screen.print(flash_used);
             screen.print("k");
         }
+
+        screen.print(200, 10, "FR:");
+        screen.print(current_state.fps);
 
 #ifdef USE_DIGITALBUS
         screen.print(1, 56, "Bus: ");
@@ -608,8 +602,8 @@ public:
         current_state.active_param_value = clamp(parameters[ch] / 35, 0, 114);
         current_state.active_param_value_pct =
             int(clamp(parameters[ch], 0, 4095) * 1000 / 4096);
-        if (current_state.menu == MENU_PARAMS && ch == current_state.menu_key)
-            dirty |= 24;
+        //if (current_state.menu == MENU_PARAMS && ch == current_state.menu_key)
+        //    dirty |= 8;
     }
 
     void setCallback(void* callback) {
@@ -669,17 +663,17 @@ public:
                 case PFM_MENU_BUTTON:
                     current_state.menu = MENU_PARAMS;
                     current_state.menu_key = current_state.active_param_id;
-                    dirty |= 24;
+                    //dirty |= 8;
                     break;
                 case PFM_PATCHES_BUTTON:
                     current_state.menu = MENU_PATCHES;
                     current_state.menu_key = program.getProgramIndex();
-                    dirty |= 24;
+                    //dirty |= 8;
                     break;
                 case PFM_RESOURCES_BUTTON:
                     current_state.menu = MENU_RESOURCES;
                     current_state.menu_key = 0;
-                    dirty |= 24;
+                    //dirty |= 8;
                     break;
                 default:
                     break;
@@ -690,12 +684,12 @@ public:
                 case PFM_MENU_BUTTON:
                     current_state.menu = MENU_MAIN;
                     current_state.active_param_id = current_state.menu_key;
-                    dirty |= 24;
+                    //dirty |= 8;
                     break;
                 case PFM_MINUS_BUTTON:
                     setValue(current_state.active_param_id,
                         parameters[current_state.active_param_id] - encoderSensitivity);
-                    dirty |= 24;
+                    //dirty |= 8;
                     break;
                 case PFM_PLUS_BUTTON:
                     setValue(current_state.active_param_id,
@@ -723,7 +717,7 @@ public:
                 switch (button) {
                 case PFM_MENU_BUTTON:
                     current_state.menu = MENU_MAIN;
-                    dirty |= 24;
+                    //dirty |= 8;
                     break;
                 case PFM_MINUS_BUTTON:
                 case PFM_PATCHES_BUTTON: {
@@ -731,21 +725,55 @@ public:
                     uint32_t num_patches = registry.getNumberOfPatches();
                     if (current_state.menu_key >= num_patches)
                         current_state.menu_key = num_patches - 1;
-                    dirty |= 24;
+                    //dirty |= 8;
                     break;
                 }
                 case PFM_RESOURCES_BUTTON:
                     program.loadProgram(current_state.menu_key);
                     program.resetProgram(false);
                     current_state.menu = MENU_MAIN;
-                    dirty |= 24;
+                    //dirty |= 8;
                     break;
                 case PFM_PLUS_BUTTON:
                 case PFM_SETTINGS_BUTTON: {
                     current_state.menu_key++;
-                    uint32_t num_patches = registry.getNumberOfPatches() - 1;
-                    if (current_state.menu_key > num_patches)
+                    uint32_t num_patches = registry.getNumberOfPatches();
+                    if (current_state.menu_key >= num_patches)
                         current_state.menu_key = 0;
+                    //dirty |= 8;
+                    break;
+                }
+                default:
+                    break;
+                }
+                break;
+            case MENU_RESOURCES:
+                switch (button) {
+                case PFM_MENU_BUTTON:
+                    current_state.menu = MENU_MAIN;
+                    //dirty |= 8;
+                    break;
+                case PFM_MINUS_BUTTON:
+                case PFM_PATCHES_BUTTON: {
+                    current_state.menu_key--;
+                    uint32_t num_resources = registry.getNumberOfResources();
+                    if (current_state.menu_key >= num_resources)
+                        current_state.menu_key = num_resources;
+                    //dirty |= 8;
+                    break;
+                }
+                case PFM_RESOURCES_BUTTON:
+                    storage.eraseResource(current_state.menu_key);
+                    current_state.menu = MENU_MAIN;
+                    //dirty |= 8;
+                    break;
+                case PFM_PLUS_BUTTON:
+                case PFM_SETTINGS_BUTTON: {
+                    current_state.menu_key++;
+                    uint32_t num_resources = registry.getNumberOfResources();
+                    if (current_state.menu_key >= num_resources)
+                        current_state.menu_key = 0;
+                    //dirty |= 8;
                     break;
                 }
                 default:

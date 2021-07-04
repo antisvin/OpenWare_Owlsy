@@ -14,13 +14,12 @@
 #if defined OWL_PREENFM3
   #define HARDWARE_VERSION    "PreenFM3 Boot"
   #define HARDWARE_ID         OTHER_HARDWARE
-  #define APPLICATION_ADDRESS 0x08100000
+  #define APPLICATION_ADDRESS 0x08020000
 #else
   #error Invalid configuration
 #endif
 
-#define PFM3_SECTOR           0xFE
-#define NO_EXTERNAL_RAM
+/* #define NO_EXTERNAL_RAM // We replace SDRAM with D1 */
 #define USE_LED
 
 /* #define USE_IWDG */

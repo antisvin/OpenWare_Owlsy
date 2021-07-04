@@ -13,7 +13,7 @@ uint8_t dummyDataIn[16];
 static void ILI9341_Reset() {
     HAL_GPIO_WritePin(OLED_RST_GPIO_Port, OLED_RST_Pin, GPIO_PIN_RESET);
     ILI9341_Unselect();
-    HAL_Delay(5);
+    HAL_Delay(40);
     ILI9341_Select();
     HAL_GPIO_WritePin(OLED_RST_GPIO_Port, OLED_RST_Pin, GPIO_PIN_SET);
     windowLastX = 9999;
@@ -93,7 +93,6 @@ HAL_StatusTypeDef ILI9341_SetAddressWindow(uint16_t y0, uint16_t y1) {
 }
 
 void ILI9341_Init() {
-
     // INIT ILI9341
     ILI9341_Select();
     ILI9341_Reset();
@@ -103,7 +102,7 @@ void ILI9341_Init() {
     // SOFTWARE RESET
     ILI9341_WriteCommand(0x01);
     ILI9341_Unselect();
-    HAL_Delay(500);
+    HAL_Delay(50);
     ILI9341_Select();
 
     // POWER CONTROL A
@@ -185,6 +184,14 @@ void ILI9341_Init() {
         ILI9341_WriteData(data, sizeof(data));
     }
 
+    // FRAME RATE CONTROL
+    ILI9341_WriteCommand(0xB3);
+    {
+        uint8_t data[] = { 0x00, 0x10}; // 100 Hz refresh rate
+        ILI9341_WriteData(data, sizeof(data));
+    }
+
+
     /*
     // INTERFACE CONTROL
     ILI9341_WriteCommand(0xF6);
@@ -263,16 +270,18 @@ void oled_init(SPI_HandleTypeDef* spi) {
     ILI9341_Init();
 }
 
-#define TFT_NUMBER_OF_PARTS 7
+#define TFT_NUMBER_OF_PARTS 6
 uint32_t tftDirtyBits = 0;
 uint8_t tftPart = 0;
 bool tftPushed = false;
 bool pushToTftInProgress = false;
-static uint16_t areaHeight[TFT_NUMBER_OF_PARTS] = { 16, 10, 10, 107, 107, 30, 40 };
-static uint16_t screenY[TFT_NUMBER_OF_PARTS] = { 0, 16, 26, 36, 143, 250, 280 };
-static uint16_t areaY[TFT_NUMBER_OF_PARTS] = { 0, 0, 0, 0, 107, 0, 0 };
+static uint16_t areaHeight[TFT_NUMBER_OF_PARTS] = { 16, 10, 10, 214, 30, 40 };
+static uint16_t screenY[TFT_NUMBER_OF_PARTS] = { 0, 16, 26, 36, 250, 280 };
+//static uint16_t areaY[TFT_NUMBER_OF_PARTS] = { 0, 0, 0, 0, 0, 0, 0 };
+static const uint8_t* last_data;
 
 void oled_write(const uint8_t* data, uint32_t length) {
+    last_data = data;
 #if 0
     // Not sure if this works as intended, copied from PFM as is
     uint8_t status_[4];
@@ -297,7 +306,7 @@ void oled_write(const uint8_t* data, uint32_t length) {
         if ((tftDirtyBits & (1UL << tftPart)) > 0) {
             uint16_t height = areaHeight[tftPart];
             uint16_t screen_y = screenY[tftPart];
-            uint16_t y = areaY[tftPart];
+            //uint16_t y = areaY[tftPart];
 
             // Update TFT part
             ILI9341_Select();
@@ -312,21 +321,23 @@ void oled_write(const uint8_t* data, uint32_t length) {
 #endif
 
                 setPin(OLED_DC_GPIO_Port, OLED_DC_Pin);
-
                 SPI1->CFG2 |= SPI_CFG2_LSBFRST;
 #ifdef OLED_DMA
+                OLED_SPIInst->Instance->CFG1 |= SPI_CFG1_DSIZE_3;
+                OLED_SPIInst->Init.DataSize = SPI_DATASIZE_16BIT;
                 if (HAL_OK ==
                     HAL_SPI_Transmit_DMA(OLED_SPIInst,
-                        (uint8_t*)data + (y * 240 * 2), height * 240 * 2)) {
+                        (uint8_t*)data, height * 240)) {
                     tftDirtyBits &= ~(1UL << tftPart);
                 }
                 else {
+                    SPI1->CFG2 &= ~SPI_CFG2_LSBFRST;
                     pushToTftInProgress = false;
                 }
 #else
                 if (HAL_OK ==
                     HAL_SPI_Transmit(OLED_SPIInst,
-                        (uint8_t*)data + (y * 240 * 2), height * 240 * 2, 1000)) {
+                        (uint8_t*)data, height * 240 * 2, 1000)) {
                     tftDirtyBits &= ~(1UL << tftPart);
                 }
                 SPI1->CFG2 &= ~SPI_CFG2_LSBFRST;
@@ -355,7 +366,11 @@ void HAL_SPI_ErrorCallback(SPI_HandleTypeDef* hspi) {
 
 void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef* hspi) {
     if (hspi == OLED_SPIInst) {
+        // MSB order
         SPI1->CFG2 &= ~SPI_CFG2_LSBFRST;
+        // 8 bit transfer
+        OLED_SPIInst->Instance->CFG1 &= ~SPI_CFG1_DSIZE_3;
+        OLED_SPIInst->Init.DataSize = SPI_DATASIZE_8BIT;
         ILI9341_Unselect();
         pushToTftInProgress = false;
     }

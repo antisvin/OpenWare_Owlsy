@@ -47,13 +47,6 @@ void pfmDefaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height) {
 extern TIM_HandleTypeDef htim1;
 Encoders encoders;
 
-enum UIState {
-    UI_DRAW,
-    UI_POLL,
-    UI_SEND,
-    UI_SKIP,
-} ui_state;
-
 extern bool tftPushed, pushToTftInProgress;
 
 void setup() {
@@ -120,7 +113,11 @@ void updateEncoders() {
 //   setButtonValue(BUTTON_D, !(TR_IN_B_GPIO_Port->IDR & TR_IN_B_Pin));
 //   break;
 
+static uint32_t prev_fps_update = 0;
+static uint16_t num_frames = 0;
+
 void loop(void) {
+    uint32_t tick = HAL_GetTick();
 
 #if defined USE_DCACHE
     // SCB_CleanInvalidateDCache_by_Addr((uint32_t*)graphics.params.user,
@@ -131,21 +128,29 @@ void loop(void) {
 
 #ifdef USE_SCREEN
     if (!pushToTftInProgress) {
-        if (tftPushed && HAL_GetTick() >= nextDrawTime) {
+        if (tftPushed && tick >= nextDrawTime) {
+            if (tick - prev_fps_update > 500) {
+                if (prev_fps_update)
+                    graphics.params.current_state.fps = num_frames * 1000 / (tick - prev_fps_update);
+                num_frames = 0;
+                prev_fps_update = tick;
+            }
+
             tftPushed = false;
+            num_frames++;
+
             //    graphics.screen.clear();
             graphics.params.updateState();
-            ui_state = UI_DRAW;
-            nextDrawTime += 20;
+//            graphics.params.dirty |= 2;
+//            graphics.params.dirty |= 63;
+            nextDrawTime = tick + 20;
         }
-        else if (graphics.params.dirty && !tftDirtyBits) {
+        if (graphics.params.dirty && !tftDirtyBits) {
             graphics.draw();
-            graphics.display();
-            ui_state = UI_SEND;
+//            graphics.display();
         }
         else if (tftDirtyBits) {
             graphics.display();
-            ui_state = UI_POLL;
             // Poll button states - callbacks only get called when they'll be released
         }
         else {
