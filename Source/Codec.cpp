@@ -27,7 +27,7 @@ SerialBuffer<CODEC_BUFFER_SIZE / 2, int32_t> audio_rx1_buffer DMA_RAM;
 SerialBuffer<CODEC_BUFFER_SIZE / 2, int32_t> audio_tx1_buffer DMA_RAM;
 SerialBuffer<CODEC_BUFFER_SIZE / 2, int32_t> audio_rx2_buffer DMA_RAM;
 SerialBuffer<CODEC_BUFFER_SIZE / 2, int32_t> audio_tx2_buffer DMA_RAM;
-extern bool is_multichannel_patch;
+extern uint8_t num_channels;
 #endif
 
 extern "C" {
@@ -351,10 +351,19 @@ float Codec::getAvg(){
 }
 
 void Codec::set(uint32_t value){
+#ifdef DUAL_CODEC
+  audio_rx_buffer.setAll(value);
+  audio_rx1_buffer.setAll(value);
+  audio_rx2_buffer.setAll(value);
+  audio_tx_buffer.setAll(value);
+  audio_tx1_buffer.setAll(value);
+  audio_tx2_buffer.setAll(value);
+#else
   for(int i=0; i<CODEC_BUFFER_SIZE; ++i){
     codec_txbuf[i] = value;
     codec_rxbuf[i] = value;
   }
+#endif
 }
 
 void Codec::bypass(bool doBypass){
@@ -486,7 +495,7 @@ extern "C" {
   void HAL_SAI_RxHalfCpltCallback(SAI_HandleTypeDef *hsai){
 #ifdef DUAL_CODEC
     if (hsai->Instance == HSAI_RX1.Instance){
-      if (!is_multichannel_patch){
+      if (num_channels == 2){
         audioCallback(codec_rxbuf1, codec_txbuf1, codec_blocksize);
       }
       else {
@@ -517,7 +526,7 @@ extern "C" {
 #ifdef DUAL_CODEC
     // Merge codec buffers
     if (hsai->Instance == HSAI_RX1.Instance) {
-      if (!is_multichannel_patch){
+      if (num_channels == 2){
         audioCallback(
           codec_rxbuf1 + codec_blocksize * AUDIO_CHANNELS / 2,
           codec_txbuf1 + codec_blocksize * AUDIO_CHANNELS / 2,

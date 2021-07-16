@@ -33,6 +33,7 @@
 //#define CPU_SMOOTH
 
 extern VersionToken* bootloader_token;
+extern uint8_t num_channels;
 
 void defaultDrawCallback(uint8_t *pixels, uint16_t width, uint16_t height);
 
@@ -256,19 +257,19 @@ public:
     if (activeEncoder == 1) {
       screen.setTextSize(1);
       offset = 26;
-      for (int i = 0; i < AUDIO_CHANNELS; i++){
+      for (int i = 0; i < num_channels; i++){
         screen.print(7 + i * 30, offset, "IN ");
         screen.print(i + 1);
       }
-      for (int i = 0; i < AUDIO_CHANNELS; i++){
+      for (int i = 0; i < num_channels; i++){
         screen.print(7 + i * 30, offset + 10, "OUT");
         screen.print(i + 1);
       }
-      if (selectedPid[1] < AUDIO_CHANNELS){
+      if (selectedPid[1] < num_channels){
         screen.drawRectangle(4 + selectedPid[1] * 30, offset - 10, 30, 10, WHITE);
       }
       else {
-        screen.drawRectangle(4 + (selectedPid[1] - AUDIO_CHANNELS) * 30, offset, 30, 10, WHITE);
+        screen.drawRectangle(4 + (selectedPid[1] - num_channels) * 30, offset, 30, 10, WHITE);
       }
     }
   }
@@ -779,9 +780,13 @@ public:
     case GATES:
       break;
     case SCOPE:
-      selectedPid[1] = max(0, min(AUDIO_CHANNELS * 2 - 1, value));
+      selectedPid[1] = max(0, min(num_channels * 2 - 1, value));
       lastChannel = selectedPid[1];
-      scope.setChannel(lastChannel);
+      if (AUDIO_CHANNELS == num_channels)
+        scope.setChannel(lastChannel);
+      else {
+        scope.setChannel((lastChannel >= num_channels) ? (AUDIO_CHANNELS - num_channels + lastChannel) : lastChannel);
+      }
       break;
     case SYSTEM:
       selectedPid[1] = max(0, min(int(SYS_LAST) - 1, value));
