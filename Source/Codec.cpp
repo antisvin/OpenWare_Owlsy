@@ -81,7 +81,8 @@ static void update_rx_read_index(){
   audio_rx_buffer.setReadIndex(pos);
   #else
   size_t pos = audio_rx1_buffer.getCapacity() - __HAL_DMA_GET_COUNTER(&HDMA_RX1);
-  audio_rx1_buffer.setReadIndex(pos);  
+  audio_rx1_buffer.setReadIndex(pos);
+  audio_rx2_buffer.setReadIndex(pos);
   #endif
 #endif
 }
@@ -92,7 +93,7 @@ static void update_tx_write_index(){
   // NDTR: the number of remaining data units in the current DMA Stream transfer.
   #ifndef DUAL_CODEC
   size_t pos = audio_tx_buffer.getCapacity() - __HAL_DMA_GET_COUNTER(&HDMA_TX1);
-  audio_tx_buffer.setWriteIndex(pos);  
+  audio_tx_buffer.setWriteIndex(pos);
   #else
   // Assuming that both SAI codecs are in sync
   size_t pos = audio_tx1_buffer.getCapacity() - __HAL_DMA_GET_COUNTER(&HDMA_TX1);
