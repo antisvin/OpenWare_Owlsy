@@ -27,6 +27,7 @@ SerialBuffer<CODEC_BUFFER_SIZE / 2, int32_t> audio_rx1_buffer DMA_RAM;
 SerialBuffer<CODEC_BUFFER_SIZE / 2, int32_t> audio_tx1_buffer DMA_RAM;
 SerialBuffer<CODEC_BUFFER_SIZE / 2, int32_t> audio_rx2_buffer DMA_RAM;
 SerialBuffer<CODEC_BUFFER_SIZE / 2, int32_t> audio_tx2_buffer DMA_RAM;
+extern bool is_multichannel_patch;
 #endif
 
 extern "C" {
@@ -485,23 +486,28 @@ extern "C" {
   void HAL_SAI_RxHalfCpltCallback(SAI_HandleTypeDef *hsai){
 #ifdef DUAL_CODEC
     if (hsai->Instance == HSAI_RX1.Instance){
-      int32_t* src1r = codec_rxbuf1;
-      int32_t* src2r = codec_rxbuf2;
-      int32_t* dstr = codec_rxbuf;
-      int32_t* dst1t = codec_txbuf1;
-      int32_t* dst2t = codec_txbuf2;
-      int32_t* srct = codec_txbuf;
-      while (dstr < codec_rxbuf + codec_blocksize * AUDIO_CHANNELS) {
-        *dstr++ = *src1r++;
-        *dstr++ = *src1r++;
-        *dstr++ = *src2r++;
-        *dstr++ = *src2r++;
-        *dst1t++ = *srct++;
-        *dst1t++ = *srct++;
-        *dst2t++ = *srct++;
-        *dst2t++ = *srct++;
+      if (!is_multichannel_patch){
+        audioCallback(codec_rxbuf1, codec_txbuf1, codec_blocksize);
       }
-      audioCallback(codec_rxbuf, codec_txbuf, codec_blocksize);
+      else {
+        int32_t* src1r = codec_rxbuf1;
+        int32_t* src2r = codec_rxbuf2;
+        int32_t* dstr = codec_rxbuf;
+        int32_t* dst1t = codec_txbuf1;
+        int32_t* dst2t = codec_txbuf2;
+        int32_t* srct = codec_txbuf;
+        while (dstr < codec_rxbuf + codec_blocksize * AUDIO_CHANNELS) {
+          *dstr++ = *src1r++;
+          *dstr++ = *src1r++;
+          *dstr++ = *src2r++;
+          *dstr++ = *src2r++;
+          *dst1t++ = *srct++;
+          *dst1t++ = *srct++;
+          *dst2t++ = *srct++;
+          *dst2t++ = *srct++;
+        }
+        audioCallback(codec_rxbuf, codec_txbuf, codec_blocksize);
+      }
     }
 #else
     audioCallback(codec_rxbuf, codec_txbuf, codec_blocksize);
@@ -511,26 +517,34 @@ extern "C" {
 #ifdef DUAL_CODEC
     // Merge codec buffers
     if (hsai->Instance == HSAI_RX1.Instance) {
-      int32_t* src1r = codec_rxbuf1 + codec_blocksize * AUDIO_CHANNELS / 2;
-      int32_t* src2r = codec_rxbuf2 + codec_blocksize * AUDIO_CHANNELS / 2;
-      int32_t* dstr = codec_rxbuf + codec_blocksize * AUDIO_CHANNELS;
-      int32_t* dst1t = codec_txbuf1 + codec_blocksize * AUDIO_CHANNELS / 2;
-      int32_t* dst2t = codec_txbuf2 + codec_blocksize * AUDIO_CHANNELS / 2;
-      int32_t* srct = codec_txbuf + codec_blocksize * AUDIO_CHANNELS;
-      while (dstr < codec_rxbuf + 2 * codec_blocksize * AUDIO_CHANNELS) {
-        *dstr++ = *src1r++;
-        *dstr++ = *src1r++;
-        *dstr++ = *src2r++;
-        *dstr++ = *src2r++;
-        *dst1t++ = *srct++;
-        *dst1t++ = *srct++;
-        *dst2t++ = *srct++;
-        *dst2t++ = *srct++;
+      if (!is_multichannel_patch){
+        audioCallback(
+          codec_rxbuf1 + codec_blocksize * AUDIO_CHANNELS / 2,
+          codec_txbuf1 + codec_blocksize * AUDIO_CHANNELS / 2,
+          codec_blocksize);
       }
-      audioCallback(
-        codec_rxbuf + codec_blocksize * AUDIO_CHANNELS,
-        codec_txbuf + codec_blocksize * AUDIO_CHANNELS,
-        codec_blocksize);
+      else {
+        int32_t* src1r = codec_rxbuf1 + codec_blocksize * AUDIO_CHANNELS / 2;
+        int32_t* src2r = codec_rxbuf2 + codec_blocksize * AUDIO_CHANNELS / 2;
+        int32_t* dstr = codec_rxbuf + codec_blocksize * AUDIO_CHANNELS;
+        int32_t* dst1t = codec_txbuf1 + codec_blocksize * AUDIO_CHANNELS / 2;
+        int32_t* dst2t = codec_txbuf2 + codec_blocksize * AUDIO_CHANNELS / 2;
+        int32_t* srct = codec_txbuf + codec_blocksize * AUDIO_CHANNELS;
+        while (dstr < codec_rxbuf + 2 * codec_blocksize * AUDIO_CHANNELS) {
+          *dstr++ = *src1r++;
+          *dstr++ = *src1r++;
+          *dstr++ = *src2r++;
+          *dstr++ = *src2r++;
+          *dst1t++ = *srct++;
+          *dst1t++ = *srct++;
+          *dst2t++ = *srct++;
+          *dst2t++ = *srct++;
+        }
+        audioCallback(
+          codec_rxbuf + codec_blocksize * AUDIO_CHANNELS,
+          codec_txbuf + codec_blocksize * AUDIO_CHANNELS,
+          codec_blocksize);
+      }      
     }
 #else
     if (hsai->Instance == HSAI_RX1.Instance) {

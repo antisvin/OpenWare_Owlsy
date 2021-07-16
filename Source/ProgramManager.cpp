@@ -58,6 +58,9 @@ extern uint16_t adc_values[NOF_ADC_VALUES];
 #ifndef USE_SCREEN
 int16_t parameter_values[NOF_PARAMETERS];
 #endif
+#ifdef DUAL_CODEC
+bool is_multichannel_patch = true;
+#endif
 BitState32 stateChanged;
 uint16_t button_values;
 uint16_t timestamps[NOF_BUTTONS]; 
@@ -295,6 +298,9 @@ void onRegisterPatch(const char* name, uint8_t inputChannels, uint8_t outputChan
 #if defined USE_SCREEN
   graphics.params.setTitle(name);
 #endif /* OWL_MAGUS */
+#ifdef DUAL_CODEC
+  is_multichannel_patch = getProgramVector()->audio_format == AUDIO_FORMAT_24B32_4X;
+#endif
 }
 
 // Called on init, resource operation, storage erase
@@ -375,7 +381,7 @@ void updateProgramVector(ProgramVector* pv, PatchDefinition* def){
 //#elif defined USE_AK4556 && defined DUAL_CODEC
 //  pv->audio_format = AUDIO_FORMAT_24B32_4X;
 #else
-  pv->audio_format = AUDIO_FORMAT_24B32_4X;
+  pv->audio_format = AUDIO_FORMAT_24B32;
   // pv->audio_format = AUDIO_FORMAT_24B32_2X;
 #endif
 #endif /* PROGRAM_VECTOR_V13 */
