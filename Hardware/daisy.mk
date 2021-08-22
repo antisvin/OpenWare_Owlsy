@@ -37,4 +37,4 @@ ARCH_FLAGS = -mcpu=cortex-m7 -mfloat-abi=hard -mfpu=fpv5-sp-d16 -mthumb
 ARCH_FLAGS += -fsingle-precision-constant
 DEF_FLAGS = -DSTM32H750xx -DARM_MATH_CM7
 DEF_FLAGS += -D__FPU_PRESENT=1
-S_SRC ?= $(BUILDROOT)/Src/bootrom_stm32h750xx.s
+S_SRC ?= $(BUILDROOT)/Src/startup_stm32h750xx.s

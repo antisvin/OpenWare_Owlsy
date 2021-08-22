@@ -3,7 +3,6 @@
 #include "hardware_ids.h"
 
 #define USE_USBD_MIDI
-#define USBD_MAX_POWER              100 // 100mA for iPad compatibility
 #define USBD_HANDLE hUsbDeviceFS
 #define USE_BOOTLOADER_MODE
 

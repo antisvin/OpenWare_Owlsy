@@ -6,7 +6,6 @@ OPENWARE ?= $(BUILDROOT)/..
 OPENOCD ?= openocd -f $(OPENWARE)/Hardware/openocd_h7.cfg
 
 LDSCRIPT = STM32H750IBKx-boot.ld
-S_SRC = startup_stm32h750xx.s
 
 include $(OPENWARE)/Hardware/daisy.mk
 
