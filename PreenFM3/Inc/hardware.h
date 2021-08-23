@@ -82,6 +82,13 @@
 #define PFM_PLUS_BUTTON        8
 #define PFM_PATCHES_BUTTON     9
 #define PFM_RESOURCES_BUTTON   10
-#define PFM_SETTINGS_BUTTON    11
+#define PFM_SYSTEM_BUTTON      11
+
+#define SYS_BOOTLOADER          0
+#define SYS_ERASE               1
+//#define SYS_DEFRAG              2
+#define SYS_REBOOT              2
+#define SYS_LAST                SYS_REBOOT
+
 #define USE_IWDG
 

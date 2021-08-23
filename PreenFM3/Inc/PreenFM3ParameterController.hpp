@@ -14,6 +14,7 @@
 #include "device.h"
 #include "errorhandlers.h"
 #include "message.h"
+#include "StorageTasks.hpp"
 #include <stdint.h>
 #include <string.h>
 #ifdef USE_DIGITALBUS
@@ -37,11 +38,9 @@ enum Menu : uint8_t {
     MENU_PARAMS,
     MENU_PATCHES,
     MENU_RESOURCES,
-    MENU_SETTINGS,
+    MENU_SYSTEM,
 };
 
-// SIZE = 24
-// BLOCKS ==
 template <uint8_t SIZE>
 class ControllerState {
 public:
@@ -91,6 +90,12 @@ public:
     ControllerState<NOF_VISIBLE_PARAMETERS> prev_state;
     uint32_t dirty;
 
+    const char system_names[SYS_LAST + 1][16] = {
+        "Bootloader",
+        "Erase patches",
+        "Reboot",
+    };
+
     enum EncoderSensitivity {
         SENS_SUPER_FINE = 0,
         SENS_FINE = (ENC_MULTIPLIER / 2),
@@ -131,8 +136,8 @@ public:
     void findChanges() {
         if (strncmp(current_state.title, prev_state.title, 12) != 0)
             dirty |= 1;
-        if (
-            memcmp((void*)(&current_state.cpu_load), (void*)(&prev_state.cpu_load), 5) != 0)
+        if (memcmp((void*)(&current_state.cpu_load),
+                (void*)(&prev_state.cpu_load), 5) != 0)
             dirty |= 2;
         if (strncmp(current_state.message, prev_state.message, 100) != 0)
             // if (message != other.message)
@@ -183,34 +188,34 @@ public:
             screen.fillRectangle(0, 0, 240, 214, BLACK);
             switch (current_state.menu) {
             case MENU_MAIN:
-            /*
-                screen.setTextSize(2);
-                screen.setCursor(0, 20);
-                screen.setTextColour(RED);
-                screen.print("RED");
-                screen.setCursor(0, 40);
-                screen.setTextColour(GREEN);
-                screen.print("GREEN");
-                screen.setCursor(0, 60);
-                screen.setTextColour(BLUE);
-                screen.print("BLUE");
-                screen.setCursor(0, 80);
-                screen.setTextColour(CYAN);
-                screen.print("CYAN");
-                screen.setCursor(0, 100);
-                screen.setTextColour(MAGENTA);
-                screen.print("MAGENTA");
-                screen.setCursor(0, 120);
-                screen.setTextColour(YELLOW);
-                screen.print("YELLOW");
-                screen.setCursor(0, 140);
-                screen.setTextColour(WHITE);
-                screen.print("WHITE");
-                screen.setCursor(0, 160);
-                screen.setTextColour(BLACK);
-                screen.print("BLACK");
-                screen.setTextSize(1);
-            */
+                /*
+                    screen.setTextSize(2);
+                    screen.setCursor(0, 20);
+                    screen.setTextColour(RED);
+                    screen.print("RED");
+                    screen.setCursor(0, 40);
+                    screen.setTextColour(GREEN);
+                    screen.print("GREEN");
+                    screen.setCursor(0, 60);
+                    screen.setTextColour(BLUE);
+                    screen.print("BLUE");
+                    screen.setCursor(0, 80);
+                    screen.setTextColour(CYAN);
+                    screen.print("CYAN");
+                    screen.setCursor(0, 100);
+                    screen.setTextColour(MAGENTA);
+                    screen.print("MAGENTA");
+                    screen.setCursor(0, 120);
+                    screen.setTextColour(YELLOW);
+                    screen.print("YELLOW");
+                    screen.setCursor(0, 140);
+                    screen.setTextColour(WHITE);
+                    screen.print("WHITE");
+                    screen.setCursor(0, 160);
+                    screen.setTextColour(BLACK);
+                    screen.print("BLACK");
+                    screen.setTextSize(1);
+                */
                 drawCallback(screen.getBuffer(), 240, 214);
                 break;
             case MENU_PARAMS:
@@ -222,7 +227,8 @@ public:
             case MENU_RESOURCES:
                 drawResourcesMenu(screen);
                 break;
-            case MENU_SETTINGS:
+            case MENU_SYSTEM:
+                drawSystemMenu(screen);
                 break;
             }
             tftDirtyBits |= 8;
@@ -576,6 +582,22 @@ public:
         }
     }
 
+    void drawSystemMenu(ScreenBuffer& screen) {
+        screen.setTextSize(2);
+
+        screen.setTextColour(WHITE);
+        screen.print(20, 16, "System:");
+
+        screen.setTextColour(CYAN);
+
+        screen.fillRectangle(0, 16 * current_state.menu_key + 16, 240, 16, MAGENTA);
+
+        for (uint8_t i = 0; i <= SYS_LAST; i++) {
+            screen.setCursor(0, 16 * i + 32);
+            screen.print(system_names[i]);            
+        }
+    }
+
     void setName(uint8_t pid, const char* name) {
         if (pid < SIZE)
             strncpy(names[pid], name, 11);
@@ -602,7 +624,7 @@ public:
         current_state.active_param_value = clamp(parameters[ch] / 35, 0, 114);
         current_state.active_param_value_pct =
             int(clamp(parameters[ch], 0, 4095) * 1000 / 4096);
-        //if (current_state.menu == MENU_PARAMS && ch == current_state.menu_key)
+        // if (current_state.menu == MENU_PARAMS && ch == current_state.menu_key)
         //    dirty |= 8;
     }
 
@@ -663,17 +685,22 @@ public:
                 case PFM_MENU_BUTTON:
                     current_state.menu = MENU_PARAMS;
                     current_state.menu_key = current_state.active_param_id;
-                    //dirty |= 8;
+                    // dirty |= 8;
                     break;
                 case PFM_PATCHES_BUTTON:
                     current_state.menu = MENU_PATCHES;
                     current_state.menu_key = program.getProgramIndex();
-                    //dirty |= 8;
+                    // dirty |= 8;
                     break;
                 case PFM_RESOURCES_BUTTON:
                     current_state.menu = MENU_RESOURCES;
                     current_state.menu_key = 0;
-                    //dirty |= 8;
+                    // dirty |= 8;
+                    break;
+                case PFM_SYSTEM_BUTTON:
+                    current_state.menu = MENU_SYSTEM;
+                    current_state.menu_key = 0;
+                    // dirty |= 8;
                     break;
                 default:
                     break;
@@ -684,12 +711,12 @@ public:
                 case PFM_MENU_BUTTON:
                     current_state.menu = MENU_MAIN;
                     current_state.active_param_id = current_state.menu_key;
-                    //dirty |= 8;
+                    // dirty |= 8;
                     break;
                 case PFM_MINUS_BUTTON:
                     setValue(current_state.active_param_id,
                         parameters[current_state.active_param_id] - encoderSensitivity);
-                    //dirty |= 8;
+                    // dirty |= 8;
                     break;
                 case PFM_PLUS_BUTTON:
                     setValue(current_state.active_param_id,
@@ -700,14 +727,16 @@ public:
                     if (current_state.menu_key >= 40)
                         current_state.menu_key = 39;
                     current_state.active_param_id = current_state.menu_key;
-                    updateActiveParameter(current_state.menu_key, parameters[current_state.menu_key]);
+                    updateActiveParameter(current_state.menu_key,
+                        parameters[current_state.menu_key]);
                     break;
-                case PFM_SETTINGS_BUTTON:
+                case PFM_SYSTEM_BUTTON:
                     current_state.menu_key++;
                     if (current_state.menu_key >= 40)
                         current_state.menu_key = 0;
                     current_state.active_param_id = current_state.menu_key;
-                    updateActiveParameter(current_state.menu_key, parameters[current_state.menu_key]);
+                    updateActiveParameter(current_state.menu_key,
+                        parameters[current_state.menu_key]);
                     break;
                 default:
                     break;
@@ -717,7 +746,7 @@ public:
                 switch (button) {
                 case PFM_MENU_BUTTON:
                     current_state.menu = MENU_MAIN;
-                    //dirty |= 8;
+                    // dirty |= 8;
                     break;
                 case PFM_MINUS_BUTTON:
                 case PFM_PATCHES_BUTTON: {
@@ -725,22 +754,22 @@ public:
                     uint32_t num_patches = registry.getNumberOfPatches();
                     if (current_state.menu_key >= num_patches)
                         current_state.menu_key = num_patches - 1;
-                    //dirty |= 8;
+                    // dirty |= 8;
                     break;
                 }
                 case PFM_RESOURCES_BUTTON:
                     program.loadProgram(current_state.menu_key);
                     program.resetProgram(false);
                     current_state.menu = MENU_MAIN;
-                    //dirty |= 8;
+                    // dirty |= 8;
                     break;
                 case PFM_PLUS_BUTTON:
-                case PFM_SETTINGS_BUTTON: {
+                case PFM_SYSTEM_BUTTON: {
                     current_state.menu_key++;
                     uint32_t num_patches = registry.getNumberOfPatches();
                     if (current_state.menu_key >= num_patches)
                         current_state.menu_key = 0;
-                    //dirty |= 8;
+                    // dirty |= 8;
                     break;
                 }
                 default:
@@ -751,7 +780,7 @@ public:
                 switch (button) {
                 case PFM_MENU_BUTTON:
                     current_state.menu = MENU_MAIN;
-                    //dirty |= 8;
+                    // dirty |= 8;
                     break;
                 case PFM_MINUS_BUTTON:
                 case PFM_PATCHES_BUTTON: {
@@ -759,21 +788,61 @@ public:
                     uint32_t num_resources = registry.getNumberOfResources();
                     if (current_state.menu_key >= num_resources)
                         current_state.menu_key = num_resources;
-                    //dirty |= 8;
+                    // dirty |= 8;
                     break;
                 }
                 case PFM_RESOURCES_BUTTON:
                     storage.eraseResource(current_state.menu_key);
                     current_state.menu = MENU_MAIN;
-                    //dirty |= 8;
+                    // dirty |= 8;
                     break;
                 case PFM_PLUS_BUTTON:
-                case PFM_SETTINGS_BUTTON: {
+                case PFM_SYSTEM_BUTTON: {
                     current_state.menu_key++;
                     uint32_t num_resources = registry.getNumberOfResources();
                     if (current_state.menu_key >= num_resources)
                         current_state.menu_key = 0;
-                    //dirty |= 8;
+                    // dirty |= 8;
+                    break;
+                }
+                default:
+                    break;
+                }
+                break;
+            case MENU_SYSTEM:
+                switch (button) {
+                case PFM_MENU_BUTTON:
+                    current_state.menu = MENU_MAIN;
+                    // dirty |= 8;
+                    break;
+                case PFM_MINUS_BUTTON:
+                case PFM_PATCHES_BUTTON: {
+                    current_state.menu_key--;
+                    if (current_state.menu_key > SYS_LAST)
+                        current_state.menu_key = SYS_LAST;
+                    // dirty |= 8;
+                    break;
+                }
+                case PFM_RESOURCES_BUTTON:
+                    switch (current_state.menu_key) {
+                        case SYS_BOOTLOADER:
+                            jump_to_bootloader();
+                            break;
+                        case SYS_ERASE:
+                            owl.setBackgroundTask(&erase_task);
+                            break;
+                        case SYS_REBOOT:
+                            device_reset();
+                            break;
+                    }
+                    // dirty |= 8;
+                    break;
+                case PFM_PLUS_BUTTON:
+                case PFM_SYSTEM_BUTTON: {
+                    current_state.menu_key++;
+                    if (current_state.menu_key > SYS_LAST)
+                        current_state.menu_key = 0;
+                    // dirty |= 8;
                     break;
                 }
                 default:

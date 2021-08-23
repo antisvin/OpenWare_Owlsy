@@ -113,6 +113,8 @@ void updateEncoders() {
 //   setButtonValue(BUTTON_D, !(TR_IN_B_GPIO_Port->IDR & TR_IN_B_Pin));
 //   break;
 
+EraseStorageTask erase_task;
+
 static uint32_t prev_fps_update = 0;
 static uint16_t num_frames = 0;
 

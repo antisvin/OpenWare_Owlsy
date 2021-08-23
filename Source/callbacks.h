@@ -12,7 +12,9 @@ extern "C" {
     RUN_MODE,
     CONFIGURE_MODE,
     STREAM_MODE,
-    ERROR_MODE
+    ERASE_MODE,
+    DEFRAG_MODE,
+    ERROR_MODE,
   } OperationMode;
 
   /** functions with weak declarations that can be defined by subprojects
