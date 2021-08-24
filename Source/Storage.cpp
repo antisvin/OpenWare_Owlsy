@@ -74,6 +74,7 @@ void Storage::init(){
 
 void Storage::index(){
   memset(resources, 0, sizeof(resources));
+  resource_count = 0;
   size_t i = 0;
   size_t progress = 0;
 #ifdef USE_FLASH

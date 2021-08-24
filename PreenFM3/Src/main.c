@@ -65,7 +65,7 @@ UART_HandleTypeDef huart1;
 DMA_HandleTypeDef hdma_usart1_rx;
 DMA_HandleTypeDef hdma_usart1_tx;
 
-PCD_HandleTypeDef hpcd_USB_OTG_FS;
+extern PCD_HandleTypeDef hpcd_USB_OTG_FS;
 
 MDMA_HandleTypeDef hmdma_mdma_channel40_sw_0;
 osThreadId defaultTaskHandle;

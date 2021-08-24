@@ -3,7 +3,10 @@
 
 #include "ProgramManager.h"
 #include "Storage.h"
+#include "eepromcontrol.h"
 #include "message.h"
+#include "cmsis_os.h"
+
 
 #ifndef min
 #define min(a,b) ((a)<(b)?(a):(b))
@@ -24,7 +27,12 @@ public:
 
   void loop() override {
     if (state < total_sectors){
-      storage.erase(state);
+      eeprom_unlock();
+      if (eeprom_erase((uint32_t)&_FLASH_STORAGE_BEGIN + state * FLASH_SECTOR_SIZE, FLASH_SECTOR_SIZE) != HAL_OK) {
+        error(FLASH_ERROR, "Error erasing storage");
+        end();
+      }
+      eeprom_lock();
       setParameterValue(LOAD_INDICATOR_PARAMETER, uint32_t(state++) * 4095 / total_sectors);
 #ifdef USE_SCREEN
       char buf[40];
@@ -46,6 +54,7 @@ public:
       p = stpcpy(p, msg_itoa(size, 10));
       p = stpcpy(p, (const char*)"M");
       debugMessage(buf);
+      vTaskDelay(MAIN_LOOP_SLEEP_MS / portTICK_PERIOD_MS);
 #endif
     }
     else {
@@ -56,6 +65,7 @@ public:
 
   void end() override {
     debugMessage("Storage erased");
+    storage.index();
     owl.setOperationMode(RUN_MODE);
     program.startProgram(false);
   }

@@ -142,12 +142,13 @@ void MidiController::sendResourceNames(){
   owl.setBackgroundTask(&task);
 }
 
+static constexpr size_t msgsize = 203; // number of resource bytes we send with each SysEx
+
 class SendResourceTask : public BackgroundTask {
 private:
   size_t index;
   uint32_t crc;
   Resource* resource;
-  static constexpr size_t msgsize = 203; // number of resource bytes we send with each SysEx
 public:
   void setResource(Resource* resource){
     this->resource = resource;
