@@ -29,6 +29,12 @@ int eeprom_erase_sector(uint32_t sector) {
 #ifndef OWL_ARCH_F7
   cfg.Banks = FLASH_BANK_1;
 #endif
+#if defined(STM32H7xx) && defined (USE_DUAL_BANK)
+  if (sector >= 8) {
+    cfg.Banks = FLASH_BANK_2;
+    sector -= 8;
+  }
+#endif
   cfg.Sector = sector;
   cfg.NbSectors = 1;
   cfg.VoltageRange = FLASH_VOLTAGE_RANGE_3;
@@ -136,18 +142,18 @@ int eeprom_erase_address(uint32_t address){
   }else if(address < ADDR_FLASH_SECTOR_15){
     eeprom_erase_sector(FLASH_SECTOR_14);
     ret = ADDR_FLASH_SECTOR_15 - ADDR_FLASH_SECTOR_14;
-  }else if(address < FLASH_END){
+  }else if(address <= FLASH_END){
     eeprom_erase_sector(FLASH_SECTOR_15);
-    ret = FLASH_END - ADDR_FLASH_SECTOR_15;
+    ret = FLASH_END + 1 - ADDR_FLASH_SECTOR_15;
 #else /* define FLASH_SECTOR_12 */
-  }else if(address < FLASH_END){
+  }else if(address <= FLASH_END){
     eeprom_erase_sector(FLASH_SECTOR_11);
-    ret = FLASH_END - ADDR_FLASH_SECTOR_11;
+    ret = FLASH_END + 1 - ADDR_FLASH_SECTOR_11;
 #endif /* define FLASH_SECTOR_12 */
 #else
-  }else if(address < FLASH_END){
+  }else if(address <= FLASH_END){
     eeprom_erase_sector(FLASH_SECTOR_7);
-    ret = FLASH_END - ADDR_FLASH_SECTOR_7;
+    ret = FLASH_END + 1 - ADDR_FLASH_SECTOR_7;
 #endif /* define FLASH_SECTOR_8 */
   }
   return ret;
