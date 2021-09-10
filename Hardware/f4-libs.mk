@@ -37,6 +37,10 @@ C_SRC_SAI += $(DRIVERS)/Src/stm32f4xx_hal_sai_ex.c
 C_SRC_SDRAM = $(DRIVERS)/Src/stm32f4xx_hal_sdram.c
 C_SRC_SDRAM += $(DRIVERS)/Src/stm32f4xx_ll_fmc.c
 
+# SD card
+C_SRC_SDCARD = $(DRIVERS)/Src/stm32f4xx_hal_sd.c
+C_SRC_SDCARD += $(DRIVERS)/Src/stm32f4xx_ll_sdmmc.c
+
 # required by OWL 1
 C_SRC_SRAM = $(DRIVERS)/Src/stm32f4xx_hal_sram.c
 C_SRC_SRAM += $(DRIVERS)/Src/stm32f4xx_ll_fsmc.c
@@ -105,3 +109,7 @@ C_SRC_OS += $(FREERTOS_DIR)/queue.c
 C_SRC_OS += $(FREERTOS_DIR)/list.c
 C_SRC_OS += $(FREERTOS_DIR)/croutine.c
 C_SRC_OS += $(FREERTOS_DIR)/portable/MemMang/heap_4.c
+
+C_SRC_FATFS = $(FATFS_DIR)/diskio.c
+C_SRC_FATFS += $(FATFS_DIR)/ff.c
+C_SRC_FATFS += $(FATFS_DIR)/ff_gen_drv.c

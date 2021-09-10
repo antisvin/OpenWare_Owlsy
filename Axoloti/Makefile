@@ -27,6 +27,8 @@ C_SRC += $(C_SRC_OS)
 C_SRC += $(C_SRC_UART)
 C_SRC += $(C_SRC_RTC)
 C_SRC += $(C_SRC_I2C)
+C_SRC += $(C_SRC_SDCARD)
+C_SRC += $(C_SRC_FATFS)
 
 
 include $(OPENWARE)/Hardware/f4.mk
