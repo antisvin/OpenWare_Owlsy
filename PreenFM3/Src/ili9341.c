@@ -42,6 +42,23 @@ HAL_StatusTypeDef ILI9341_ReadPowerMode(uint8_t buff[2]) {
     return ret;
 }
 
+HAL_StatusTypeDef ILI9341_GetScanline(uint8_t buff[2]) {
+    static uint8_t getScanlineCommand[3] = { 0x45, 0x00, 0x00};
+    uint8_t getScanlineArgs[] = { 0x00, 0x00};
+
+    ILI9341_Select();
+    // We send a command
+    clearPin(OLED_DC_GPIO_Port, OLED_DC_Pin);
+    uint8_t dummy;
+    HAL_SPI_Transmit(OLED_SPIInst, getScanlineCommand, 1, HAL_MAX_DELAY);
+    for(int i = 0; i < 5000; i++)  __asm("NOP");
+    //HAL_SPI_Receive(OLED_SPIInst, &dummy, 1, HAL_MAX_DELAY);
+    HAL_StatusTypeDef ret = HAL_SPI_Receive(
+        OLED_SPIInst, buff, 2, HAL_MAX_DELAY);
+    ILI9341_Unselect();
+    return ret;
+}
+
 HAL_StatusTypeDef ILI9341_ReadDisplayStatus(uint8_t buff[2]) {
     static uint8_t readPowerModeCommand[5] = { 0x09, 0xFF, 0xFF, 0xFF, 0xFF };
 
@@ -187,7 +204,7 @@ void ILI9341_Init() {
     // FRAME RATE CONTROL
     ILI9341_WriteCommand(0xB3);
     {
-        uint8_t data[] = { 0x00, 0x10}; // 100 Hz refresh rate
+        uint8_t data[] = { 0x00, 0x13}; // 100 Hz refresh rate
         ILI9341_WriteData(data, sizeof(data));
     }
 
@@ -307,6 +324,9 @@ void oled_write(const uint8_t* data, uint32_t length) {
             uint16_t height = areaHeight[tftPart];
             uint16_t screen_y = screenY[tftPart];
             //uint16_t y = areaY[tftPart];
+
+            //static uint8_t scanline_buf[2] = {0, 0};
+            //ILI9341_GetScanline(scanline_buf);
 
             // Update TFT part
             ILI9341_Select();
