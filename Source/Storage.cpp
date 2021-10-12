@@ -186,9 +186,7 @@ bool Storage::eraseResource(Resource* resource){
     eeprom_unlock();
     eeprom_wait(); // clear flash flags
 #ifdef STM32H743xx
-    ResourceHeader copy = *header;
-    copy.magic = RESOURCE_ERASED_MAGIC;
-    status = eeprom_write_block((uint32_t)header, &copy, sizeof(ResourceHeader));
+    status = eeprom_write_word((uint32_t)header + sizeof(ResourceHeader), 0);
 #else
     status = eeprom_write_word((uint32_t)header, RESOURCE_ERASED_MAGIC);
 #endif
@@ -308,7 +306,7 @@ size_t Storage::writeResourceHeader(uint8_t* dest, const char* name, size_t data
 
 // data length must already include space for ResourceHeader
 size_t Storage::writeResource(const char* name, uint8_t* data, size_t datasize, uint32_t flags){
-  writeResourceHeader(data, name, datasize, flags);  
+  writeResourceHeader(data, name, datasize, flags);
   return writeResource((ResourceHeader*)data);
 }
 
@@ -324,7 +322,7 @@ size_t Storage::writeResource(ResourceHeader* header){
 #ifndef USE_SPI_FLASH
   header->flags |= RESOURCE_MEMORY_MAPPED; // save everything mem mapped
 #endif
-  size_t length = header->size+sizeof(ResourceHeader);
+  size_t length = header->size + sizeof(ResourceHeader);
   uint32_t flags = header->flags;
   uint8_t slot = flags & 0xff;
   uint8_t* data = (uint8_t*)header;
@@ -336,13 +334,13 @@ size_t Storage::writeResource(ResourceHeader* header){
   }      
   if(old){
     // compare CRC
-    uint32_t crc = crc32(data+sizeof(ResourceHeader), header->size, 0);
+    uint32_t crc = crc32(data + sizeof(ResourceHeader), header->size, 0);
     if(old->getDataSize() == header->size){
       if(crc == getChecksum(old))
-	debugMessage("Resource checksum match");
+        debugMessage("Resource checksum match");
       if(verifyData(old, data, length)){
-	debugMessage("Resource identical");
-	return 0;
+        debugMessage("Resource identical");
+        return 0;
       }
     }
     eraseResource(old); // mark as deleted if it exists but is non-identical
@@ -369,7 +367,15 @@ size_t Storage::writeResource(ResourceHeader* header){
 #ifdef USE_FLASH
     eeprom_unlock();
     eeprom_wait();
+#if RESOURCE_HEADER_OFFSET > 0
+    status = eeprom_write_block((uint32_t)dest->getHeader(), data, sizeof(ResourceHeader));
+    if (status == 0)
+      status = eeprom_write_block(
+        (uint32_t)dest->getHeader() + sizeof(ResourceHeader) + RESOURCE_HEADER_OFFSET,
+        data + sizeof(ResourceHeader), length - sizeof(ResourceHeader));
+#else
     status = eeprom_write_block((uint32_t)dest->getHeader(), data, length);
+#endif
     eeprom_lock();
 #endif
   }else{
@@ -393,7 +399,15 @@ size_t Storage::writeResource(ResourceHeader* header){
 
 bool Storage::verifyData(Resource* resource, void* data, size_t length){
   if(resource->isMemoryMapped()){
+#if RESOURCE_HEADER_OFFSET > 0
+    return memcmp(data, resource->getHeader(), sizeof(ResourceHeader)) == 0 &&
+      memcmp(
+        data + sizeof(ResourceHeader),
+        (uint8_t*)resource->getHeader() + sizeof(ResourceHeader) + RESOURCE_HEADER_OFFSET,
+        length - sizeof(ResourceHeader)) == 0;
+#else
     return memcmp(data, resource->getHeader(), length) == 0;
+#endif
 #ifdef USE_SPI_FLASH
   }else{
     uint32_t quad[4]; // read 16 bytes at a time (slow but memory efficient)

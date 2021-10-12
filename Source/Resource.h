@@ -22,6 +22,12 @@
 extern char _FLASH_STORAGE_BEGIN;
 extern char _FLASH_STORAGE_END;
 
+#if defined STM32H7xx && !defined USE_SPI_FLASH
+#define RESOURCE_HEADER_OFFSET  32
+#else
+#define RESOURCE_HEADER_OFFSET  0
+#endif
+
 class Resource {
 private:
   ResourceHeader* header;
@@ -35,7 +41,12 @@ public:
    * A valid resource is not erased and not free.
    */
   bool isValid(){
+#if RESOURCE_HEADER_OFFSET > 0
+    return isValidSize() && header->magic == RESOURCE_VALID_MAGIC
+      && *((uint8_t*)header + sizeof(ResourceHeader)) == 0xff;
+#else
     return isValidSize() && header->magic == RESOURCE_VALID_MAGIC;
+#endif
   }
   /**
    * A used resource may be erased but always has a correct size. It is not free.
@@ -44,7 +55,12 @@ public:
     return isValid() || isErased();
   }
   bool isErased(){
+#if RESOURCE_HEADER_OFFSET > 0
+    return isValidSize() && header->magic == RESOURCE_VALID_MAGIC
+      && *((uint8_t*)header + sizeof(ResourceHeader)) == 0x00;
+#else
     return isValidSize() && header->magic == RESOURCE_ERASED_MAGIC;
+#endif
   }
   /**
    * The resource size is valid if it is within the boundaries of its storage.
@@ -97,7 +113,7 @@ public:
    * Get data pointer to memory-mapped resource
    */
   uint8_t* getData(){
-    return ((uint8_t*)header)+sizeof(ResourceHeader);
+    return ((uint8_t*)header)+sizeof(ResourceHeader) + RESOURCE_HEADER_OFFSET;
   }
 #ifdef USE_SPI_FLASH
   /**
@@ -119,7 +135,7 @@ public:
     if(!header || header->magic == RESOURCE_FREE_MAGIC)
       return 0;
     if(header->flags & RESOURCE_MEMORY_MAPPED)
-      return (header->size+sizeof(ResourceHeader)+31) & ~31;
+      return (header->size+sizeof(ResourceHeader)+31 + RESOURCE_HEADER_OFFSET) & ~31;
     else
       return (header->size+sizeof(ResourceHeader)+255) & ~255;
   }
