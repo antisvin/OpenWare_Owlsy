@@ -75,7 +75,7 @@ int eeprom_write_block(uint32_t address, void* data, uint32_t size){
 #ifdef STM32H7xx
   // we are actually writing up to 31 bytes more than 'size'
   // which is okay assuming 'data' points to plenty of unused EXTRAM
-  for(; i <= size; i += 32){
+  for(; i < size; i += 32){
     status |= HAL_FLASH_Program(FLASH_TYPEPROGRAM_FLASHWORD, address + i, (uint32_t)p32);
     p32 += 32 / sizeof(uint32_t);
   }
