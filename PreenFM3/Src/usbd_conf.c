@@ -24,11 +24,10 @@
 #include "stm32h7xx_hal.h"
 #include "usbd_def.h"
 #include "usbd_core.h"
-#include "usbd_audio.h"
 
 /* USER CODE BEGIN Includes */
 #include "device.h"
-uint8_t  USBD_AUDIO_SetFiFos(PCD_HandleTypeDef *hpcd);
+//uint8_t  USBD_AUDIO_SetFiFos(PCD_HandleTypeDef *hpcd);
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -303,7 +302,13 @@ USBD_StatusTypeDef USBD_LL_Init(USBD_HandleTypeDef *pdev)
   HAL_PCD_RegisterIsoOutIncpltCallback(&hpcd_USB_OTG_FS, PCD_ISOOUTIncompleteCallback);
   HAL_PCD_RegisterIsoInIncpltCallback(&hpcd_USB_OTG_FS, PCD_ISOINIncompleteCallback);
 #endif /* USE_HAL_PCD_REGISTER_CALLBACKS */
+#ifdef USE_USBD_AUDIO
   USBD_AUDIO_SetFiFos(&hpcd_USB_OTG_FS);
+#else
+  HAL_PCDEx_SetRxFiFo(&hpcd_USB_OTG_FS, 0x80);
+  HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_FS, 0, 0x40);
+  HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_FS, 1, 0x80);
+#endif
   }
   return USBD_OK;
 }
