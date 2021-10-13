@@ -29,7 +29,7 @@ int eeprom_erase_sector(uint32_t sector) {
 #ifndef OWL_ARCH_F7
   cfg.Banks = FLASH_BANK_1;
 #endif
-#if defined(STM32H7xx) && defined (USE_DUAL_BANK)
+#if defined(STM32H7xx) && defined (DUAL_BANK)
   if (sector >= 8) {
     cfg.Banks = FLASH_BANK_2;
     sector -= 8;

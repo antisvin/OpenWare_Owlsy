@@ -10,10 +10,9 @@ MEMORY
 {
 DTCMRAM (xrw)    : ORIGIN = 0x20000000, LENGTH = 48K
 PATCHRAM (rwx)   : ORIGIN = 0x2000c000, LENGTH = 80K
-GRAPHICS (xrw)   : ORIGIN = 0x24000000, LENGTH = 112K /* D1 RAM */
-PLUSRAM  (xrw)   : ORIGIN = 0x2401c000, LENGTH = 388K
-HEAP_D2  (xrw)   : ORIGIN = 0x30000000, LENGTH = 272K
-DMA_D2  (xrw)    : ORIGIN = 0x30044000, LENGTH = 16K
+PLUSRAM  (xrw)   : ORIGIN = 0x24000000, LENGTH = 512K /* D1 RAM */
+DMA_D2  (xrw)    : ORIGIN = 0x30000000, LENGTH = 128K
+HEAP_D2  (xrw)   : ORIGIN = 0x30020000, LENGTH = 160K
 RAM_D3  (xrw)    : ORIGIN = 0x38000000, LENGTH = 64K
 ITCMRAM (xrw)    : ORIGIN = 0x00000008, LENGTH = 65528 /* 64K - 8 to avoid starting at 0x0 - FreeRTOS fails if stack address is NULL */
 EXTRAM  (rwx)    : ORIGIN = 0xD0000000, LENGTH = 8M
@@ -186,7 +185,7 @@ SECTIONS
     . = ALIGN(4);
     PROVIDE (_GRAPHICS = .);
     *(.graphics)
-  } >GRAPHICS
+  } >DMA_D2
 
   .dmadata (NOLOAD) :
   {

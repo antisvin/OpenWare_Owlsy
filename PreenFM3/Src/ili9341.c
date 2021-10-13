@@ -229,7 +229,8 @@ void ILI9341_Init() {
     // FRAME RATIO CONTROL, STANDARD RGB COLOR
     ILI9341_WriteCommand(0xB1);
     {
-        uint8_t data[] = { 0x00, 0x18 };
+        uint8_t data[] = { 0x00, 0x13 };
+        //0x18 };
         ILI9341_WriteData(data, sizeof(data));
     }
 

@@ -93,7 +93,6 @@
 
 #define USE_IWDG
 
-#define USE_DUAL_BANK
 #define FLASH_SECTOR_8             8U       /*!< Sector Number 8   */
 #define FLASH_SECTOR_9             9U       /*!< Sector Number 9   */
 #define FLASH_SECTOR_10            10U      /*!< Sector Number 10  */
