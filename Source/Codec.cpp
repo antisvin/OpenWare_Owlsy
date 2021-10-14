@@ -6,7 +6,7 @@
 #include <cstring>
 #include "ProgramManager.h"
 
-#if defined USE_CS4271 || defined USE_CS4344
+#if defined USE_CS4271
 #define HSAI_RX hsai_BlockB1
 #define HSAI_TX hsai_BlockA1
 #define HDMA_RX hdma_sai1_b

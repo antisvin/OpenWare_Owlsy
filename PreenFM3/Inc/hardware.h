@@ -51,7 +51,7 @@
 
 #define USE_USBD_MIDI
 //#define USE_USBD_AUDIO
-#define USE_USBD_AUDIO_TX  // microphone
+//#define USE_USBD_AUDIO_TX  // microphone
 //#define USE_USBD_AUDIO_RX // speaker
 #define USE_USBD_FS
 #define USBD_HANDLE hUsbDeviceFS
