@@ -314,7 +314,9 @@ extern "C"{
 
 extern "C" {
 #if defined MULTI_CODEC && NOF_OUTPUT_CODECS > 0 && NOF_INPUT_CODECS == 0
+  #if NOF_OUTPUT_CODECS > 1
   extern SAI_HandleTypeDef HSAI_TX1;
+  #endif
   #if NOF_OUTPUT_CODECS > 1
   extern SAI_HandleTypeDef HSAI_TX2;
   #endif
@@ -327,7 +329,9 @@ extern "C" {
   void HAL_SAI_TxHalfCpltCallback(SAI_HandleTypeDef *hsai){    
     if (hsai == &HSAI_TX1) {
       int32_t* srct = codec_txbuf;
+      #if NOF_OUTPUT_CODECS > 0
       int32_t* dst1t = codec_tx[0];
+      #endif
       #if NOF_OUTPUT_CODECS > 1
       int32_t* dst2t = codec_tx[1];
       #endif
@@ -339,8 +343,10 @@ extern "C" {
       #endif
       int32_t* last = codec_txbuf + sizeof(codec_txbuf) / sizeof(uint32_t);
       while (srct < last) {
+        #if NOF_OUTPUT_CODECS > 0
         *dst1t++ = *srct++;
         *dst1t++ = *srct++;
+        #endif
         #if NOF_OUTPUT_CODECS > 1
         *dst2t++ = *srct++;
         *dst2t++ = *srct++;
@@ -360,7 +366,9 @@ extern "C" {
   void HAL_SAI_TxCpltCallback(SAI_HandleTypeDef *hsai){
     if (hsai == &HSAI_TX1){
       int32_t* srct = codec_txbuf;
+      #if NOF_OUTPUT_CODECS > 0
       int32_t* dst1t = codec_tx[0] + CODEC_BUFFER_SIZE / NOF_OUTPUT_CODECS / 2;
+      #endif
       #if NOF_OUTPUT_CODECS > 1
       int32_t* dst2t = codec_tx[1] + CODEC_BUFFER_SIZE / NOF_OUTPUT_CODECS / 2;
       #endif
@@ -372,8 +380,10 @@ extern "C" {
       #endif
       int32_t* last = codec_txbuf + sizeof(codec_txbuf) / sizeof(uint32_t);
       while (srct < last) {
+        #if NOF_OUTPUT_CODECS > 0
         *dst1t++ = *srct++;
         *dst1t++ = *srct++;
+        #endif
         #if NOF_OUTPUT_CODECS > 1
         *dst2t++ = *srct++;
         *dst2t++ = *srct++;
