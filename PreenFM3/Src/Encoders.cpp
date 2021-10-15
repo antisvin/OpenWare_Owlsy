@@ -19,6 +19,7 @@
 
 #define likely(x)       __builtin_expect((x),1)
 #define unlikely(x)     __builtin_expect((x),0)
+#define BUTTON_TICK     20
 
 
 Encoders::Encoders() {
@@ -108,12 +109,12 @@ void Encoders::checkSimpleStatus() {
         bool b1 = ((registerBits & buttonBit_[k]) == 0);
         // button is pressed
         if (b1) {
-            if (buttonTimer_[k] > 30) {
-                buttonPressed(k);
+            if (buttonTimer_[k] > buttonTimerNext_[k]) {
+                actions_.insert((EncoderAction){ NEXT_BUTTON_TICK, 0, buttonTimer_[k], k, 0});
+                buttonTimerNext_[k] += BUTTON_TICK;
             }
-            buttonTimer_[k] = 0;
+            buttonTimer_[k]++;
         }
-        buttonTimer_[k]++;
     }
 }
 
@@ -188,6 +189,7 @@ void Encoders::checkStatus(uint8_t encoderType, uint8_t encoderPush) {
                     firstButtonDown_ = k;
                     buttonUsedFromSomethingElse_[k] = false;
                     actions_.insert((EncoderAction){ ENCODER_BUTTON_PRESS_STARTED, 0, 0, k, 0});
+                    buttonTimerNext_[k] = BUTTON_TICK;
                 } else {
                     actions_.insert((EncoderAction){ ENCODER_TWO_BUTTON_PRESSED, 0, 0, firstButtonDown_, k});
                     buttonUsedFromSomethingElse_[firstButtonDown_] = true;
@@ -209,12 +211,16 @@ void Encoders::checkStatus(uint8_t encoderType, uint8_t encoderPush) {
                     firstButtonDown_ = -1;
                 }
                 //if (buttonPreviousState_[k] && !buttonUsedFromSomethingElse_[k]) {
-                if (buttonPreviousState_[k]) {
+                //if (buttonPreviousState_[k]) {
                     // Just released
                     if (buttonTimer_[k] > 15) {
-                        actions_.insert((EncoderAction){ ENCODER_BUTTON_PRESSED, 0, 0, k, 0});
+                        if (k >= NUMBER_OF_BUTTONS_MIN)
+                            actions_.insert((EncoderAction){ ENCODER_PRESSED, k - NUMBER_OF_BUTTONS_MIN, 0, 0, 0});
+                        else
+                            actions_.insert((EncoderAction){ BUTTON_PRESSED, 0, 0, k, 0});
                     }
-                }
+                //}
+                buttonTimerNext_[k] = 0;
                 buttonTimer_[k] = 0;
             }
         }
@@ -237,8 +243,11 @@ void Encoders::processActions() {
 		case ENCODER_BUTTON_PRESS_STARTED:
 			buttonPressStarted(ea.button1);
 			break;
-		case ENCODER_BUTTON_PRESSED:
+		case BUTTON_PRESSED:
 			buttonPressed(ea.button1);
+			break;
+		case ENCODER_PRESSED:
+			encoderPressed(ea.encoder);
 			break;
 		case ENCODER_TWO_BUTTON_PRESSED:
 			twoButtonsPressed(ea.button1, ea.button2);
@@ -246,6 +255,9 @@ void Encoders::processActions() {
 		case ENCODER_LONG_BUTTON_PRESSED:
 			buttonLongPressed(ea.button1);
 			break;
+        case NEXT_BUTTON_TICK:
+			buttonTick(ea.button1);
+            break;
 		}
 	}
 }

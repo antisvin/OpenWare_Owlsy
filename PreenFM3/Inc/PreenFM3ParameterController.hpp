@@ -27,6 +27,8 @@ extern DigitalBusReader bus;
 #endif
 #define ENC_MULTIPLIER 6 // shift left by this many steps
 
+#define MAX_MESSAGE 256
+
 extern VersionToken* bootloader_token;
 
 extern uint32_t tftDirtyBits;
@@ -52,7 +54,7 @@ public:
     uint16_t flash_used = 0;
     uint8_t fps = 0;
     // Section 3
-    const char* message = 0;
+    char message[MAX_MESSAGE] = {0};
     // Section 4
     Menu menu = MENU_MAIN;
     uint8_t menu_key = 0;
@@ -74,7 +76,8 @@ public:
         cpu_load = cpu_load_percent;
         mem_kbytes_used = (int)(pv->heap_bytes_used) / 1024;
         flash_used = storage.getUsedSize() / 1024;
-        message = pv->message;
+        //message = pv->message;
+        strncpy(message, pv->message, MAX_MESSAGE);
     }
 };
 
@@ -139,7 +142,7 @@ public:
         if (memcmp((void*)(&current_state.cpu_load),
                 (void*)(&prev_state.cpu_load), 5) != 0)
             dirty |= 2;
-        if (strncmp(current_state.message, prev_state.message, 100) != 0)
+        if (strncmp(current_state.message, prev_state.message, MAX_MESSAGE) != 0)
             // if (message != other.message)
             dirty |= 4;
         if (current_state.custom_callback ||
@@ -639,6 +642,12 @@ public:
         }
     }
 
+    void encoderPressed(int encoder) override {
+        uint8_t active = current_state.blocks[encoder] * 6 + encoder;
+        current_state.active_param_id = active;
+        updateActiveParameter(active, parameters[active]);
+    }
+
     void encoderTurned(int encoder, int ticks) override {
         uint8_t pid = current_state.blocks[encoder] * 6 + encoder;
         current_state.active_param_id = pid;
@@ -869,6 +878,45 @@ public:
             current_state.active_buttons |= 1 << uint8_t(button2);
         }
     };
+
+    void buttonTick(int button) override {
+        switch (current_state.menu) {
+        case MENU_MAIN:
+            switch (button) {
+            case PFM_MINUS_BUTTON:
+                setValue(current_state.active_param_id,
+                    parameters[current_state.active_param_id] - encoderSensitivity);
+                break;
+            case PFM_PLUS_BUTTON:
+                setValue(current_state.active_param_id,
+                    parameters[current_state.active_param_id] + encoderSensitivity);
+                break;
+            default:
+                break;
+            }
+            break;
+        case MENU_PARAMS:
+            switch (button) {
+            case PFM_PLUS_BUTTON:
+                setValue(current_state.active_param_id,
+                    parameters[current_state.active_param_id] + encoderSensitivity);
+                break;
+            case PFM_MINUS_BUTTON:
+                setValue(current_state.active_param_id,
+                    parameters[current_state.active_param_id] - encoderSensitivity);
+                break;
+            default:
+                break;
+            }
+            break;
+        case MENU_PATCHES:
+            break;
+        case MENU_RESOURCES:
+            break;
+        case MENU_SYSTEM:
+            break;
+        }
+    }
 
 private:
     void (*drawCallback)(uint8_t*, uint16_t, uint16_t);

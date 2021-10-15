@@ -128,6 +128,7 @@ void loop(void) {
 
     // updateEncoders();
 
+
 #ifdef USE_SCREEN
     if (!pushToTftInProgress) {
         if (tftPushed && tick >= nextDrawTime) {
@@ -161,6 +162,7 @@ void loop(void) {
     }
 
     encoders.checkStatus(1, 1);
+    encoders.checkSimpleStatus();
     encoders.processActions();    
 
 #endif /* USE_SCREEN */
