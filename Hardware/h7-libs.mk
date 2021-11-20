@@ -30,6 +30,8 @@ C_SRC_RTC = $(DRIVERS)/Src/stm32h7xx_hal_rtc.c
 C_SRC_RTC += $(DRIVERS)/Src/stm32h7xx_hal_pwr.c
 C_SRC_RTC += $(DRIVERS)/Src/stm32h7xx_hal_rtc_ex.c
 C_SRC_IWDG = $(DRIVERS)/Src/stm32h7xx_hal_iwdg.c
+C_SRC_I2C = $(DRIVERS)/Src/stm32h7xx_hal_i2c.c
+C_SRC_I2C += $(DRIVERS)/Src/stm32h7xx_hal_i2c_ex.c
 
 # external SDRAM
 C_SRC_SDRAM = $(DRIVERS)/Src/stm32h7xx_hal_sdram.c
