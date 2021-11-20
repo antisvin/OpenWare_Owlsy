@@ -1,5 +1,5 @@
-PROJECT = MidiBootDaisy
-PLATFORM ?= Daisy
+PLATFORM ?= Bluemchen
+PROJECT = MidiBoot-$(PLATFORM)
 BUILDROOT = .
 OPENWARE ?= $(BUILDROOT)/..
 
@@ -24,7 +24,10 @@ CPP_SRC += $(OPENWARE)/Source/VersionToken.cpp
 
 
 ifeq ($(PLATFORM),Daisy)
-	CPPFLAGS += -Iusbd-hs -DDAISY -DUSE_USBD_FS
+	CPPFLAGS += -Iusbd-hs -DDAISY -DDAISY_PATCH -DUSE_USBD_FS
+	vpath %.c usbd-hs
+else ifeq ($(PLATFORM),Bluemchen)
+	CPPFLAGS += -Iusbd-hs -DDAISY -DBLUEMCHEN -DUSE_USBD_FS
 	vpath %.c usbd-hs
 endif
 
@@ -60,7 +63,7 @@ dump: # flash read_bank num filename [offset [length]]
 	$(OPENOCD) -c "init" -c "halt" -c "flash read_bank 0 dump.bin" -c "exit"
 
 upload:
-	$(OPENOCD) -c "program Build/MidiBootDaisy.elf verify reset exit"
+	$(OPENOCD) -c "program Build/$(PROJECT).elf verify reset exit"
 
 #lock:
 #	$(OPENOCD) -c "init" -c "halt" -c "flash protect 0 0 1 on" -c "flash info 0" -c "exit"
@@ -68,7 +71,7 @@ upload:
 deploy: upload lock
 
 dfu:
-	dfu-util -a 0 -s 0x08000000:leave -D Build/MidiBootDaisy.bin -d 0483:df11
+	dfu-util -a 0 -s 0x08000000:leave -D Build/$(PROJECT).bin -d 0483:df11
 
 sysex:
 	FirmwareSender -in "Build/${PROJECT}.bin" -flash `crc32 "Build/${PROJECT}.bin"` -save "Build/${PROJECT}.syx"

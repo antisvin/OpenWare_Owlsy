@@ -83,11 +83,7 @@ static int testButton(){
 #ifdef USE_BOOT1_PIN
   return !(BOOT1_GPIO_Port->IDR & BOOT1_Pin);
 #else
-  #ifdef USE_ENCODER_PIN
-  return !(ENC_CLICK_GPIO_Port->IDR & ENC_CLICK_Pin);
-  #else
   return 0;
-  #endif
 #endif
 }
 
@@ -474,6 +470,14 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   GPIO_InitStruct.Alternate = GPIO_AF12_OTG2_FS;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+#ifdef USE_BOOT1_PIN
+  /*Configure GPIO pin : BOOT1_Pin */
+  GPIO_InitStruct.Pin = BOOT1_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(BOOT1_GPIO_Port, &GPIO_InitStruct);
+#endif
 
 }
 

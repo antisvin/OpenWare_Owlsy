@@ -9,10 +9,20 @@
 
 #define MAX_SYSEX_FIRMWARE_SIZE 512 * 1024
 
-#if defined DAISY
+#if defined DAISY_PATCH
   #define HARDWARE_ID         DAISY_PATCH_HARDWARE
   #define HARDWARE_VERSION    "Daisy Boot"
   #define APPLICATION_ADDRESS 0x90000000
+  #define USE_BOOT1_PIN
+  #define BOOT1_Pin GPIO_PIN_12
+  #define BOOT1_GPIO_Port GPIOB  
+#elif defined BLUEMCHEN
+  #define HARDWARE_ID         BLUEMCHEN_HARDWARE
+  #define HARDWARE_VERSION    "Daisy Boot"
+  #define APPLICATION_ADDRESS 0x90000000
+  #define USE_BOOT1_PIN
+  #define BOOT1_Pin GPIO_PIN_2
+  #define BOOT1_GPIO_Port GPIOA
 #else
   #error Invalid configuration
 #endif
@@ -26,6 +36,3 @@
 
 #define USE_IWDG
 
-#define USE_ENCODER_PIN
-#define ENC_CLICK_Pin GPIO_PIN_12
-#define ENC_CLICK_GPIO_Port GPIOB
