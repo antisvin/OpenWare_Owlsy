@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include "device.h"
 #include "Owl.h"
-//#include "Graphics.h"
+#include "Graphics.h"
 #include "message.h"
 #include "gpio.h"
 #include "qspicontrol.h"
@@ -16,7 +16,7 @@
 extern bool updateUi;
 extern uint16_t button_values;
 
-//Graphics graphics;
+Graphics graphics;
 
 static SoftwareEncoder encoder(
   ENC_A_GPIO_Port, ENC_A_Pin,
@@ -54,8 +54,6 @@ void onChangePin(uint16_t pin){
 */
 
 void setup(){
-  //HAL_GPIO_WritePin(OLED_RST_GPIO_Port, OLED_RST_Pin, GPIO_PIN_RESET); // OLED off
-
   qspi_init(QSPI_MODE_MEMORY_MAPPED);
   
   /* This doesn't work with bootloader, need to find how to deinit it earlier*/
@@ -66,16 +64,14 @@ void setup(){
   }
   #endif
 
-//  extern SPI_HandleTypeDef OLED_SPI;
-//  graphics.begin(&OLED_SPI);
+  extern I2C_HandleTypeDef OLED_I2C;
+  graphics.begin(&OLED_I2C);
 
   owl.setup();
 //  setButtonValue(PUSHBUTTON, 0);
 }
 
 static int16_t enc_data[2];
-
-bool updateUi = true;
 
 void loop(){
   updateEncoderCounter();
@@ -87,7 +83,7 @@ void loop(){
     enc_data[0] = int16_t(
       encoder.isRisingEdge() | (encoder.isFallingEdge() << 1) | (encoder.isLongPress() << 2));
     enc_data[1] = int16_t(encoder.getValue());
-/*
+
     graphics.params.updateEncoders(enc_data, 2);
 
     for(int i = NOF_ADC_VALUES; i < NOF_PARAMETERS; ++i) {
@@ -96,7 +92,6 @@ void loop(){
 
     graphics.draw();
     graphics.display();
-*/
   }
   
   owl.loop();

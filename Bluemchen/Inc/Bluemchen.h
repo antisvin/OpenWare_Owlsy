@@ -1,5 +1,5 @@
-#ifndef __DAISY_H__
-#define __DAISY_H__
+#ifndef __BLUEMCHEN_H__
+#define __BLUEMCHEN_H__
 
 #ifdef __cplusplus
 extern "C"

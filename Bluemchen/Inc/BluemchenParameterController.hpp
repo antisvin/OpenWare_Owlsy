@@ -507,6 +507,11 @@ public:
 
   void draw(ScreenBuffer& screen){
     screen.clear();
+    screen.setTextSize(1);
+    screen.setCursor(20, 12);
+    screen.print("Owlsy");
+    return;
+
     screen.setTextWrap(false);
     switch (owl.getOperationMode()){
     case LOAD_MODE:

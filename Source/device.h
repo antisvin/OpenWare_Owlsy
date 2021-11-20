@@ -65,8 +65,13 @@
 #define OLED_HEIGHT		     96
 #define OLED_BUFFER_SIZE             (OLED_WIDTH*OLED_HEIGHT*sizeof(uint16_t))
 #elif defined SSD1309
+  #ifdef OLED_I2C
+#define OLED_WIDTH		     64
+#define OLED_HEIGHT		     32
+  #else
 #define OLED_WIDTH		     128
-#define OLED_HEIGHT	             64
+#define OLED_HEIGHT	       64
+  #endif
 #define OLED_BUFFER_SIZE             (OLED_WIDTH*OLED_HEIGHT/8)
 #endif
 

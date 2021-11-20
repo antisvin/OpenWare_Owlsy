@@ -12,15 +12,15 @@ C_SRC = $(wildcard Src/*.c)
 CPP_SRC = $(wildcard Src/*.cpp)
 C_SRC += $(OPENWARE)/Source/usbd_audio.c
 C_SRC += $(OPENWARE)/Source/sdram_daisy.c
-#C_SRC += $(OPENWARE)/Source/ssd1309.c
+C_SRC += $(OPENWARE)/Source/ssd1309_i2c.c
 C_SRC += $(OPENWARE)/Source/ak4556.c
 CPP_SRC += $(OPENWARE)/Source/FirmwareHeader.cpp
 CPP_SRC += $(OPENWARE)/Source/uart.cpp
 CPP_SRC += $(OPENWARE)/Source/uart_midi.cpp
 CPP_SRC += $(OPENWARE)/Source/MidiStreamReader.cpp
-#CPP_SRC += $(OPENWARE)/Source/ScreenBuffer.cpp
-#CPP_SRC += $(OPENWARE)/Source/ScreenBufferMono.cpp
-#CPP_SRC += $(OPENWARE)/Source/Graphics.cpp
+CPP_SRC += $(OPENWARE)/Source/ScreenBuffer.cpp
+CPP_SRC += $(OPENWARE)/Source/ScreenBufferMono.cpp
+CPP_SRC += $(OPENWARE)/Source/Graphics.cpp
 
 CPPFLAGS += -DDAISY -DBLUEMCHEN
 

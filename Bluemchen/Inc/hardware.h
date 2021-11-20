@@ -32,13 +32,12 @@
 #define MAX_NUMBER_OF_RESOURCES     60
 #define STORAGE_MAX_BLOCKS          128
 
-//#define USE_SCREEN
+#define USE_SCREEN
 #define SSD1309
 //#define OLED_DMA
-// #define OLED_SOFT_CS
-#define OLED_SPI hspi1
-/* #define OLED_IT */
-/* #define OLED_BITBANG */
+//#define OLED_UPSIDE_DOWN
+#define OLED_I2C                    hi2c1
+#define OLED_I2C_ADDRESS            0x3C
 
 #define USE_ADC
 #define ADC_PERIPH hadc1

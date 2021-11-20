@@ -13,8 +13,10 @@
 #include "PrismParameterController.hpp"
 #elif defined OWL_EFFECTSBOX
 #include "EffectsBoxParameterController.hpp"
-#elif defined DAISY
+#elif defined DAISY_PATCH
 #include "DaisyParameterController.hpp"
+#elif defined BLUEMCHEN
+#include "BluemchenParameterController.hpp"
 #elif defined OWL_GENIUS
 #include "GeniusParameterController.hpp"
 #else
@@ -24,7 +26,11 @@
 class Graphics {
 public:
   Graphics();
+#ifdef OLED_I2C
+  void begin(I2C_HandleTypeDef *i2c);
+#else
   void begin(SPI_HandleTypeDef *spi);
+#endif
   void display();
   void draw();
   void setCallback(void *callback);

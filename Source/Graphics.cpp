@@ -3,8 +3,13 @@
 #include "errorhandlers.h"
 #include "oled.h"
 
+#ifdef OLED_I2C
+void Graphics::begin(I2C_HandleTypeDef *i2c) {
+  oled_init(i2c);
+#else
 void Graphics::begin(SPI_HandleTypeDef *spi) {
   oled_init(spi);
+#endif
   screen.setBuffer(pixelbuffer);
   screen.clear();
   display();
