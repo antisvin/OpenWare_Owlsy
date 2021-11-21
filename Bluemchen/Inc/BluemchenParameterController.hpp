@@ -1,9 +1,6 @@
 #ifndef __ParameterController_hpp__
 #define __ParameterController_hpp__
 
-#include <cstring>
-#include "errorhandlers.h"
-#include "message.h"
 #include "ApplicationSettings.h"
 #include "Codec.h"
 #include "OpenWareMidiControl.h"
@@ -14,25 +11,28 @@
 #include "Scope.hpp"
 #include "StorageTasks.hpp"
 #include "VersionToken.h"
+#include "errorhandlers.h"
+#include "message.h"
+#include <cstring>
 
 #ifdef USE_DIGITALBUS
 #include "bus.h"
 #endif
 
 #ifndef min
-#define min(a,b) ((a)<(b)?(a):(b))
+#define min(a, b) ((a) < (b) ? (a) : (b))
 #endif
 #ifndef max
-#define max(a,b) ((a)>(b)?(a):(b))
+#define max(a, b) ((a) > (b) ? (a) : (b))
 #endif
 #ifndef abs
-#define abs(x) ((x)>0?(x):-(x))
+#define abs(x) ((x) > 0 ? (x) : -(x))
 #endif
 
 #define HYSTERESIS 64
 //#define CPU_SMOOTH
 
-extern VersionToken* bootloader_token;
+extern VersionToken *bootloader_token;
 extern uint8_t num_channels;
 
 void defaultDrawCallback(uint8_t *pixels, uint16_t width, uint16_t height);
@@ -44,8 +44,7 @@ static DefragStorageTask defrag_task;
 
 /* shows a single parameter selected and controlled with a single encoder
  */
-template <uint8_t SIZE>
-class ParameterController {
+template <uint8_t SIZE> class ParameterController {
 public:
   char title[10] = "  Owlsy";
 
@@ -67,10 +66,12 @@ public:
   enum ControlMode {
     SETUP,
     STATUS,
+    FLASH_STORAGE,
     PATCH,
     DATA,
     GATES,
     SCOPE,
+    VERSION,
     SYSTEM,
     EXIT,
     NOF_CONTROL_MODES, // Not an actual mode
@@ -84,66 +85,66 @@ public:
     SYS_LAST,
   };
   const char system_names[SYS_LAST][16] = {
-    "Bootloader",
-    "Erase patches",
-    "Defragmentation",
-    "Exit",
+      "Bootloader",
+      "Erase patches",
+      "Defragmentation",
+      "Exit",
   };
   bool systemPressed;
 
   float cpu_used;
-  #ifdef CPU_SMOOTH
+#ifdef CPU_SMOOTH
   static constexpr float cpu_smooth_lambda = 0.8;
-  #endif
+#endif
 
   int16_t parameters[SIZE];
   int16_t display_parameters[SIZE];
-  int16_t encoders[NOF_ENCODERS]; // last seen encoder values
-  int16_t offsets[NOF_ENCODERS];  // last seen encoder values
-  int16_t user[SIZE] CACHE_ALIGNED;             // user set values (ie by encoder or MIDI)
-  char names[SIZE][16];
+  int16_t encoders[NOF_ENCODERS];   // last seen encoder values
+  int16_t offsets[NOF_ENCODERS];    // last seen encoder values
+  int16_t user[SIZE] CACHE_ALIGNED; // user set values (ie by encoder or MIDI)
+  char names[SIZE][11];
   uint8_t selectedPid[NOF_ENCODERS];
   uint8_t lastSelectedPid, lastChannel, lastSelectedResource;
-  // Use first param after ADC as default to avoid confusion from accidental turns
+  // Use first param after ADC as default to avoid confusion from accidental
+  // turns
   bool saveSettings;
   uint8_t activeEncoder;
 
   bool resourceDelete;
-  bool resourceDeletePressed; // This is used to ensure that we don't delete current resourse on menu enter
+  bool resourceDeletePressed; // This is used to ensure that we don't delete
+                              // current resourse on menu enter
 
   EncoderSensitivity encoderSensitivity = SENS_STANDARD;
 
   ControlMode controlMode;
   const char controlModeNames[NOF_CONTROL_MODES][12] = {
-    "  Setup  >",
-    "< Status >",
-    "< Patch >",
-    "< Data   >",
+      "  Setup  >", "< Status >", "< Flash  >", "< Patch  >", "< Data   >",
 #ifdef USE_DIGITALBUS
-    "< Bus    >",
+      "< Bus    >",
 #endif
-    "< Gates  >",
-    "< Scope  >",
-    "< System  >",
-    "< Exit    ",
+      "< Gates  >", "< Scope  >", "< Version>", "< System >", "< Exit    ",
   };
 
+  static constexpr size_t max_char_wait = 10;
+  static constexpr size_t max_end_wait = 100;
+  size_t message_pos = 0;
+  size_t message_timer = 0;
   DisplayMode displayMode;
 
   Scope<AUDIO_CHANNELS, AUDIO_CHANNELS> scope;
 
   ParameterController() { reset(); }
-  
+
   void reset() {
     saveSettings = false;
     resourceDelete = false;
     drawCallback = defaultDrawCallback;
     for (int i = 0; i < SIZE; ++i) {
+      names[i][10] = 0;
       strcpy(names[i], "Param  ");
-      if (i < 8){
+      if (i < 8) {
         names[i][6] = 'A' + i;
-      }
-      else {
+      } else {
         names[i][6] = 'A' - 1 + i / 8;
         names[i][7] = 'A' + i % 8;
       }
@@ -151,7 +152,7 @@ public:
       parameters[i] = 0;
       user[i] = 0;
     }
-    
+
     for (int i = 0; i < NOF_ENCODERS; ++i) {
       // encoders[i] = 0;
       offsets[i] = 0;
@@ -170,85 +171,58 @@ public:
   }
 
   void drawSetup(ScreenBuffer &screen) {
-    int offset = 16;
+    int offset = 18;
     screen.setTextSize(1);
     if (activeEncoder == 1) {
-      screen.drawRectangle(10, offset + 3, 108, 24, WHITE);
+      screen.drawRectangle(1, offset - 6, 62, 13, WHITE);
     }
-    screen.print(1, offset + 36, " Encoder sensitivity");
+    // screen.print(1, offset + 16, " Encoder sensitivity"); // No place for
+    // this
 
-    screen.drawCircle(24, offset + 15, 8, WHITE);
-    screen.drawCircle(44, offset + 15, 8, WHITE);
-    screen.drawCircle(64, offset + 15, 8, WHITE);
-    screen.drawCircle(84, offset + 15, 8, WHITE);
-    screen.drawCircle(104, offset + 15, 8, WHITE);
+    screen.drawCircle(8, offset, 6, WHITE);
+    screen.drawCircle(20, offset, 6, WHITE);
+    screen.drawCircle(32, offset, 6, WHITE);
+    screen.drawCircle(44, offset, 6, WHITE);
+    screen.drawCircle(56, offset, 6, WHITE);
 
-    screen.fillCircle(24, offset + 15, 6, WHITE);
+    screen.fillCircle(8, offset, 4, WHITE);
     if (encoderSensitivity >= SENS_FINE)
-      screen.fillCircle(44, offset + 15, 6, WHITE);
+      screen.fillCircle(20, offset, 4, WHITE);
     if (encoderSensitivity >= SENS_STANDARD)
-      screen.fillCircle(64, offset + 15, 6, WHITE);
+      screen.fillCircle(32, offset, 4, WHITE);
     if (encoderSensitivity >= SENS_COARSE)
-      screen.fillCircle(84, offset + 15, 6, WHITE);
+      screen.fillCircle(44, offset, 4, WHITE);
     if (encoderSensitivity >= SENS_SUPER_COARSE)
-      screen.fillCircle(104, offset + 15, 6, WHITE);
+      screen.fillCircle(56, offset, 4, WHITE);
   }
 
   void drawGates(uint8_t selected, ScreenBuffer &screen) {
     screen.setTextSize(1);
-    int offset = 16;
+    int offset = 14;
 
-    screen.drawCircle(15, offset + 15, 12, WHITE);
+    screen.drawCircle(12, offset + 6, 9, WHITE);
     if (getButtonValue(PUSHBUTTON)) {
-      screen.fillCircle(15, offset + 15, 9, WHITE);
+      screen.fillCircle(12, offset + 6, 7, WHITE);
+    } else {
+      screen.drawCircle(12, offset + 6, 7, WHITE);
     }
-    else {
-      screen.drawCircle(15, offset + 15, 9, WHITE);
-    }
-    screen.print(2, offset + 38, "PUSH");
-
-    screen.drawCircle(47, offset + 15, 12, WHITE);
-    if (getButtonValue(BUTTON_A)) {
-      screen.fillCircle(47, offset + 15, 9, WHITE);
-    }
-    else {
-      screen.drawCircle(47, offset + 15, 9, WHITE);
-    }
-    screen.print(32, offset + 38, "A:IN1");
-    
-    screen.drawCircle(79, offset + 15, 12, WHITE);
-    if (getButtonValue(BUTTON_B)) {
-      screen.fillCircle(79, offset + 15, 9, WHITE);
-    }
-    else {
-      screen.drawCircle(79, offset + 15, 9, WHITE);
-    }
-    screen.print(64, offset + 38, "B:IN2");
-
-    screen.drawCircle(111, offset + 15, 12, WHITE);
-    if (getButtonValue(BUTTON_C)) {
-      screen.fillCircle(111, offset + 15, 9, WHITE);
-    }
-    else {
-      screen.drawCircle(111, offset + 15, 9, WHITE);
-    }
-    screen.print(96, offset + 38, "C:OUT");
+    screen.print(30, offset + 11, "PUSH");
 
     if (selectedPid[1])
-      screen.drawRectangle(2, offset + 2, 27, 27, WHITE);
-    screen.drawRectangle(3, offset + 3, 25, 25, WHITE);
+      screen.drawRectangle(2, offset - 4, 21, 21, WHITE);
+    screen.drawRectangle(3, offset - 3, 19, 19, WHITE);
   }
 
   void drawScope(uint8_t selected, ScreenBuffer &screen) {
     scope.update();
-    //scope.resync();
-    uint8_t offset = 36;
-    uint8_t y_prev = int16_t(scope.getBufferData()) * 32 / 128 + offset;
-    //uint16_t(data[0]) * 36U / 255U;
+    // scope.resync();
+    uint8_t offset = 34;
+    uint8_t y_prev = int16_t(scope.getBufferData()) * 12 / 128 + offset - 12;
+    // uint16_t(data[0]) * 36U / 255U;
     uint16_t step = 4;
-    for (int x = step; x < screen.getWidth(); x+= step) {
-      uint8_t y = int16_t(scope.getBufferData()) * 32 / 128 + offset;
-      //uint8_t y = uint16_t(data[x]) * 36 / 255 + offset;
+    for (int x = step; x < screen.getWidth(); x += step) {
+      uint8_t y = int16_t(scope.getBufferData()) * 12 / 128 + offset - 12;
+      // uint8_t y = uint16_t(data[x]) * 36 / 255 + offset;
       screen.drawLine(x - step, y_prev, x, y, WHITE);
       y_prev = y;
     }
@@ -256,25 +230,26 @@ public:
     // Channel selection overlay
     if (activeEncoder == 1) {
       screen.setTextSize(1);
-      offset = 26;
-      for (int i = 0; i < num_channels; i++){
-        screen.print(7 + i * 30, offset, "IN ");
+      offset = 22;
+      for (int i = 0; i < num_channels; i++) {
+        screen.print(2 + i * 32, offset, "IN ");
         screen.print(i + 1);
       }
-      for (int i = 0; i < num_channels; i++){
-        screen.print(7 + i * 30, offset + 10, "OUT");
+      for (int i = 0; i < num_channels; i++) {
+        screen.print(2 + i * 32, offset + 10, "OUT");
         screen.print(i + 1);
       }
-      if (selectedPid[1] < num_channels){
-        screen.drawRectangle(4 + selectedPid[1] * 30, offset - 10, 30, 10, WHITE);
-      }
-      else {
-        screen.drawRectangle(4 + (selectedPid[1] - num_channels) * 30, offset, 30, 10, WHITE);
+      if (selectedPid[1] < num_channels) {
+        screen.drawRectangle(1 + selectedPid[1] * 32, offset - 10, 30, 10,
+                             WHITE);
+      } else {
+        screen.drawRectangle(1 + (selectedPid[1] - num_channels) * 32, offset,
+                             30, 10, WHITE);
       }
     }
   }
 
-  void drawSystem(uint8_t selected, ScreenBuffer& screen) {
+  void drawSystem(uint8_t selected, ScreenBuffer &screen) {
     screen.setTextSize(1);
     if (activeEncoder == 1)
       selected = min(selected, uint8_t(SYS_LAST));
@@ -294,21 +269,23 @@ public:
     if (activeEncoder == 0)
       screen.invert(0, 25, 128, 10);
     else
-      screen.drawRectangle(0, 25, 128, 10, WHITE);      
+      screen.drawRectangle(0, 25, 128, 10, WHITE);
   }
 
-  void drawParameterValues(ScreenBuffer& screen){
+  void drawParameterValues(ScreenBuffer &screen) {
     // draw 4x2x2 levels on bottom 8px row
     int x = 0;
-    int y = 63-7;
-    for(int i=0; i<16; ++i){
+    int y = 63 - 7;
+    for (int i = 0; i < 16; ++i) {
       // 4px high by up to 16px long rectangle, filled if selected
-      if(i == lastSelectedPid)
-        screen.fillRectangle(x, y, max(1, min(16, display_parameters[i]/255)), 4, WHITE);
+      if (i == lastSelectedPid)
+        screen.fillRectangle(x, y, max(1, min(16, display_parameters[i] / 255)),
+                             4, WHITE);
       else
-        screen.drawRectangle(x, y, max(1, min(16, display_parameters[i]/255)), 4, WHITE);
+        screen.drawRectangle(x, y, max(1, min(16, display_parameters[i] / 255)),
+                             4, WHITE);
       x += 16;
-      if(i == 7){
+      if (i == 7) {
         x = 0;
         y += 3;
       }
@@ -316,7 +293,7 @@ public:
   }
 
   void drawStatus(ScreenBuffer &screen) {
-    int offset = 16;
+    int offset = 14;
     screen.setTextSize(1);
     // single row
     screen.print(1, offset + 8, "mem ");
@@ -329,52 +306,61 @@ public:
       screen.print(mem);
       screen.print("k");
     }
+    // draw CPU load
+    screen.print(1, offset + 17, "cpu ");
+#ifdef CPU_SMOOTH
+    float new_cpu_used = (pv->cycles_per_block) / pv->audio_blocksize / 100;
+    cpu_used = cpu_used * cpu_smooth_lambda + new_cpu_used -
+               new_cpu_used * cpu_smooth_lambda;
+#else
+    cpu_used = (pv->cycles_per_block) / pv->audio_blocksize / 100;
+#endif
+    screen.print((int)cpu_used);
+    screen.print("%");
+  }
+
+  void drawFlash(ScreenBuffer &screen) {
+    int offset = 14;
+    screen.setTextSize(1);
 
     // draw flash load
     int flash_used = storage.getWrittenSize() / 1024;
     int flash_total = storage.getTotalAllocatedSize() / 1024;
-    screen.print(64, offset + 8, "flash ");
+    screen.setCursor(1, offset + 8);
     screen.print(flash_used * 100 / flash_total);
     screen.print("%");
 
-    screen.setCursor(64, offset + 17);
+    screen.setCursor(1, offset + 17);
     if (flash_used > 999) {
       screen.print(flash_used / 1024);
       screen.print(".");
-      screen.print((int)((flash_used  % 1024) * 10 / 1024));
+      screen.print((int)((flash_used % 1024) * 10 / 1024));
       screen.print("M/");
-    }
-    else {
+    } else {
       screen.print(flash_used);
       screen.print("k/");
     }
     if (flash_total > 999) {
       screen.print(flash_total / 1024);
       screen.print(".");
-      screen.print((int)((flash_total  % 1024) * 10 / 1024));
+      screen.print((int)((flash_total % 1024) * 10 / 1024));
       screen.print("M");
-    }
-    else {
+    } else {
       screen.print(flash_total);
       screen.print("k");
     }
+  }
 
-    // draw CPU load
-    screen.print(1, offset + 17, "cpu ");
-#ifdef CPU_SMOOTH
-    float new_cpu_used = (pv->cycles_per_block) / pv->audio_blocksize / 100;
-    cpu_used = cpu_used * cpu_smooth_lambda + new_cpu_used - new_cpu_used * cpu_smooth_lambda;
-#else
-    cpu_used = (pv->cycles_per_block) / pv->audio_blocksize / 100;
-#endif
-    screen.print((int)cpu_used);
-    screen.print("%");
+  void drawVersion(ScreenBuffer &screen) {
+    int offset = 16;
+    screen.setTextSize(1);
+
     // draw firmware version
-    screen.print(1, offset + 26, getFirmwareVersion());
-    if (bootloader_token->magic == BOOTLOADER_MAGIC){
-      screen.print(" (bt.");
+    screen.print(1, offset + 6, "FW ");
+    screen.print(FIRMWARE_VERSION);
+    if (bootloader_token->magic == BOOTLOADER_MAGIC) {
+      screen.print(1, offset + 15, "boot ");
       screen.print(getBootloaderVersion());
-      screen.print(")");
     }
   }
 
@@ -421,7 +407,10 @@ public:
     case STATUS:
       drawTitle(controlModeNames[controlMode], screen);
       drawStatus(screen);
-      drawMessage(55, screen);
+      break;
+    case FLASH_STORAGE:
+      drawTitle(controlModeNames[controlMode], screen);
+      drawFlash(screen);
       break;
     case PATCH:
       drawTitle(controlModeNames[controlMode], screen);
@@ -444,6 +433,10 @@ public:
     case SCOPE:
       drawTitle(controlModeNames[controlMode], screen);
       drawScope(selectedPid[1], screen);
+      break;
+    case VERSION:
+      drawTitle(controlModeNames[controlMode], screen);
+      drawVersion(screen);
       break;
     case SYSTEM:
       drawTitle(controlModeNames[controlMode], screen);
@@ -505,37 +498,31 @@ public:
       screen.invert(64, y - 10, 64, 10);
   }
 
-  void draw(ScreenBuffer& screen){
+  void draw(ScreenBuffer &screen) {
     screen.clear();
-    screen.setTextSize(1);
-    //screen.setCursor(20, 12);
-    screen.print(10, 12, "des");
-    screen.print(10, 22, "Puddels");
-    screen.print(10, 32, "Kern");
-    screen.drawLine(0, 0, 63, 31, WHITE);
-    screen.drawRectangle(0, 0, 64, 32, WHITE);
-    return;
-
     screen.setTextWrap(false);
-    switch (owl.getOperationMode()){
+    switch (owl.getOperationMode()) {
     case LOAD_MODE:
       drawTitle(screen);
-      drawProgress(user[LOAD_INDICATOR_PARAMETER] * 127 / 4095, screen, "Uploading...");
+      drawProgress(user[LOAD_INDICATOR_PARAMETER] * 127 / 4095, screen,
+                   "Uploading...");
       break;
     case ERASE_MODE:
       drawTitle(screen);
-      drawProgress(user[LOAD_INDICATOR_PARAMETER] * 127 / 4095, screen, "Erasing...");
+      drawProgress(user[LOAD_INDICATOR_PARAMETER] * 127 / 4095, screen,
+                   "Erasing...");
       break;
     case DEFRAG_MODE:
       drawTitle(screen);
-      drawProgress(user[LOAD_INDICATOR_PARAMETER] * 127 / 4095, screen, "Defrag...");
+      drawProgress(user[LOAD_INDICATOR_PARAMETER] * 127 / 4095, screen,
+                   "Defrag...");
       break;
     default:
-      switch(displayMode){
-      case STANDARD: 
+      switch (displayMode) {
+      case STANDARD:
         // draw most recently changed parameter
         // drawParameter(selectedPid[selectedBlock], 44, screen);
-        drawParameter(selectedPid[0], 54, screen);
+        drawParameter(selectedPid[0], 24, screen);
         // use callback to draw title and message
         drawCallback(screen.getBuffer(), screen.getWidth(), screen.getHeight());
         break;
@@ -599,18 +586,19 @@ public:
       screen.setCursor(1, 24 + 10);
       screen.print((int)selected + 1 + MAX_NUMBER_OF_PATCHES);
       screen.print(".");
-      screen.print(registry.getResourceName(MAX_NUMBER_OF_PATCHES + 1 + selected));
-    }
-    else if (resourceDelete){
+      screen.print(
+          registry.getResourceName(MAX_NUMBER_OF_PATCHES + 1 + selected));
+    } else if (resourceDelete) {
       screen.print(18, 24 + 10, "Exit");
     }
     if (selected + 1 < (int)registry.getNumberOfResources()) {
       screen.setCursor(1, 24 + 20);
       screen.print((int)selected + 2 + MAX_NUMBER_OF_PATCHES);
       screen.print(".");
-      screen.print(registry.getResourceName(MAX_NUMBER_OF_PATCHES + 2 + selected));
-    }
-    else if (resourceDelete && selected < (int)registry.getNumberOfResources()){
+      screen.print(
+          registry.getResourceName(MAX_NUMBER_OF_PATCHES + 2 + selected));
+    } else if (resourceDelete &&
+               selected < (int)registry.getNumberOfResources()) {
       screen.print(18, 24 + 20, "Exit");
     }
 
@@ -620,14 +608,15 @@ public:
       screen.invert(0, 25, 128, 10);
   }
 
-  void drawProgress(uint8_t progress, ScreenBuffer &screen, const char* message){
+  void drawProgress(uint8_t progress, ScreenBuffer &screen,
+                    const char *message) {
     // progress should be 0 - 127
     screen.drawRectangle(0, 26, 128, 20, WHITE);
     screen.setCursor(32, 36);
     screen.setTextSize(1);
     screen.print(message);
     screen.fillRectangle(0, 40, progress, 5, WHITE);
-    ProgramVector* pv = getProgramVector();
+    ProgramVector *pv = getProgramVector();
     if (pv->message != NULL)
       screen.print(0, 55, pv->message);
   }
@@ -637,52 +626,53 @@ public:
     screen.setTextSize(1);
     screen.print(x, y, names[pid]);
     // 6px high by up to 96px long rectangle
-    y -= 7;
-    x += 64;
-    screen.drawRectangle(x, y, max(1, min(64, display_parameters[pid] / 64)), 6, WHITE);
+    y += 2;
+    //x += 64;
+    screen.drawRectangle(x, y, max(1, min(64, display_parameters[pid] / 64)), 6,
+                         WHITE);
   }
 
-  void drawParameters(ScreenBuffer& screen){
+  void drawParameters(ScreenBuffer &screen) {
     drawParameterValues(screen);
     int x = 0;
-    //int y = 63-8;
-    for(int i=2; i<NOF_ENCODERS; ++i){
+    // int y = 63-8;
+    for (int i = 2; i < NOF_ENCODERS; ++i) {
       // screen.print(x+1, y, blocknames[i-1]);
-      //if(selectedBlock == i)
+      // if(selectedBlock == i)
       //  screen.drawHorizontalLine(x, y, 32, WHITE);
       // screen.invert(x, 63-8, 32, 8);
       // screen.invert(x, y-10, 32, 10);
       x += 32;
     }
   }
-  
-  void drawStats(ScreenBuffer& screen){
+
+  void drawStats(ScreenBuffer &screen) {
     int offset = 0;
     screen.setTextSize(1);
     // screen.clear(86, 0, 128-86, 16);
     // draw memory use
 
     // two columns
-    screen.print(80, offset+8, "mem");
-    ProgramVector* pv = getProgramVector();
-    screen.setCursor(80, offset+17);
-    int mem = (int)(pv->heap_bytes_used)/1024;
-    if(mem > 999){
-      screen.print(mem/1024);
+    screen.print(80, offset + 8, "mem");
+    ProgramVector *pv = getProgramVector();
+    screen.setCursor(80, offset + 17);
+    int mem = (int)(pv->heap_bytes_used) / 1024;
+    if (mem > 999) {
+      screen.print(mem / 1024);
       screen.print("M");
-    }else{
+    } else {
       screen.print(mem);
       screen.print("k");
     }
     // draw CPU load
-    screen.print(110, offset+8, "cpu");
-    screen.setCursor(110, offset+17);
-    screen.print((int)((pv->cycles_per_block)/pv->audio_blocksize)/83);
+    screen.print(110, offset + 8, "cpu");
+    screen.setCursor(110, offset + 17);
+    screen.print((int)((pv->cycles_per_block) / pv->audio_blocksize) / 83);
     screen.print("%");
   }
 
-  void drawError(ScreenBuffer& screen){
-    if(getErrorMessage() != NULL){
+  void drawError(ScreenBuffer &screen) {
+    if (getErrorMessage() != NULL) {
       screen.setTextSize(1);
       screen.setTextWrap(true);
       screen.print(0, 26, getErrorMessage());
@@ -700,29 +690,51 @@ public:
 
   void setName(uint8_t pid, const char *name) {
     if (pid < SIZE)
-      strncpy(names[pid], name, 11);
+      strncpy(names[pid], name, 10);
   }
 
   void setTitle(const char *str) { strncpy(title, str, 10); }
 
   uint8_t getSize() const { return SIZE; }
 
-  void drawMessage(int16_t y, ScreenBuffer &screen) {
+  void drawMessage(ScreenBuffer &screen) {
     ProgramVector *pv = getProgramVector();
     if (pv->message != NULL) {
       screen.setTextSize(1);
-      screen.setTextWrap(true);
-      screen.print(0, y, pv->message);
-      screen.setTextWrap(false);
+      // screen.setTextWrap(true);
+      size_t message_len = strlen(pv->message);
+      const size_t viewable = 10;
+      if (message_len <= viewable) {
+          message_pos = 0;
+          message_timer = 0;
+      }
+      else {
+        if (message_pos == 0) {
+          if (message_timer++ > max_end_wait){
+            message_pos++;
+            message_timer = 0;
+          }
+        }
+        else if (message_timer++ > max_char_wait) {
+          message_pos++;
+          message_timer = 0;
+        }
+        if (message_pos > message_len)
+          message_pos = 0;
+      }
+      char buf[viewable + 1];
+      strncpy(buf, pv->message + message_pos, viewable);
+      screen.print(1, 16, buf);
+      // screen.setTextWrap(false);
     }
   }
 
   void drawTitle(ScreenBuffer &screen) { drawTitle(title, screen); }
 
-  void drawTitle(const char *title, ScreenBuffer &screen) {
+  void drawTitle(const char *title, ScreenBuffer &screen, bool large = false) {
     // draw title
-    screen.setTextSize(2);
-    screen.print(1, 17, title);
+    screen.setTextSize(large ? 2 : 1);
+    screen.print(1, large ? 17 : 8, title);
   }
 
   void setCallback(void *callback) {
@@ -733,27 +745,29 @@ public:
   }
 
   // called by MIDI cc and/or from patch
-  void setValue(uint8_t pid, int16_t value){
+  void setValue(uint8_t pid, int16_t value) {
     if (pid >= NOF_ADC_VALUES)
       user[pid] = value;
     // reset encoder value if associated through selectedPid to avoid skipping
-    for(int i=0; i<NOF_ENCODERS; ++i)
-      if(selectedPid[i] == pid)
+    for (int i = 0; i < NOF_ENCODERS; ++i)
+      if (selectedPid[i] == pid)
         setEncoderValue(i, value);
-    // TODO: store values set from patch somewhere and multiply with user[] value for outputs
-    // graphics.params.updateOutput(i, getOutputValue(i));
+    // TODO: store values set from patch somewhere and multiply with user[]
+    // value for outputs graphics.params.updateOutput(i, getOutputValue(i));
   }
 
   // @param value is the modulation ADC value
-  void updateValue(uint8_t pid, int16_t value){
+  void updateValue(uint8_t pid, int16_t value) {
     // smoothing at apprx 50Hz
-    parameters[pid] = max(0, min(4095, (parameters[pid] + user[pid] + value)>>1));
+    parameters[pid] =
+        max(0, min(4095, (parameters[pid] + user[pid] + value) >> 1));
     if (abs(parameters[pid] - display_parameters[pid]) > HYSTERESIS)
       display_parameters[pid] = parameters[pid];
   }
 
-  void updateOutput(uint8_t pid, int16_t value){
-    parameters[pid] = max(0, min(4095, (((parameters[pid] + (user[pid]*value))>>12)>>1)));
+  void updateOutput(uint8_t pid, int16_t value) {
+    parameters[pid] = max(
+        0, min(4095, (((parameters[pid] + (user[pid] * value)) >> 12) >> 1)));
   }
 
   /*
@@ -763,28 +777,31 @@ public:
   }
   */
 
-  void setControlModeValue(uint8_t value){
-    switch(controlMode){
+  void setControlModeValue(uint8_t value) {
+    switch (controlMode) {
     case SETUP:
-        value = max((uint8_t)SENS_SUPER_FINE, min((uint8_t)SENS_SUPER_COARSE, value));
-        if (value > (uint8_t)encoderSensitivity){
-          encoderSensitivity = (EncoderSensitivity)((uint8_t)encoderSensitivity + ENC_MULTIPLIER / 2);
-          value = (uint8_t)encoderSensitivity;
-        }
-        else if (value < (uint8_t)encoderSensitivity) {
-          encoderSensitivity = (EncoderSensitivity)((uint8_t)encoderSensitivity - ENC_MULTIPLIER / 2);
-          value = (uint8_t)encoderSensitivity;
-        }
-        selectedPid[1] = value;
-        break;
+      value =
+          max((uint8_t)SENS_SUPER_FINE, min((uint8_t)SENS_SUPER_COARSE, value));
+      if (value > (uint8_t)encoderSensitivity) {
+        encoderSensitivity = (EncoderSensitivity)((uint8_t)encoderSensitivity +
+                                                  ENC_MULTIPLIER / 2);
+        value = (uint8_t)encoderSensitivity;
+      } else if (value < (uint8_t)encoderSensitivity) {
+        encoderSensitivity = (EncoderSensitivity)((uint8_t)encoderSensitivity -
+                                                  ENC_MULTIPLIER / 2);
+        value = (uint8_t)encoderSensitivity;
+      }
+      selectedPid[1] = value;
+      break;
     case PATCH:
-      selectedPid[1] = max(1, min(registry.getNumberOfPatches()-1, value));
+      selectedPid[1] = max(1, min(registry.getNumberOfPatches() - 1, value));
       break;
     case DATA:
       if (resourceDelete)
         selectedPid[1] = max(0, min(registry.getNumberOfResources(), value));
       else
-        selectedPid[1] = max(0, min(registry.getNumberOfResources() - 1, value));
+        selectedPid[1] =
+            max(0, min(registry.getNumberOfResources() - 1, value));
       break;
     case GATES:
       break;
@@ -794,7 +811,9 @@ public:
       if (AUDIO_CHANNELS == num_channels)
         scope.setChannel(lastChannel);
       else {
-        scope.setChannel((lastChannel >= num_channels) ? (AUDIO_CHANNELS - num_channels + lastChannel) : lastChannel);
+        scope.setChannel((lastChannel >= num_channels)
+                             ? (AUDIO_CHANNELS - num_channels + lastChannel)
+                             : lastChannel);
       }
       break;
     case SYSTEM:
@@ -814,28 +833,26 @@ public:
     switch (displayMode) {
     case STANDARD:
     case ERROR:
-      if(displayMode != ERROR && getErrorStatus() && getErrorMessage() != NULL)
-          displayMode = ERROR;        
+      if (displayMode != ERROR && getErrorStatus() && getErrorMessage() != NULL)
+        displayMode = ERROR;
       if (isLongPress) {
         // Long press switches to global parameter selection
         displayMode = SELECTGLOBALPARAMETER;
         activeEncoder = 0;
-        //selectedPid[0] = lastSelectedPid;
-      }
-      else if (isPress) {
+        // selectedPid[0] = lastSelectedPid;
+      } else if (isPress) {
         // Go to control mode
         displayMode = CONTROL;
         controlMode = SETUP;
         activeEncoder = 0;
         selectedPid[1] = encoderSensitivity;
-      }
-      else {
-        if(encoders[0] != value){
-          encoders[0] = value; //min(4095, max(0, value));
-          // We must update encoder value before calculating user value, otherwise
-          // previous value would be displayed
+      } else {
+        if (encoders[0] != value) {
+          encoders[0] = value; // min(4095, max(0, value));
+          // We must update encoder value before calculating user value,
+          // otherwise previous value would be displayed
           user[selectedPid[0]] = getEncoderValue(0);
-        }    
+        }
       }
       break;
     case CONTROL: {
@@ -849,15 +866,13 @@ public:
     case SELECTGLOBALPARAMETER:
       if (!isLongPress) {
         displayMode = STANDARD;
-      }
-      else {
+      } else {
         // Selected another parameter
         int16_t delta = value - encoders[0];
-        if(delta < 0) {
+        if (delta < 0) {
           encoders[0] = value;
           selectGlobalParameter(selectedPid[0] - 1);
-        }
-        else if(delta > 0) {              
+        } else if (delta > 0) {
           encoders[0] = value;
           selectGlobalParameter(selectedPid[0] + 1);
         }
@@ -905,8 +920,7 @@ public:
         selectedPid[1] = 0;
       }
       controlMode = EXIT;
-    }
-    else if (pressed & 0x02) {
+    } else if (pressed & 0x02) {
       // Short press end
       switch (controlMode) {
       case SETUP:
@@ -925,51 +939,46 @@ public:
         if (!systemPressed && activeEncoder == 1) {
           systemPressed = true;
           handleSystem(SystemAction(selectedPid[1]));
-        }
-        else {
+        } else {
           activeEncoder = 1;
         }
         break;
       }
       case PATCH:
         // load patch
-        if (activeEncoder == 1){
+        if (activeEncoder == 1) {
           settings.program_index = selectedPid[1];
           program.loadProgram(settings.program_index);
           program.resetProgram(false);
           controlMode = EXIT;
-        }
-        else {
+        } else {
           activeEncoder = 1;
         }
         break;
       case DATA:
         if (resourceDelete) {
-          if (selectedPid[1] == registry.getNumberOfResources()){
+          if (selectedPid[1] == registry.getNumberOfResources()) {
             // Exit on last menu item (exit link after resources list)
             resourceDelete = false;
             resourceDeletePressed = false;
             controlMode = EXIT;
             activeEncoder = 0;
-          }
-          else if (!resourceDeletePressed) {
+          } else if (!resourceDeletePressed) {
             // Delete resource unless it's protected by "__" prefix
             resourceDeletePressed = true;
-            debugMessage("sel", selectedPid[1] + MAX_NUMBER_OF_PATCHES + 1);
-            ResourceHeader* res = registry.getResource(selectedPid[1] + MAX_NUMBER_OF_PATCHES + 1);
+            ResourceHeader *res = registry.getResource(
+                selectedPid[1] + MAX_NUMBER_OF_PATCHES + 1);
             if (res != NULL) {
-              if(res->name[0] == '_' && res->name[1] == '_'){
+              if (res->name[0] == '_' && res->name[1] == '_') {
                 debugMessage("Resource protected");
-              }
-              else {
+              } else {
                 program.exitProgram(false);
                 registry.setDeleted(selectedPid[1] + MAX_NUMBER_OF_PATCHES + 1);
                 program.startProgram(false);
               }
             }
           }
-        }
-        else {
+        } else {
           resourceDelete = true;
           resourceDeletePressed = true;
           activeEncoder = 1;
@@ -978,8 +987,7 @@ public:
       default:
         break;
       }
-    }
-    else if (pressed & 0x01) {
+    } else if (pressed & 0x01) {
       if (controlMode == GATES) {
         setButtonValue(PUSHBUTTON, 1);
         selectedPid[1] = 1;
@@ -992,8 +1000,7 @@ public:
       selectedPid[1] = parameters[lastSelectedPid];
       if (saveSettings)
         settings.saveToFlash();
-    }
-    else {
+    } else {
       int16_t delta = value - encoders[activeEncoder];
       if (activeEncoder == 0) {
         if (delta > 0 && controlMode + 1 < NOF_CONTROL_MODES) {
@@ -1001,12 +1008,10 @@ public:
         } else if (delta < 0 && controlMode > 0) {
           setControlMode(controlMode - 1);
         }
-      }
-      else {
-        if(delta > 0 && selectedPid[1] < 127) {
+      } else {
+        if (delta > 0 && selectedPid[1] < 127) {
           setControlModeValue(selectedPid[1] + 1);
-        }
-        else if(delta < 0 && selectedPid[1] > 0) {
+        } else if (delta < 0 && selectedPid[1] > 0) {
           setControlModeValue(selectedPid[1] - 1);
         }
         if (controlMode == DATA && resourceDeletePressed) {
@@ -1018,7 +1023,7 @@ public:
     }
   }
 
-  void handleSystem(SystemAction action){
+  void handleSystem(SystemAction action) {
     controlMode = EXIT;
     switch (action) {
     case SYS_BOOTLOADER:
