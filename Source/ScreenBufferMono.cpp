@@ -9,7 +9,7 @@ Colour ScreenBuffer::getPixel(unsigned int x, unsigned int y){
   uint8_t  ucByteOffset = 0;
   uint16_t usiArrayLoc = 0;
   // Determine array location
-  usiArrayLoc = (y/8)+(x*8);
+  usiArrayLoc = (y/8)+(x*bytes_per_column);
   // Determine byte offset
   ucByteOffset = y-((uint8_t)(y/8)*8);
   // Return bit state from buffer
@@ -22,9 +22,9 @@ void ScreenBuffer::setPixel(unsigned int x, unsigned int y, Colour c){
     uint8_t  ucByteOffset = 0;
     uint16_t usiArrayLoc = 0;
     // Determine array location
-    usiArrayLoc = (y/8)+(x*8);
+    usiArrayLoc = (y/8)+(x*bytes_per_column);
     // Determine byte offset
-    ucByteOffset = y-((uint8_t)(y/8)*8);		
+    ucByteOffset = y-((uint8_t)(y/8)*8);
     // Set pixel in buffer
     if(c == BLACK)
       pixels[usiArrayLoc] &= ~(1 << ucByteOffset);
@@ -38,7 +38,7 @@ void ScreenBuffer::invertPixel(unsigned int x, unsigned int y){
     uint8_t  ucByteOffset = 0;
     uint16_t usiArrayLoc = 0;
     // Determine array location
-    usiArrayLoc = (y/8)+(x*8);
+    usiArrayLoc = (y/8)+(x*bytes_per_column);
     // Determine byte offset
     ucByteOffset = y-((uint8_t)(y/8)*8);
     uint8_t pixel = (1 << ucByteOffset);

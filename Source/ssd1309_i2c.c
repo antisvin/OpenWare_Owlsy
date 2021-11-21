@@ -52,9 +52,9 @@ static const uint8_t OLED_initSequence[] = {
     0x20,            // 0x20,0.77xVcc
     0x8D, 0x14,      // Set DC-DC enable
 #else
-    //0xfd, 0x12, // Command unlock
+    // 0xfd, 0x12, // Command unlock
     0xae,       // Display off
-    0xd5, 0x70, // Clock divide ratio / Oscillator Frequency
+    0xd5, 0xa0, // Clock divide ratio / Oscillator Frequency
                 //    0xd5, 0xa0, // Clock divide ratio / Oscillator Frequency
     0xa8, 0x1f, // Multiplex ratio 32
     0xd3, 0x00, // Display offset
@@ -62,12 +62,12 @@ static const uint8_t OLED_initSequence[] = {
     0x8d, 0x14, // Charge pump
 
 #ifdef OLED_UPSIDE_DOWN
-    0xc1,       // Scan direction: c0: scan dir normal, c8: reverse
-    0xa0,       // Segment re-map: a0: col0 -> SEG0, a1: col127 -> SEG0
+    0xc1, // Scan direction: c0: scan dir normal, c8: reverse
+    0xa0, // Segment re-map: a0: col0 -> SEG0, a1: col127 -> SEG0
 #else
     0xc8, 0xa1,
 #endif
-    //0xda, 0x00, // COM pins
+    // 0xda, 0x00, // COM pins
     0xda, 0x12, // COM pins
     0xd9, 0x25, // Pre-charge period
                 //    0xd9, 0x22, // Pre-charge period
@@ -77,11 +77,10 @@ static const uint8_t OLED_initSequence[] = {
     0x81, 0x8f, // Contrast control: 0 to 0xff. Current increases with contrast.
     //    0x81, 0xcf, // Contrast control: 0 to 0xff. Current increases with
     //    contrast.
-    0x2e,        // Stop scroll
 
     0x20, 0x01,       // Vertical addressing mode
-    0x21, 0x00, 0x7f, // Set column address
-    0x22, 0x00, 0x07, // Set page address
+    0x21, 0x20, 0x5f, // Set column address
+    0x22, 0x00, 0x03, // Set page address
     0xaf,             // Display on
 #endif
 };
@@ -130,45 +129,52 @@ void oled_write(const uint8_t *data, uint16_t length) {
 #ifdef USE_CACHE
   SCB_CleanInvalidateDCache_by_Addr((uint32_t *)data, length);
 #endif
-  while (OLED_I2CInst->State != HAL_I2C_STATE_READY); // wait
+  while (OLED_I2CInst->State != HAL_I2C_STATE_READY)
+    ; // wait
 
-
-    HAL_I2C_Mem_Write_DMA(
-        OLED_I2CInst, OLED_I2C_ADDRESS << 1, 0x40, 1, data, length);
+  HAL_I2C_Mem_Write_DMA(OLED_I2CInst, OLED_I2C_ADDRESS << 1, 0x40, 1, data,
+                        length);
 #else
+/*
+  uint8_t buf[] = {
+    0x21, 0x20, 0x5f, // Set column address
+    0x22, 0x00, 0x03, // Set page address
+    0x40
+  };
+  OLED_writeCMD(buf, sizeof(buf));
 
-    HAL_I2C_Mem_Write(
-        OLED_I2CInst, OLED_I2C_ADDRESS << 1, 0x40, 1, data, length, 1000);
-
-  // while (OLED_I2CInst->State != HAL_I2C_STATE_READY) {}; // wait
-  /*
+*/
+   while (OLED_I2CInst->State != HAL_I2C_STATE_READY) {}; // wait
+   HAL_I2C_Mem_Write(
+       OLED_I2CInst, OLED_I2C_ADDRESS << 1, 0x40, 1, data, length, 1000);
+   //HAL_I2C_Master_Transmit(OLED_I2CInst, OLED_I2C_ADDRESS << 1, data, length, 1000);
+#if 0
   for (uint8_t i = 0; i < 8; i++) {
-      uint8_t buf[] = {
-          0xB0 + i, 0x00, 0x12
-      };
-      OLED_writeCMD(buf, 3);
-      //(hi2c,
-      //ssd1306_WriteCommand(hi2c, 0x00);
-      //ssd1306_WriteCommand(hi2c, 0x10);
+    uint8_t buf[] = {0xB0 + i, 0x00, 0x12};
+    OLED_writeCMD(buf, 3);
+    //(hi2c,
+    // ssd1306_WriteCommand(hi2c, 0x00);
+    // ssd1306_WriteCommand(hi2c, 0x10);
 
-      HAL_I2C_Mem_Write(
-          OLED_I2CInst, OLED_I2C_ADDRESS << 1, 0x40, 1, data + (OLED_WIDTH * i),
-  OLED_WIDTH, 1000);
-  }*/
-  //uint8_t buf = {0x40};
-//HAL_I2C_Master_Transmit(OLED_I2CInst, OLED_I2C_ADDRESS << 1, buf, 1, 1000);
+    HAL_I2C_Mem_Write(OLED_I2CInst, OLED_I2C_ADDRESS << 1, 0x40, 1,
+                      data + (OLED_WIDTH * i), OLED_WIDTH, 1000);
+  }
+#endif
+  // uint8_t buf = {0x40};
+  // HAL_I2C_Master_Transmit(OLED_I2CInst, OLED_I2C_ADDRESS << 1, buf, 1, 1000);
 
-  //HAL_I2C_Master_Transmit(OLED_I2CInst, OLED_I2C_ADDRESS << 1, (uint8_t *)data,
+  // HAL_I2C_Master_Transmit(OLED_I2CInst, OLED_I2C_ADDRESS << 1, (uint8_t
+  // *)data,
 //                          length, 1000);
-  // uint8_t buf[2] = {0X40};
-  // HAL_I2C_Master_Transmit(OLED_I2CInst, OLED_I2C_ADDRESS << 1, buf, 2, 1000);
-  // while (OLED_I2CInst->State != HAL_I2C_STATE_READY) {}; // wait
-  // HAL_I2C_Master_Transmit(OLED_I2CInst, OLED_I2C_ADDRESS << 1, data, length,
-  // 1000); for (int i = 0; i < length; i++) {
-  // uint8_t buf[2] = {0X40, data[i]};
-  // buf[1] = data[i];
-  // HAL_I2C_Master_Transmit(OLED_I2CInst, OLED_I2C_ADDRESS << 1, buf, 2, 1000);
-  //}
+// uint8_t buf[2] = {0X40};
+// HAL_I2C_Master_Transmit(OLED_I2CInst, OLED_I2C_ADDRESS << 1, buf, 2, 1000);
+// while (OLED_I2CInst->State != HAL_I2C_STATE_READY) {}; // wait
+// HAL_I2C_Master_Transmit(OLED_I2CInst, OLED_I2C_ADDRESS << 1, data, length,
+// 1000); for (int i = 0; i < length; i++) {
+// uint8_t buf[2] = {0X40, data[i]};
+// buf[1] = data[i];
+// HAL_I2C_Master_Transmit(OLED_I2CInst, OLED_I2C_ADDRESS << 1, buf, 2, 1000);
+//}
 #endif
 }
 
@@ -177,6 +183,7 @@ void oled_init(I2C_HandleTypeDef *i2c) {
   OLED_I2CInst = i2c;
   // Initialisation
   delay(5);
+  while (OLED_I2CInst->State != HAL_I2C_STATE_READY) {}; // wait
   OLED_writeCMD(OLED_initSequence, sizeof OLED_initSequence);
   delay(10);
 }

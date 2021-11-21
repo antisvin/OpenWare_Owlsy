@@ -508,8 +508,12 @@ public:
   void draw(ScreenBuffer& screen){
     screen.clear();
     screen.setTextSize(1);
-    screen.setCursor(20, 12);
-    screen.print("Owlsy");
+    //screen.setCursor(20, 12);
+    screen.print(10, 12, "des");
+    screen.print(10, 22, "Puddels");
+    screen.print(10, 32, "Kern");
+    screen.drawLine(0, 0, 63, 31, WHITE);
+    screen.drawRectangle(0, 0, 64, 32, WHITE);
     return;
 
     screen.setTextWrap(false);

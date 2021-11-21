@@ -44,6 +44,7 @@ private:
   uint16_t textcolor;
   uint16_t textbgcolor;
   bool wrap;
+  const uint8_t bytes_per_column = OLED_HEIGHT / 8;
 public:
   ScreenBuffer(uint16_t w, uint16_t h);
   inline int getWidth(){
