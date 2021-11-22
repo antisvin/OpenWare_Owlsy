@@ -86,8 +86,8 @@ public:
   };
   const char system_names[SYS_LAST][16] = {
       "Bootloader",
-      "Erase patches",
-      "Defragmentation",
+      "Erase",
+      "Defrag",
       "Exit",
   };
   bool systemPressed;
@@ -253,25 +253,26 @@ public:
 
   void drawSystem(uint8_t selected, ScreenBuffer &screen) {
     screen.setTextSize(1);
+    const uint8_t offset = 16;
     if (activeEncoder == 1)
       selected = min(selected, uint8_t(SYS_LAST));
-    if (activeEncoder == 1 && selected < 1)
-      screen.print(18, 24, "Caveat emptor!");
+    //if (activeEncoder == 1 && selected < 1)
+    //  screen.print(offset, 24, "Caveat emptor!");
 
     if (selected > 0) {
-      screen.setCursor(1, 24);
+      screen.setCursor(1, offset);
       screen.print(system_names[selected - 1]);
     };
-    screen.setCursor(1, 24 + 10);
+    screen.setCursor(1, offset + 8);
     screen.print(system_names[selected]);
     if (selected + 1 < uint8_t(SYS_LAST)) {
-      screen.setCursor(1, 24 + 20);
+      screen.setCursor(1, offset + 16);
       screen.print(system_names[selected + 1]);
     }
     if (activeEncoder == 0)
-      screen.invert(0, 25, 128, 10);
+      screen.invert(0, offset - 1, 64, 10);
     else
-      screen.drawRectangle(0, 25, 128, 10, WHITE);
+      screen.drawRectangle(0, offset - 1, 64, 10, WHITE);
   }
   void drawStatus(ScreenBuffer &screen) {
     int offset = 14;
@@ -446,28 +447,6 @@ public:
         WHITE);
   }
 
-  void drawParameterNames(ScreenBuffer &screen) {
-    int y = 29;
-    screen.setTextSize(1);
-    int i = selectedPid[0];
-    screen.print(1, y, names[i]);
-    if (selectedPid[0] == i)
-      screen.invert(0, y - 10, 64, 10);
-    i += 1;
-    screen.print(65, y, names[i]);
-    if (selectedPid[0] == i)
-      screen.invert(64, y - 10, 64, 10);
-    y += 12;
-    i += 7;
-    screen.print(1, y, names[i]);
-    if (selectedPid[0] == i)
-      screen.invert(0, y - 10, 64, 10);
-    i += 1;
-    screen.print(65, y, names[i]);
-    if (selectedPid[0] == i)
-      screen.invert(64, y - 10, 64, 10);
-  }
-
   void draw(ScreenBuffer &screen) {
     screen.clear();
     screen.setTextWrap(false);
@@ -512,26 +491,30 @@ public:
   void drawPatchNames(int selected, ScreenBuffer &screen) {
     screen.setTextSize(1);
     selected = min(uint8_t(selected), registry.getNumberOfPatches() - 1);
+    uint8_t offset = 16;
     if (selected > 1) {
-      screen.setCursor(1, 24);
+      screen.setCursor(1, offset);
       screen.print((int)selected - 1);
       screen.print(".");
       screen.print(registry.getPatchName(selected - 1));
     };
-    screen.setCursor(1, 24 + 10);
+    screen.setCursor(1, offset + 8);
     screen.print((int)selected);
     screen.print(".");
-    screen.print(registry.getPatchName(selected));
+    char buf[9];
+    buf[8] = 0;
+    scrollTitle(registry.getPatchName(selected), buf, (selected < 10) ? 8 : 7);
+    screen.print(buf);
     if (selected + 1 < (int)registry.getNumberOfPatches()) {
-      screen.setCursor(1, 24 + 20);
+      screen.setCursor(1, offset + 16);
       screen.print((int)selected + 1);
       screen.print(".");
       screen.print(registry.getPatchName(selected + 1));
     }
     if (activeEncoder == 0)
-      screen.invert(0, 25, 128, 10);
+      screen.invert(0, offset - 1, 64, 10);
     else
-      screen.drawRectangle(0, 25, 128, 10, WHITE);
+      screen.drawRectangle(0, offset - 1, 64, 10, WHITE);
   }
 
   void drawResourceNames(int selected, ScreenBuffer &screen) {
@@ -540,38 +523,41 @@ public:
       selected = min(uint8_t(selected), registry.getNumberOfResources());
     else
       selected = min(uint8_t(selected), registry.getNumberOfResources() - 1);
+    uint8_t offset = 16;
     if (resourceDelete && selected == 0)
-      screen.print(18, 24, "Delete:");
+      screen.print(12, offset, "Delete:");
     if (selected > 0 && registry.getNumberOfResources() > 0) {
-      screen.setCursor(1, 24);
+      screen.setCursor(1, offset);
       screen.print((int)selected + MAX_NUMBER_OF_PATCHES);
       screen.print(".");
       screen.print(registry.getResourceName(MAX_NUMBER_OF_PATCHES + selected));
     };
     if (selected < (int)registry.getNumberOfResources()) {
-      screen.setCursor(1, 24 + 10);
+      screen.setCursor(1, offset + 8);
       screen.print((int)selected + 1 + MAX_NUMBER_OF_PATCHES);
       screen.print(".");
-      screen.print(
-          registry.getResourceName(MAX_NUMBER_OF_PATCHES + 1 + selected));
+      char buf[9];
+      buf[8] = 0;
+      scrollTitle(registry.getResourceName(MAX_NUMBER_OF_PATCHES + 1 + selected), buf, (selected < 10) ? 8 : 7);
+      screen.print(buf);
     } else if (resourceDelete) {
-      screen.print(18, 24 + 10, "Exit");
+      screen.print(12, offset + 8, "Exit");
     }
     if (selected + 1 < (int)registry.getNumberOfResources()) {
-      screen.setCursor(1, 24 + 20);
+      screen.setCursor(1, offset + 16);
       screen.print((int)selected + 2 + MAX_NUMBER_OF_PATCHES);
       screen.print(".");
       screen.print(
           registry.getResourceName(MAX_NUMBER_OF_PATCHES + 2 + selected));
     } else if (resourceDelete &&
                selected < (int)registry.getNumberOfResources()) {
-      screen.print(18, 24 + 20, "Exit");
+      screen.print(12, offset + 16, "Exit");
     }
 
     if (resourceDelete)
-      screen.drawRectangle(0, 25, 128, 10, WHITE);
+      screen.drawRectangle(0, offset - 1, 64, 10, WHITE);
     else
-      screen.invert(0, 25, 128, 10);
+      screen.invert(0, offset - 1, 64, 10);
   }
 
   void drawProgress(uint8_t progress, ScreenBuffer &screen,
@@ -679,32 +665,18 @@ public:
     }
   }
 
-  void drawTitle(ScreenBuffer &screen) { drawTitle(title, screen); }
+  void drawTitle(ScreenBuffer &screen) { drawTitle(title, screen, true); }
 
-  void drawTitle(const char *title, ScreenBuffer &screen) {
+  void drawTitle(const char *title, ScreenBuffer &screen, bool scroll = false) {
     // draw title
     screen.setTextSize(1);
-    size_t title_len = strlen(title);
-    const size_t viewable = 10;
-    if (title_len <= viewable) {
-      title_pos = 0;
-      title_timer = 0;
-      screen.print(1, 8, title);
-    } else {
-      if (title_pos == 0) {
-        if (title_timer++ > max_end_wait) {
-          title_pos++;
-          title_timer = 0;
-        }
-      } else if (title_timer++ > max_char_wait) {
-        title_pos++;
-        title_timer = 0;
-      }
-      if (title_pos > title_len)
-        title_pos = 0;
-      char buf[viewable + 1];
-      strncpy(buf, title + title_pos, viewable);
+    if (scroll) {
+      char buf[11];
+      scrollTitle(title, buf, 10);
       screen.print(1, 8, buf);
+    }
+    else {
+      screen.print(1, 8, title);
     }
   }
 
@@ -1010,6 +982,28 @@ public:
       break;
     default:
       break;
+    }
+  }
+
+  void scrollTitle(const char* title_msg, char* buf, size_t viewable) {
+    size_t title_len = strlen(title_msg);
+    if (title_len <= viewable) {
+      title_pos = 0;
+      title_timer = 0;
+      strcpy(buf, title_msg);
+    } else {
+      if (title_pos == 0) {
+        if (title_timer++ > max_end_wait) {
+          title_pos++;
+          title_timer = 0;
+        }
+      } else if (title_timer++ > max_char_wait) {
+        title_pos++;
+        title_timer = 0;
+      }
+      if (title_pos > title_len)
+        title_pos = 0;
+      strncpy(buf, title_msg + title_pos, viewable);
     }
   }
 

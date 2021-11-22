@@ -99,7 +99,7 @@ public:
           StorageBlock storage_block = storage.getBlock(block);
           if (storage_block.verify()){
 #ifdef USE_SCREEN
-            p = stpcpy(p, "Copying block\n");
+            p = stpcpy(p, "Copying block ");
             p = stpcpy(p, (const char*)msg_itoa(block, 10));
             p = stpcpy(p, " / ");
             p = stpcpy(p, (const char*)msg_itoa(total_blocks, 10));
@@ -123,7 +123,7 @@ public:
       case DEFRAG_ERASE:
         if (sector < storage_sectors){
 #ifdef USE_SCREEN
-          p = stpcpy(p, "Erasing sector\n");
+          p = stpcpy(p, "Erasing sector ");
           p = stpcpy(p, (const char*)msg_itoa(sector, 10));
           p = stpcpy(p, " / ");
           p = stpcpy(p, (const char*)msg_itoa(storage_sectors, 10));
@@ -140,7 +140,7 @@ public:
       case DEFRAG_RESTORE:
         if (written_sector < buffer_sectors){
 #ifdef USE_SCREEN
-          p = stpcpy(p, "Restoring sector\n");
+          p = stpcpy(p, "Restoring sector ");
           p = stpcpy(p, (const char*)msg_itoa(written_sector, 10));
           p = stpcpy(p, " / ");
           p = stpcpy(p, (const char*)msg_itoa(buffer_sectors, 10));
