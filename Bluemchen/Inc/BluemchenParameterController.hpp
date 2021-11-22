@@ -435,26 +435,15 @@ public:
 
   void drawGlobalParameterNames(ScreenBuffer &screen) {
     screen.setTextSize(1);
-    // Footer
-    screen.setCursor(66, 24 + 20);
-    screen.print("Shift");
-    screen.setCursor(98, 24 + 20);
-    screen.print("Value");
     // First row
     if (selectedPid[0] > 0)
-      screen.print(1, 24, names[selectedPid[0] - 1]);
+      screen.print(1, 16, names[selectedPid[0] - 1]);
+    screen.print(1, 24, names[selectedPid[0]]);
+    screen.invert(0, 16, 64, 8);
     // Second row
-    screen.print(1, 24 + 10, names[selectedPid[0]]);
-    // Third row
-    if (selectedPid[0] < SIZE - 1)
-      screen.print(1, 24 + 20, names[selectedPid[0] + 1]);
-    // Offset and param value
-    screen.setCursor(66, 24 + 10);
-    screen.print(user[selectedPid[0]]);
-    screen.setCursor(100, 24 + 10);
-    screen.print(parameters[selectedPid[0]]);
-    // Frame around value
-    screen.invert(0, 25, 98, 10);
+    screen.drawRectangle(
+        0, 26, max(1, min(64, display_parameters[selectedPid[0]] / 64)), 6,
+        WHITE);
   }
 
   void drawParameterNames(ScreenBuffer &screen) {
@@ -505,7 +494,7 @@ public:
         drawCallback(screen.getBuffer(), screen.getWidth(), screen.getHeight());
         break;
       case SELECTGLOBALPARAMETER:
-        drawTitle(screen);
+        drawTitle("Parameters", screen);
         drawGlobalParameterNames(screen);
         break;
       case CONTROL:
