@@ -1,7 +1,3 @@
-SAI slots/offsets - MDMA?
-OLED DMA - copy buffer from ITCM with MDMA?
+OLED driver
 SDMMC
-USB audio - test if works
-Other patching environment - PD, MAX, Gen
-Turn off OLED before bootloader jump?
-FASTHEAP - CCM replacement
+USB audio - new code from upstream?

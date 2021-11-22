@@ -46,7 +46,7 @@ static DefragStorageTask defrag_task;
  */
 template <uint8_t SIZE> class ParameterController {
 public:
-  char title[10] = "  Owlsy";
+  char title[32] = "  Owlsy";
 
   enum EncoderSensitivity {
     SENS_SUPER_FINE = 0,
@@ -129,6 +129,8 @@ public:
   static constexpr size_t max_end_wait = 100;
   size_t message_pos = 0;
   size_t message_timer = 0;
+  size_t title_pos = 0;
+  size_t title_timer = 0;
   DisplayMode displayMode;
 
   Scope<AUDIO_CHANNELS, AUDIO_CHANNELS> scope;
@@ -271,27 +273,6 @@ public:
     else
       screen.drawRectangle(0, 25, 128, 10, WHITE);
   }
-
-  void drawParameterValues(ScreenBuffer &screen) {
-    // draw 4x2x2 levels on bottom 8px row
-    int x = 0;
-    int y = 63 - 7;
-    for (int i = 0; i < 16; ++i) {
-      // 4px high by up to 16px long rectangle, filled if selected
-      if (i == lastSelectedPid)
-        screen.fillRectangle(x, y, max(1, min(16, display_parameters[i] / 255)),
-                             4, WHITE);
-      else
-        screen.drawRectangle(x, y, max(1, min(16, display_parameters[i] / 255)),
-                             4, WHITE);
-      x += 16;
-      if (i == 7) {
-        x = 0;
-        y += 3;
-      }
-    }
-  }
-
   void drawStatus(ScreenBuffer &screen) {
     int offset = 14;
     screen.setTextSize(1);
@@ -503,19 +484,16 @@ public:
     screen.setTextWrap(false);
     switch (owl.getOperationMode()) {
     case LOAD_MODE:
-      drawTitle(screen);
-      drawProgress(user[LOAD_INDICATOR_PARAMETER] * 127 / 4095, screen,
-                   "Uploading...");
+      drawProgress(user[LOAD_INDICATOR_PARAMETER] * 63 / 4095, screen,
+                   "Uploading");
       break;
     case ERASE_MODE:
-      drawTitle(screen);
-      drawProgress(user[LOAD_INDICATOR_PARAMETER] * 127 / 4095, screen,
-                   "Erasing...");
+      drawProgress(user[LOAD_INDICATOR_PARAMETER] * 63 / 4095, screen,
+                   "Erasing");
       break;
     case DEFRAG_MODE:
-      drawTitle(screen);
-      drawProgress(user[LOAD_INDICATOR_PARAMETER] * 127 / 4095, screen,
-                   "Defrag...");
+      drawProgress(user[LOAD_INDICATOR_PARAMETER] * 63 / 4095, screen,
+                   "Defrag");
       break;
     default:
       switch (displayMode) {
@@ -539,7 +517,6 @@ public:
         drawStats(screen);
         break;
       }
-      drawParameters(screen);
     }
   }
 
@@ -611,39 +588,25 @@ public:
   void drawProgress(uint8_t progress, ScreenBuffer &screen,
                     const char *message) {
     // progress should be 0 - 127
-    screen.drawRectangle(0, 26, 128, 20, WHITE);
-    screen.setCursor(32, 36);
+    screen.drawRectangle(0, 0, 64, 16, WHITE);
     screen.setTextSize(1);
-    screen.print(message);
-    screen.fillRectangle(0, 40, progress, 5, WHITE);
+    screen.print(2, 11, message);
+    screen.fillRectangle(0, 12, progress, 3, WHITE);
     ProgramVector *pv = getProgramVector();
-    if (pv->message != NULL)
-      screen.print(0, 55, pv->message);
+    if (pv->message != NULL) {
+      screen.setTextWrap(true);
+      screen.print(0, 24, pv->message);
+      screen.setTextWrap(false);
+    }
   }
 
   void drawParameter(int pid, int y, ScreenBuffer &screen) {
     int x = 0;
     screen.setTextSize(1);
     screen.print(x, y, names[pid]);
-    // 6px high by up to 96px long rectangle
     y += 2;
-    //x += 64;
     screen.drawRectangle(x, y, max(1, min(64, display_parameters[pid] / 64)), 6,
                          WHITE);
-  }
-
-  void drawParameters(ScreenBuffer &screen) {
-    drawParameterValues(screen);
-    int x = 0;
-    // int y = 63-8;
-    for (int i = 2; i < NOF_ENCODERS; ++i) {
-      // screen.print(x+1, y, blocknames[i-1]);
-      // if(selectedBlock == i)
-      //  screen.drawHorizontalLine(x, y, 32, WHITE);
-      // screen.invert(x, 63-8, 32, 8);
-      // screen.invert(x, y-10, 32, 10);
-      x += 32;
-    }
   }
 
   void drawStats(ScreenBuffer &screen) {
@@ -693,7 +656,7 @@ public:
       strncpy(names[pid], name, 10);
   }
 
-  void setTitle(const char *str) { strncpy(title, str, 10); }
+  void setTitle(const char *str) { strncpy(title, str, 31); }
 
   uint8_t getSize() const { return SIZE; }
 
@@ -705,17 +668,15 @@ public:
       size_t message_len = strlen(pv->message);
       const size_t viewable = 10;
       if (message_len <= viewable) {
-          message_pos = 0;
-          message_timer = 0;
-      }
-      else {
+        message_pos = 0;
+        message_timer = 0;
+      } else {
         if (message_pos == 0) {
-          if (message_timer++ > max_end_wait){
+          if (message_timer++ > max_end_wait) {
             message_pos++;
             message_timer = 0;
           }
-        }
-        else if (message_timer++ > max_char_wait) {
+        } else if (message_timer++ > max_char_wait) {
           message_pos++;
           message_timer = 0;
         }
@@ -731,10 +692,31 @@ public:
 
   void drawTitle(ScreenBuffer &screen) { drawTitle(title, screen); }
 
-  void drawTitle(const char *title, ScreenBuffer &screen, bool large = false) {
+  void drawTitle(const char *title, ScreenBuffer &screen) {
     // draw title
-    screen.setTextSize(large ? 2 : 1);
-    screen.print(1, large ? 17 : 8, title);
+    screen.setTextSize(1);
+    size_t title_len = strlen(title);
+    const size_t viewable = 10;
+    if (title_len <= viewable) {
+      title_pos = 0;
+      title_timer = 0;
+      screen.print(1, 8, title);
+    } else {
+      if (title_pos == 0) {
+        if (title_timer++ > max_end_wait) {
+          title_pos++;
+          title_timer = 0;
+        }
+      } else if (title_timer++ > max_char_wait) {
+        title_pos++;
+        title_timer = 0;
+      }
+      if (title_pos > title_len)
+        title_pos = 0;
+      char buf[viewable + 1];
+      strncpy(buf, title + title_pos, viewable);
+      screen.print(1, 8, buf);
+    }
   }
 
   void setCallback(void *callback) {

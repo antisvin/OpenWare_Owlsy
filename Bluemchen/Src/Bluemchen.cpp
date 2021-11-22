@@ -32,8 +32,8 @@ void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t*
   //SCB_InvalidateDCache_by_Addr((uint32_t*)adc_values, sizeof(adc_values));
 #endif
   // Note that updateValue will apply smoothing, so we don't have to do it here
-  graphics.params.updateValue(0, adc_values[0]);
-  graphics.params.updateValue(1, 4095 - adc_values[1]);
+  graphics.params.updateValue(0, adc_values[0] + adc_values[2]);
+  graphics.params.updateValue(1, adc_values[1] + adc_values[3]);
 }
 
 /*

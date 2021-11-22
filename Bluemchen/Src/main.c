@@ -346,7 +346,7 @@ static void MX_ADC1_Init(void)
   }
   /** Configure Regular Channel
   */
-  sConfig.Channel = ADC_CHANNEL_10;
+  sConfig.Channel = ADC_CHANNEL_15;
   sConfig.Rank = ADC_REGULAR_RANK_1;
   sConfig.SamplingTime = ADC_SAMPLETIME_8CYCLES_5;
   sConfig.SingleDiff = ADC_SINGLE_ENDED;
@@ -359,7 +359,7 @@ static void MX_ADC1_Init(void)
   }
   /** Configure Regular Channel
   */
-  sConfig.Channel = ADC_CHANNEL_15;
+  sConfig.Channel = ADC_CHANNEL_10;
   sConfig.Rank = ADC_REGULAR_RANK_2;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
@@ -403,7 +403,6 @@ static void MX_I2C1_Init(void)
 
   /* USER CODE END I2C1_Init 1 */
   hi2c1.Instance = I2C1;
-//  hi2c1.Init.Timing = 0x0050174F;
   hi2c1.Init.Timing = 0x10A00B20;
   hi2c1.Init.OwnAddress1 = 0;
   hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
@@ -699,11 +698,11 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(CODEC_RESET1_GPIO_Port, CODEC_RESET1_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin : ENC_B_Pin */
-  GPIO_InitStruct.Pin = ENC_B_Pin;
+  /*Configure GPIO pin : ENC_A_Pin */
+  GPIO_InitStruct.Pin = ENC_A_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(ENC_B_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(ENC_A_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : USER_LED_Pin */
   GPIO_InitStruct.Pin = USER_LED_Pin;
@@ -712,11 +711,11 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(USER_LED_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : ENC_A_Pin */
-  GPIO_InitStruct.Pin = ENC_A_Pin;
+  /*Configure GPIO pin : ENC_B_Pin */
+  GPIO_InitStruct.Pin = ENC_B_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(ENC_A_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(ENC_B_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : ENC_CLICK_Pin */
   GPIO_InitStruct.Pin = ENC_CLICK_Pin;
