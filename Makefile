@@ -8,11 +8,11 @@ endif
 .PHONY: clean
 
 # To avoid problems on case insensitive filesystems, mark all targets named the same as a directory as phony
-.PHONY: alchemist wizard magus lich owlpedal quadfm player prism effectsbox noctua biosignals daisypatch midibootdaisy witch midiboot tesseract genius
+.PHONY: alchemist wizard magus lich owlpedal quadfm player prism effectsbox noctua biosignals daisypatch bluemchen midibootdaisy witch midiboot tesseract genius
 
 export OPENWARE CONFIG
 
-all: alchemist wizard magus lich witch owlpedal noctua effectsbox biosignals daisypatch midibootdaisy midiboot genius # tesseract prism player quadfm  ## build most targets
+all: alchemist wizard magus lich witch owlpedal noctua effectsbox biosignals daisypatch bluemchen midibootdaisy midiboot genius # tesseract prism player quadfm  ## build most targets
 
 midiboot: ## build MidiBoot project
 	@$(MAKE) -C MidiBoot all
@@ -62,6 +62,9 @@ biosignals: ## build BioSignals project
 daisypatch: ## build DaisyPatch project
 	@$(MAKE) -C DaisyPatch all
 
+bluemchen: ## build Bluemchen project
+	@$(MAKE) -C Bluemchen all
+
 midibootdaisy: ## build MidiBootDaisy project
 	@$(MAKE) -C MidiBootDaisy all
 
@@ -83,6 +86,7 @@ clean: ## remove generated files
 	@$(MAKE) -C MidiBoot clean
 	@$(MAKE) -C MidiBootDaisy clean	
 	@$(MAKE) -C DaisyPatch clean
+	@$(MAKE) -C Bluemchen clean
 
 docs: ## generate HTML documentation
 	@doxygen Doxyfile

@@ -23,7 +23,7 @@ CPP_SRC += $(OPENWARE)/Source/VersionToken.cpp
 # S_SRC = startup_openboot.s
 
 
-ifeq ($(PLATFORM),Daisy)
+ifeq ($(PLATFORM),DaisyPatch)
 	CPPFLAGS += -Iusbd-hs -DDAISY -DDAISY_PATCH -DUSE_USBD_FS
 	vpath %.c usbd-hs
 else ifeq ($(PLATFORM),Bluemchen)
