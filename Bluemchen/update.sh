@@ -1,4 +1,4 @@
-PROJECT=DaisyPatch
+PROJECT=Bluemchen
 DEVICE=hw:3,0,0
 
 make clean

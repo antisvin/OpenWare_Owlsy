@@ -59,7 +59,7 @@
 #define USE_EXTERNAL_RAM
 #define USE_CACHE
 
-#define USE_UART_MIDI_TX
+//#define USE_UART_MIDI_TX
 #define USE_UART_MIDI_RX
 #define UART_MIDI_HANDLE huart1
 #define UART_MIDI_RX_BUFFER_SIZE 256

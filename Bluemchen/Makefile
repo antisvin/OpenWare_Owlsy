@@ -1,4 +1,4 @@
-PROJECT = DaisyPatch
+PROJECT = Bluemchen
 BUILDROOT = .
 OPENWARE ?= $(BUILDROOT)/..
 

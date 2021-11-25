@@ -613,7 +613,7 @@ public:
     if (getErrorMessage() != NULL) {
       screen.setTextSize(1);
       screen.setTextWrap(true);
-      screen.print(0, 26, getErrorMessage());
+      screen.print(0, 16, getErrorMessage());
       screen.setTextWrap(false);
     }
   }

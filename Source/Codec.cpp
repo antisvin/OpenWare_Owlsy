@@ -188,7 +188,7 @@ size_t usbd_audio_rx_callback(uint8_t* data, size_t len){
   audio_t* src = (audio_t*)data;
   size_t blocksize = len / (USBD_AUDIO_RX_CHANNELS*AUDIO_BYTES_PER_SAMPLE);
   #ifndef DUAL_CODEC
-  size_t available = audio_rx_buffer.getWriteCapacity()/AUDIO_CHANNELS;
+  size_t available = audio_rx_buffer.getWriteCapacity() / AUDIO_CHANNELS;
   #else
   size_t available = audio_rx1_buffer.getWriteCapacity() * 2 /AUDIO_CHANNELS;
   #endif
@@ -239,7 +239,7 @@ void usbd_audio_tx_callback(uint8_t* data, size_t len){
   size_t available = audio_tx_buffer.getReadCapacity()/AUDIO_CHANNELS;
   #else
   // Bufferrs are in sync, so we can use just first one and double its size
-  size_t available = audio_tx1_buffer.getReadCapacity()*2/AUDIO_CHANNELS;
+  size_t available = audio_tx1_buffer.getReadCapacity() * 2 / AUDIO_CHANNELS;
   #endif
   if(available < blocksize){
     usbd_audio_tx_flow += blocksize-available;
@@ -250,7 +250,7 @@ void usbd_audio_tx_callback(uint8_t* data, size_t len){
   while(blocksize--){
     #ifndef DUAL_CODEC
     int32_t* src = audio_tx_buffer.getReadHead();
-    size_t ch = USBD_AUDIO_TX_CHANNELS / 2;
+    size_t ch = USBD_AUDIO_TX_CHANNELS;
     while(ch--)
       *dst++ = AUDIO_INT32_TO_SAMPLE(*src++); // shift, round, dither, clip, truncate, bitswap
     audio_tx_buffer.incrementReadHead(AUDIO_CHANNELS);
