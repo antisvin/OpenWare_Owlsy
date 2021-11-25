@@ -468,17 +468,23 @@ public:
     screen.print("Shift");
     screen.setCursor(98, 24 + 20);
     screen.print("Value");
+    char name_buf[11] = {};
     // First row
-    if (selectedPid[0] > 0)
-      screen.print(1, 24, names[selectedPid[0] - 1]);
+    if (selectedPid[0] > 0) {
+      strncpy(name_buf, names[selectedPid[0] - 1], 10);
+      screen.print(1, 24, name_buf);
+    }
     // Second row
-    screen.print(1, 24 + 10, names[selectedPid[0]]);
+    strncpy(name_buf, names[selectedPid[0]], 10);
+    screen.print(1, 24 + 10, name_buf);
     // Third row
-    if (selectedPid[0] < SIZE - 1)
-      screen.print(1, 24 + 20, names[selectedPid[0] + 1]);
+    if (selectedPid[0] < SIZE - 1) {
+      strncpy(name_buf, names[selectedPid[0] + 1], 10);
+      screen.print(1, 24 + 20, name_buf);
+    }
     // Offset and param value
     screen.setCursor(66, 24 + 10);
-    static char buf[6] = {0, 0, 0};
+    char buf[6] = {0, 0, 0};
     strncpy(buf, msg_ftoa(float(user[selectedPid[0]]) * value_mul, 10), 5);
     if (user[selectedPid[0]] >= 0)
       buf[4] = 0;
