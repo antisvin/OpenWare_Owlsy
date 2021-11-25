@@ -47,7 +47,7 @@ static DefragStorageTask defrag_task;
 template <uint8_t SIZE>
 class ParameterController {
 public:
-  char title[10] = "  Owlsy";
+  char title[13] = "  Owlsy     ";
 
   enum EncoderSensitivity {
     SENS_SUPER_FINE = 0,
@@ -90,6 +90,7 @@ public:
     "Exit",
   };
   bool systemPressed;
+  static constexpr float value_mul = 1.0 / 4096;
 
   float cpu_used;
   #ifdef CPU_SMOOTH
@@ -139,6 +140,7 @@ public:
     resourceDelete = false;
     drawCallback = defaultDrawCallback;
     for (int i = 0; i < SIZE; ++i) {
+      memset(names[i], 0, 16);
       strcpy(names[i], "Param  ");
       if (i < 8){
         names[i][6] = 'A' + i;
@@ -421,7 +423,7 @@ public:
     case STATUS:
       drawTitle(controlModeNames[controlMode], screen);
       drawStatus(screen);
-      drawMessage(55, screen);
+      drawMessage(screen, 55);
       break;
     case PATCH:
       drawTitle(controlModeNames[controlMode], screen);
@@ -476,9 +478,15 @@ public:
       screen.print(1, 24 + 20, names[selectedPid[0] + 1]);
     // Offset and param value
     screen.setCursor(66, 24 + 10);
-    screen.print(user[selectedPid[0]]);
+    static char buf[6] = {0, 0, 0};
+    strncpy(buf, msg_ftoa(float(user[selectedPid[0]]) * value_mul, 10), 5);
+    if (user[selectedPid[0]] >= 0)
+      buf[4] = 0;
+    screen.print(buf);
     screen.setCursor(100, 24 + 10);
-    screen.print(parameters[selectedPid[0]]);
+    buf[4] = 0;
+    strncpy(buf, msg_ftoa(float(parameters[selectedPid[0]]) * value_mul, 10), 4);
+    screen.print(buf);
     // Frame around value
     screen.invert(0, 25, 98, 10);
   }
@@ -691,14 +699,14 @@ public:
 
   void setName(uint8_t pid, const char *name) {
     if (pid < SIZE)
-      strncpy(names[pid], name, 11);
+      strncpy(names[pid], name, 15);
   }
 
-  void setTitle(const char *str) { strncpy(title, str, 10); }
+  void setTitle(const char *str) { strncpy(title, str, 12); }
 
   uint8_t getSize() const { return SIZE; }
 
-  void drawMessage(int16_t y, ScreenBuffer &screen) {
+  void drawMessage(ScreenBuffer &screen, int y = 24) {
     ProgramVector *pv = getProgramVector();
     if (pv->message != NULL) {
       screen.setTextSize(1);

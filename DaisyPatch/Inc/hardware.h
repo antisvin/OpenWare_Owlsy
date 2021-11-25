@@ -4,7 +4,7 @@
 #define USBD_MAX_POWER              100 // 100mA for iPad compatibility
 #define USBD_HANDLE hUsbDeviceFS
 
-#if defined DAISY
+#if defined DAISY_PATCH
   #define HARDWARE_ID                  DAISY_PATCH_HARDWARE
   #define HARDWARE_VERSION             "Owlsy"
 #else

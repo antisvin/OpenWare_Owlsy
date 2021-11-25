@@ -22,14 +22,8 @@ CPP_SRC += $(OPENWARE)/Source/ScreenBuffer.cpp
 CPP_SRC += $(OPENWARE)/Source/ScreenBufferMono.cpp
 CPP_SRC += $(OPENWARE)/Source/Graphics.cpp
 
-ifndef PLATFORM
-	PLATFORM = Daisy
-endif
-
-ifeq ($(PLATFORM),Daisy)
-	CPPFLAGS += -DDAISY
+CPPFLAGS += -DDAISY -DDAISY_PATCH
 #  vpath %.c usbd-hs
-endif
 
 include $(OPENWARE)/Hardware/sources.mk
 
@@ -48,7 +42,7 @@ include $(OPENWARE)/Hardware/h7.mk
 .PHONY: upload dfu
 
 upload:
-	$(OPENOCD) -c "program Build/DaisyPatch.elf verify reset exit"
+	$(OPENOCD) -c "program Build/$(PROJECT).elf verify reset exit"
 
 dfu:
-	sudo dfu-util -a 0 -s 0x08000000:leave -D Build/DaisyPatch.bin -d 0483:df11
+	sudo dfu-util -a 0 -s 0x08000000:leave -D Build/$(PROJECT).bin -d 0483:df11
