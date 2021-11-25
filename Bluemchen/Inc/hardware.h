@@ -34,7 +34,7 @@
 
 #define USE_SCREEN
 #define SSD1309
-//#define OLED_DMA
+//#define OLED_DMA // DMA doesn't work for data transfers for some reason, commands are OK
 //#define OLED_UPSIDE_DOWN
 #define OLED_I2C                    hi2c1
 #define OLED_I2C_ADDRESS            0x3C
