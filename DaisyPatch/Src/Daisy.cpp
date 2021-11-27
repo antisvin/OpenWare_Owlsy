@@ -14,6 +14,7 @@
 #include "OpenWareMidiControl.h"
 #include "SoftwareEncoder.hpp"
 #include "VersionToken.h"
+#include "SdCardTask.hpp"
 
 extern bool updateUi;
 extern uint16_t button_values;
@@ -78,6 +79,9 @@ void onChangePin(uint16_t pin){
   }
 }
 
+SdCardTask sd_card_task;
+uint8_t buf[4];
+
 void setup(){
   HAL_GPIO_WritePin(OLED_RST_GPIO_Port, OLED_RST_Pin, GPIO_PIN_RESET); // OLED off
 
@@ -95,7 +99,11 @@ void setup(){
   graphics.begin(&OLED_SPI);
 
   owl.setup();
-  setButtonValue(PUSHBUTTON, 0);
+  setButtonValue(PUSHBUTTON, 0); 
+
+  //BSP_SD_Init();
+  sd_card_task.setDestination("bank05.wav", buf, 4);
+  owl.setBackgroundTask(&sd_card_task);
 }
 
 static int16_t enc_data[2];

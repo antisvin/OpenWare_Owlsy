@@ -23,6 +23,7 @@
 
 /* USER CODE BEGIN firstSection */
 /* can be used to modify / undefine following code or add new definitions */
+#include "device.h"
 /* USER CODE END firstSection*/
 
 /* Includes ------------------------------------------------------------------*/
@@ -55,7 +56,7 @@ See BSP_SD_ErrorCallback() and BSP_SD_AbortCallback() below
  * in case of errors in either BSP_SD_ReadCpltCallback() or BSP_SD_WriteCpltCallback()
  * the value by default is as defined in the BSP platform driver otherwise 30 secs
  */
-#define SD_TIMEOUT 30 * 1000
+#define SD_TIMEOUT 1 * 1000
 
 #define SD_DEFAULT_BLOCK_SIZE 512
 
@@ -70,17 +71,20 @@ See BSP_SD_ErrorCallback() and BSP_SD_AbortCallback() below
 /* USER CODE END disableSDInit */
 
 /*
- * when using cachable memory region, it may be needed to maintain the cache
+ * when using cacheable memory region, it may be needed to maintain the cache
  * validity. Enable the define below to activate a cache maintenance at each
  * read and write operation.
  * Notice: This is applicable only for cortex M7 based platform.
  */
 /* USER CODE BEGIN enableSDDmaCacheMaintenance */
-/* #define ENABLE_SD_DMA_CACHE_MAINTENANCE  1 */
+#ifdef USE_CACHE
+#define ENABLE_SD_DMA_CACHE_MAINTENANCE  1
+#define ENABLE_SCRATCH_BUFFER
+#endif
 /* USER CODE END enableSDDmaCacheMaintenance */
 
 /*
-* Some DMA requires 4-Byte aligned address buffer to correctly read/wite data,
+* Some DMA requires 4-Byte aligned address buffer to correctly read/write data,
 * in FatFs some accesses aren't thus we need a 4-byte aligned scratch buffer to correctly
 * transfer data
 */
@@ -91,9 +95,11 @@ See BSP_SD_ErrorCallback() and BSP_SD_AbortCallback() below
 /* Private variables ---------------------------------------------------------*/
 #if defined(ENABLE_SCRATCH_BUFFER)
 #if defined (ENABLE_SD_DMA_CACHE_MAINTENANCE)
-ALIGN_32BYTES(static uint8_t scratch[BLOCKSIZE]); // 32-Byte aligned for cache maintenance
+static uint8_t scratch[BLOCKSIZE] __attribute__((section (".sdbuf")));
+//ALIGN_32BYTES(static uint8_t scratch[BLOCKSIZE]); // 32-Byte aligned for cache maintenance
 #else
-__ALIGN_BEGIN static uint8_t scratch[BLOCKSIZE] __ALIGN_END;
+static uint8_t scratch[BLOCKSIZE] __attribute__((section (".sdbuf")));
+//__ALIGN_BEGIN static uint8_t scratch[BLOCKSIZE] __ALIGN_END;
 #endif
 #endif
 /* Disk status */
@@ -139,7 +145,7 @@ const Diskio_drvTypeDef  SD_Driver =
 static int SD_CheckStatusWithTimeout(uint32_t timeout)
 {
   uint32_t timer;
-  /* block until SDIO peripherial is ready again or a timeout occur */
+  /* block until SDIO peripheral is ready again or a timeout occur */
 #if (osCMSIS <= 0x20000U)
   timer = osKernelSysTick();
   while( osKernelSysTick() - timer < timeout)
@@ -164,6 +170,7 @@ static DSTATUS SD_CheckStatus(BYTE lun)
   if(BSP_SD_GetCardState() == SD_TRANSFER_OK)
   {
     Stat &= ~STA_NOINIT;
+    printf("TRANSFER OK\n");
   }
 
   return Stat;
@@ -223,6 +230,8 @@ Stat = STA_NOINIT;
     }
   }
 
+  printf("NOINIT = %i\n", Stat & STA_NOINIT);
+
   return Stat;
 }
 
@@ -250,6 +259,7 @@ DSTATUS SD_status(BYTE lun)
 
 DRESULT SD_read(BYTE lun, BYTE *buff, DWORD sector, UINT count)
 {
+  uint8_t ret;
   DRESULT res = RES_ERROR;
   uint32_t timer;
 #if (osCMSIS < 0x20000U)
@@ -275,7 +285,7 @@ DRESULT SD_read(BYTE lun, BYTE *buff, DWORD sector, UINT count)
   {
 #endif
     /* Fast path cause destination buffer is correctly aligned */
-    uint8_t ret = BSP_SD_ReadBlocks_DMA((uint32_t*)buff, (uint32_t)(sector), count);
+    ret = BSP_SD_ReadBlocks_DMA((uint32_t*)buff, (uint32_t)(sector), count);
 
     if (ret == MSD_OK) {
 #if (osCMSIS < 0x20000U)
@@ -656,6 +666,7 @@ void BSP_SD_ReadCpltCallback(void)
    * No need to add an "osKernelRunning()" check here, as the SD_initialize()
    * is always called before any SD_Read()/SD_Write() call
    */
+  printf("READ CPLT\n");
 #if (osCMSIS < 0x20000U)
    osMessagePut(SDQueueID, READ_CPLT_MSG, 0);
 #else

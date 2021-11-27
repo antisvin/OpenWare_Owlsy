@@ -1,5 +1,7 @@
 #include <inttypes.h>
+extern "C" {
 #include "arm_math.h"
+}
 #include "device.h"
 #include "ServiceCall.h"
 #include "ApplicationSettings.h"

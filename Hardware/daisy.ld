@@ -19,7 +19,8 @@ ITCMHEAP (rw)     : ORIGIN = 0x00008000, LENGTH = 28K
 PROGRAMSTACK(rw)  : ORIGIN = 0x0000f000, LENGTH = 4K
 DTCMRAM (rw)      : ORIGIN = 0x20000000, LENGTH = 48K /* First 48kb of DTCM is used as FW RAM */
 PATCHRAM (rw)     : ORIGIN = 0x2000c000, LENGTH = 80K /* Remaining 80kb of DTCM is used as patch RAM */
-RAMHEAP (rwx)     : ORIGIN = 0x24000000, LENGTH = 512K
+RAMHEAP (rwx)     : ORIGIN = 0x24000000, LENGTH = 523776 /* 512k - 512 */
+SDBUF (rwx)       : ORIGIN = 0x2407fe00, LENGTH = 512
 RAM (rwx)         : ORIGIN = 0x30000000, LENGTH = 256K /* Firmware code, copied by bootloader */
 BUFFERS (rwx)     : ORIGIN = 0x30040000, LENGTH = 32K /* DMA buffer */
 RAM_D3 (rwx)      : ORIGIN = 0x38000000, LENGTH = 64K /* UNUSED */
@@ -71,10 +72,10 @@ SECTIONS
 		*/Daisy.o (.text .text*)
 		*/usbd*.o (.text .text*)
 		*/uart*.o (.text .text*)
-		*/ServiceCalls.o (.text .text*)
+/*		* /ServiceCalls.o (.text .text*) */
 		*/ProgramManager.o (.text .text*)
 		*/ScreenBuffer.o (.text .text*)
-		*/Graphics.o (.text .text*)
+/*		* /Graphics.o (.text .text*) */
 		*/Midi*.o (.text .text*)
 		*/ssd1309.o (.text .text*)
 		*/stm32h7xx_it.o (.text .text*)
@@ -220,6 +221,16 @@ SECTIONS
     	. = ALIGN(4);
   	} > DTCMRAM
   	_estack = ORIGIN(DTCMRAM) + LENGTH(DTCMRAM); /* end of firmware RAM */
+
+
+	.sdbuf (NOLOAD):
+	{
+                . = ALIGN(32);
+
+                *(.sdbuf)
+                *(.sdbuf*)
+
+	} > SDBUF
 
 	.ramheap (NOLOAD):
 	{
