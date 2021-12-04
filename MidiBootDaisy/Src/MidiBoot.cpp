@@ -233,6 +233,7 @@ void MidiHandler::handleFirmwareFlashCommand(uint8_t *data, uint16_t size) {
       led_on();
       FirmwareHeader* header = (FirmwareHeader*)loader.getData();
       if (header->magic == HEADER_MAGIC && header->checksum == HEADER_CHECKSUM_PLACEHOLDER){
+        // OWL firmware
         header->checksum = 0xFFFFFFFF; // Not an actual checksum yet
         checksum = crc32((void*)header, header->header_size - 4, 0);
         saveToFlash((uint32_t)&_FIRMWARE_STORAGE_BEGIN, loader.getData(), loader.getSize());
@@ -246,6 +247,12 @@ void MidiHandler::handleFirmwareFlashCommand(uint8_t *data, uint16_t size) {
         else {
           error(PROGRAM_ERROR, "Error storing checksum");
         }
+      }
+      else if (header->magic == DAISY_STACK_END) {
+        // Patch for daisy
+        saveToFlash(DAISY_APPLICATION_ADDRESS, loader.getData(), loader.getSize());
+        loader.clear();
+        led_off();
       }
       else {
         error(PROGRAM_ERROR, "Invalid firmware header");

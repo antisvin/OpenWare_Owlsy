@@ -75,8 +75,21 @@ int loadFirmware(void);
 
 typedef  void (*pFunction)(void);
 
+enum BootloaderMode {
+  BOOT_INVALID,
+  BOOT_OWL,
+  BOOT_DAISY,
+} bootloader_mode;
+
 static int testMagic(){
   return *OWLBOOT_MAGIC_ADDRESS == OWLBOOT_MAGIC_NUMBER;
+}
+
+static int testLoop(){
+  // Prevent reset cycles.
+  // Check if we've been reset without zeroing the magic address,
+  // which might indicate a corrupt firmware.
+  return *OWLBOOT_MAGIC_ADDRESS == OWLBOOT_LOOP_NUMBER;
 }
 
 static int testButton(){
@@ -91,7 +104,22 @@ static int testNoProgram(){
   // NOTE: this must run only if QSPI flash is:
   // a. initialized successfully
   // b. is in memory-mapped mode
-  return (*(__IO uint32_t*)APPLICATION_ADDRESS) != HEADER_MAGIC;
+  int result = 1;
+  if (*(__IO uint32_t*)DAISY_APPLICATION_ADDRESS == DAISY_STACK_END) {
+    // Daisy is checked first, because its firmare start comes later.
+    // If we check OWL first, it would be detected even after flashing a daisy patch
+    bootloader_mode = BOOT_DAISY;
+    result = 0;
+  }
+  else if (*(__IO uint32_t*)APPLICATION_ADDRESS == HEADER_MAGIC) {
+    bootloader_mode = BOOT_OWL;
+    result = 0;
+    MX_IWDG1_Init();
+  }
+  else {
+    MX_IWDG1_Init();
+  }
+  return result;
 }
 
 static int testWatchdogReset(){
@@ -141,12 +169,13 @@ int main(void)
   MX_GPIO_Init();
   MX_FMC_Init();
   MX_QUADSPI_Init();
-  MX_IWDG1_Init();
+  // MX_IWDG1_Init();
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
 
   SDRAM_Initialization_Sequence(&hsdram1);   
   MPU_Config();
+  bootloader_mode = BOOT_INVALID;
   if (qspi_init(QSPI_MODE_MEMORY_MAPPED) != MEMORY_OK){
     // We can end here only if QSPI settings are misconfigured
     error(RUNTIME_ERROR, "Flash init error");
@@ -158,17 +187,22 @@ int main(void)
     else if(testButton()){
       setMessage("Bootloader requested");
     }
+    else if(testLoop()){
+      error(RUNTIME_ERROR, "Unexpected firmware reset");
+    }
     else if(testWatchdogReset()){
       error(RUNTIME_ERROR, "Watchdog reset");
     }
     else if(testNoProgram()){
       error(RUNTIME_ERROR, "No valid firmware");
     }
-    else if(testFirmwareHeader()){
+    else if(bootloader_mode == BOOT_OWL && testFirmwareHeader()){
       error(RUNTIME_ERROR, "Invalid firmware header");
     }
-    else if (loadFirmware()){
-      // jump to application code
+    else if (bootloader_mode != BOOT_INVALID){
+      if (bootloader_mode == BOOT_OWL) {
+        loadFirmware();
+      }
 
       /* Disable all interrupts */
       __disable_irq();
@@ -186,20 +220,30 @@ int main(void)
 	      NVIC->ICPR[i]=0xFFFFFFFF;
       }
 
-      /* put marker in to prevent reset cycles */
-      *OWLBOOT_MAGIC_ADDRESS = OWLBOOT_LOOP_NUMBER;
+      uint32_t jump_address;
+      uint32_t isr_vector_address;
 
-      /* Jump to user application */
-      struct FirmwareHeader* header = getFirmwareHeader();
+      if (bootloader_mode == BOOT_OWL) {
+        /* put marker in to prevent reset cycles */
+        *OWLBOOT_MAGIC_ADDRESS = OWLBOOT_LOOP_NUMBER;
 
-      // Enable IWDG if firmware has option bit set
-      //if ((header->options >> OPT_IWDG_OFFSET) & OPT_IWDG_MASK)
-        MX_IWDG1_Init();
+        /* Jump to user application */
+        struct FirmwareHeader* header = getFirmwareHeader();
 
-      uint32_t JumpAddress = *(__IO uint32_t*) (header->isr_vector_address + 4);
-      pFunction jumpToApplication = (pFunction) JumpAddress;
+        // Enable IWDG if firmware has option bit set
+        //if ((header->options >> OPT_IWDG_OFFSET) & OPT_IWDG_MASK)
+        isr_vector_address = *(__IO uint32_t*) header->isr_vector_address;
+        jump_address = *(__IO uint32_t*) (header->isr_vector_address + 4);
+      }
+      else {
+        isr_vector_address = *(__IO uint32_t*) (DAISY_APPLICATION_ADDRESS);
+        jump_address = *(__IO uint32_t*) (DAISY_APPLICATION_ADDRESS + 4);
+        __enable_irq();
+      }
+
+      pFunction jumpToApplication = (pFunction) jump_address;
       /* Initialize user application's Stack Pointer */
-      __set_MSP(*(__IO uint32_t*) header->isr_vector_address);
+      __set_MSP(isr_vector_address);
 
       jumpToApplication();
       for(;;);

@@ -23,6 +23,10 @@
   #define USE_BOOT1_PIN
   #define BOOT1_Pin GPIO_PIN_2
   #define BOOT1_GPIO_Port GPIOA
+#elif defined DAISY_SEED
+  #define HARDWARE_ID         DAISY_SEED_HARDWARE
+  #define HARDWARE_VERSION    "Daisy Boot"
+  #define APPLICATION_ADDRESS 0x90000000
 #else
   #error Invalid configuration
 #endif
@@ -33,6 +37,9 @@
 /* Firmware header configuration */
 #define FIRMWARE_HEADER        0xBABECAFE
 #define FIRMWARE_RELOCATIONS_COUNT 5
+
+#define DAISY_APPLICATION_ADDRESS 0x90040000
+#define DAISY_STACK_END           0x20020000
 
 #define USE_IWDG
 
