@@ -19,7 +19,8 @@ ITCMHEAP (rw)     : ORIGIN = 0x00008000, LENGTH = 28K
 PROGRAMSTACK(rw)  : ORIGIN = 0x0000f000, LENGTH = 4K
 DTCMRAM (rw)      : ORIGIN = 0x20000000, LENGTH = 48K /* First 48kb of DTCM is used as FW RAM */
 PATCHRAM (rw)     : ORIGIN = 0x2000c000, LENGTH = 80K /* Remaining 80kb of DTCM is used as patch RAM */
-RAMHEAP (rwx)     : ORIGIN = 0x24000000, LENGTH = 512K
+RAMHEAP (rwx)     : ORIGIN = 0x24000000, LENGTH = 510K
+SD_BUF  (rwx)     : ORIGIN = 0x2407f800, LENGTH = 2K
 RAM (rwx)         : ORIGIN = 0x30000000, LENGTH = 256K /* Firmware code, copied by bootloader */
 BUFFERS (rwx)     : ORIGIN = 0x30040000, LENGTH = 32K /* DMA buffer */
 RAM_D3 (rwx)      : ORIGIN = 0x38000000, LENGTH = 64K /* UNUSED */
@@ -232,6 +233,18 @@ SECTIONS
 	} > RAMHEAP
 	_RAMHEAP_SIZE = LENGTH(RAMHEAP);
 	_RAMHEAP_END = ORIGIN(RAMHEAP) + LENGTH(RAMHEAP);
+
+	.sd_buf (NOLOAD):
+	{
+		. = ALIGN(4);
+		PROVIDE(_SD_BUF = .);
+
+		*(.sd_buf)
+		*(.sd_buf*)
+
+	} > SD_BUF
+	_SD_BUF_SIZE = LENGTH(SD_BUF);
+	_SD_BUF_END = ORIGIN(SD_BUF) + LENGTH(SD_BUF);
 
   	/* Bootloader will be used for finding bootloader token */
   	.bootloader (NOLOAD) :

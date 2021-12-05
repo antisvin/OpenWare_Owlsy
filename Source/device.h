@@ -200,6 +200,9 @@
   #define ITCM
   #define TABLE
 #endif
+#ifdef USE_FATFS
+  #define SD_BUF                      __attribute__ ((section (".sd_buf")))
+#endif
 
 #define USE_IWDG                     // compile with support for IWDG watchdog */
 #if defined(USE_IWDG) && !defined(IWDG_PERIPH)
