@@ -1,5 +1,13 @@
 #include <inttypes.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include "arm_math.h"
+#ifdef __cplusplus
+}
+#endif
+
 #include "device.h"
 #include "ServiceCall.h"
 #include "ApplicationSettings.h"
