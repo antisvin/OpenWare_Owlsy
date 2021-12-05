@@ -37,16 +37,17 @@ C_SRC_I2C += $(DRIVERS)/Src/stm32h7xx_hal_i2c_ex.c
 C_SRC_SDRAM = $(DRIVERS)/Src/stm32h7xx_hal_sdram.c
 C_SRC_SDRAM += $(DRIVERS)/Src/stm32h7xx_ll_fmc.c
 
+# SDMMC
+C_SRC_SD = $(DRIVERS)/Src/stm32h7xx_hal_sd.c
+C_SRC_SD += $(DRIVERS)/Src/stm32h7xx_hal_sd_ex.c
+C_SRC_SD += $(DRIVERS)/Src/stm32h7xx_ll_sdmmc.c
+
 # required by Daisy Seed
 C_SRC_SAI = $(DRIVERS)/Src/stm32h7xx_hal_sai.c
 C_SRC_SAI += $(DRIVERS)/Src/stm32h7xx_hal_sai_ex.c
 
 C_SRC_QSPI += $(DRIVERS)/Src/stm32h7xx_hal_qspi.c
 C_SRC_QSPI += $(OPENWARE)/Source/qspicontrol.c
-
-C_SRC_SD = $(DRIVERS)/Src/stm32h7xx_hal_sd.c
-C_SRC_SD += $(DRIVERS)/Src/stm32h7xx_hal_sd_ex.c
-C_SRC_SD += $(DRIVERS)/Src/stm32h7xx_ll_sdmmc.c
 
 ### USB Device Library ###
 C_SRC_USBD = $(DRIVERS)/Src/stm32h7xx_hal_pcd.c
@@ -111,6 +112,6 @@ C_SRC_FAT += $(FATFS_DIR)/ff_gen_drv.c
 # C_SRC_FAT += $(FATFS_DIR)/option/cc932.c
 # C_SRC_FAT += $(FATFS_DIR)/option/cc936.c
 # C_SRC_FAT += $(FATFS_DIR)/option/cc949.c
-# C_SRC_FAT += $(FATFS_DIR)/option/ccsbcs.c
+ C_SRC_FAT += $(FATFS_DIR)/option/ccsbcs.c
 C_SRC_FAT += $(FATFS_DIR)/option/syscall.c
-C_SRC_FAT += $(FATFS_DIR)/option/unicode.c
+#C_SRC_FAT += $(FATFS_DIR)/option/unicode.c

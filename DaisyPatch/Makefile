@@ -14,6 +14,9 @@ C_SRC += $(OPENWARE)/Source/usbd_audio.c
 C_SRC += $(OPENWARE)/Source/sdram_daisy.c
 C_SRC += $(OPENWARE)/Source/ssd1309.c
 C_SRC += $(OPENWARE)/Source/ak4556.c
+C_SRC += $(OPENWARE)/Source/bsp_driver_sd.c
+C_SRC += $(OPENWARE)/Source/sd_diskio.c
+C_SRC += $(OPENWARE)/Source/fatfs.c
 CPP_SRC += $(OPENWARE)/Source/FirmwareHeader.cpp
 CPP_SRC += $(OPENWARE)/Source/uart.cpp
 CPP_SRC += $(OPENWARE)/Source/uart_midi.cpp
@@ -21,6 +24,7 @@ CPP_SRC += $(OPENWARE)/Source/MidiStreamReader.cpp
 CPP_SRC += $(OPENWARE)/Source/ScreenBuffer.cpp
 CPP_SRC += $(OPENWARE)/Source/ScreenBufferMono.cpp
 CPP_SRC += $(OPENWARE)/Source/Graphics.cpp
+
 
 CPPFLAGS += -DDAISY -DDAISY_PATCH
 #  vpath %.c usbd-hs

@@ -78,8 +78,6 @@ void onChangePin(uint16_t pin){
   }
 }
 
-//#include "sd_test.h"
-
 void setup(){
   HAL_GPIO_WritePin(OLED_RST_GPIO_Port, OLED_RST_Pin, GPIO_PIN_RESET); // OLED off
 
@@ -98,8 +96,6 @@ void setup(){
 
   owl.setup();
   setButtonValue(PUSHBUTTON, 0);
-
-  //test_sd();
 }
 
 static int16_t enc_data[2];

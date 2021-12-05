@@ -92,3 +92,6 @@
 #define USE_IWDG
 #define IWDG_PERIPH IWDG1
 /* #define INIT_FMC */
+
+#define USE_FATFS
+#define FATFS_USE_DMA
