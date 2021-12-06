@@ -31,7 +31,7 @@
 * the value by default is as defined in the BSP platform driver otherwise 30 secs
 */
 
-#define SD_TIMEOUT 2 * 1000
+#define SD_TIMEOUT 1 * 1000
 
 #define SD_DEFAULT_BLOCK_SIZE 512
 
@@ -51,23 +51,25 @@
 * Notice: This is applicable only for cortex M7 based platform.
 */
 
-/* #define ENABLE_SD_DMA_CACHE_MAINTENANCE  1 */
+#if defined USE_CACHE && defined FATFS_USE_DMA
+#define ENABLE_SD_DMA_CACHE_MAINTENANCE 1
+#endif
 
 /*
 * Some DMA requires 4-Byte aligned address buffer to correctly read/wite data,
 * in FatFs some accesses aren't thus we need a 4-byte aligned scratch buffer to correctly
 * transfer data
 */
-/* #define ENABLE_SCRATCH_BUFFER */
+#define ENABLE_SCRATCH_BUFFER
 
 
 /* Private variables ---------------------------------------------------------*/
 
 #if defined(ENABLE_SCRATCH_BUFFER)
-#if defined (ENABLE_SD_DMA_CACHE_MAINTENANCE)
-ALIGN_32BYTES(static uint8_t scratch[BLOCKSIZE]); // 32-Byte aligned for cache maintenance
+#ifdef USE_CACHE
+static uint8_t scratch[BLOCKSIZE] SD_BUF; // 32-Byte aligned for cache maintenance
 #else
-__ALIGN_BEGIN static uint8_t scratch[BLOCKSIZE] __ALIGN_END;
+static uint8_t scratch[BLOCKSIZE] CACHE_ALIGNED SD_BUF; // 32-Byte aligned for cache maintenance
 #endif
 #endif
 
@@ -192,7 +194,11 @@ DRESULT SD_read(BYTE lun, BYTE *buff, DWORD sector, UINT count)
   }
 
 #if defined(ENABLE_SCRATCH_BUFFER)
+#ifdef OWL_ARCH_H7
+  if (!((uint32_t)buff & 0x3) && (uint32_t)buff & 0xFF000000 == 0x24000000)
+#else
   if (!((uint32_t)buff & 0x3))
+#endif
   {
 #endif
     if(BSP_SD_ReadBlocks_DMA((uint32_t*)buff,
@@ -205,7 +211,7 @@ DRESULT SD_read(BYTE lun, BYTE *buff, DWORD sector, UINT count)
       while((ReadStatus == 0) && ((HAL_GetTick() - timeout) < SD_TIMEOUT))
       {
       }
-      /* incase of a timeout return error */
+      /* in case of a timeout return error */
       if (ReadStatus == 0)
       {
         res = RES_ERROR;
@@ -320,9 +326,14 @@ DRESULT SD_write(BYTE lun, const BYTE *buff, DWORD sector, UINT count)
     return res;
   }
 
+
+
 #if defined(ENABLE_SCRATCH_BUFFER)
-  if (!((uint32_t)buff & 0x3))
-  {
+#ifdef OWL_ARCH_H7
+  if (!((uint32_t)buff & 0x3) && (uint32_t)buff & 0xFF000000 == 0x24000000) {
+#else
+  if (!((uint32_t)buff & 0x3)) {
+#endif
 #endif
 #if (ENABLE_SD_DMA_CACHE_MAINTENANCE == 1)
 

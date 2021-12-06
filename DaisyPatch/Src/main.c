@@ -30,7 +30,6 @@
 #include "sdram.h"
 #include "qspicontrol.h"
 #include "fatfs.h"
-#include "sd_test.h"  
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -182,8 +181,6 @@ int main(void)
   SDRAM_Initialization_Sequence(&hsdram1);
   MX_SDMMC1_SD_Init();
   MX_FATFS_Init();
-
-  test_sd();
 
   /* USER CODE END 2 */
 
@@ -650,7 +647,7 @@ static void MX_SDMMC1_SD_Init(void)
   hsd1.Init.ClockPowerSave = SDMMC_CLOCK_POWER_SAVE_DISABLE;
   hsd1.Init.BusWide = SDMMC_BUS_WIDE_4B;
   hsd1.Init.HardwareFlowControl = SDMMC_HARDWARE_FLOW_CONTROL_DISABLE;
-  hsd1.Init.ClockDiv = 4;
+  hsd1.Init.ClockDiv = 2;
   if (HAL_SD_Init(&hsd1) != HAL_OK)
   {
     Error_Handler();

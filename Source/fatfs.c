@@ -18,10 +18,10 @@
 
 #include "fatfs.h"
 
-uint8_t retSD SD_BUF;    /* Return value for SD */
-char SDPath[4] SD_BUF;   /* SD logical drive path */
-FATFS SDFatFS SD_BUF;    /* File system object for SD logical drive */
-FIL SDFile SD_BUF;       /* File object for SD */
+CACHE_ALIGNED uint8_t retSD SD_BUF;    /* Return value for SD */
+CACHE_ALIGNED char SDPath[4] SD_BUF;   /* SD logical drive path */
+CACHE_ALIGNED FATFS SDFatFS SD_BUF;    /* File system object for SD logical drive */
+CACHE_ALIGNED FIL SDFile SD_BUF;       /* File object for SD */
 
 /* USER CODE BEGIN Variables */
 
