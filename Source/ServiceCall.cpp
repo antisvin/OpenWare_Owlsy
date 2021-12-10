@@ -33,6 +33,7 @@
 #ifndef min
 #define min(a,b) ((a)<(b)?(a):(b))
 #endif
+#include <stdio.h>
 
 #if defined(USE_FFT_TABLES)
 int SERVICE_ARM_CFFT_INIT_F32(arm_cfft_instance_f32* instance, int len){
@@ -171,6 +172,10 @@ static int handleLoadResource(void** params, int len){
 #ifdef USE_FATFS
     // Fallback to read from FatFS
     else {
+      extern bool sd_initialized;
+      if (!sd_initialized)
+        return ret;
+
       FRESULT res;
       // Mount storage. TODO: maybe add multi-storage support i.e. for SD + USB MSC
       res = f_mount(&SDFatFS, (TCHAR const *)SDPath, 1);

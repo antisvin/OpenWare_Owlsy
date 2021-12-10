@@ -95,3 +95,4 @@
 
 #define USE_FATFS
 #define FATFS_USE_DMA
+#define FATFS_SD_HANDLE hsd1
