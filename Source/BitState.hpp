@@ -6,7 +6,7 @@ private:
   uint32_t state;
 public:
   BitState32() : state(0) {}
-  inline bool get(uint8_t ch){
+  inline bool get(uint8_t ch) const {
     return state & (1<<ch);
   }
   inline void clear(uint8_t ch){
@@ -25,13 +25,13 @@ public:
   inline void set(){
     state = 0xffff;
   }
-  inline int getFirstSetIndex(){
+  inline int getFirstSetIndex() const {
     return 31-countLeadingZeros();
   }
-  inline int countLeadingZeros(){
+  inline int countLeadingZeros() const {
     return __builtin_clz(state);
   }
-  inline uint16_t getState(){
+  inline uint16_t getState() const {
     return state;
   }
 };
@@ -47,10 +47,10 @@ public:
   void clear(){
     memset(state, 0, sizeof(state));
   }
-  inline bool isClear(){
+  inline bool isClear() const {
     return !(state[0] || state[1] || state[2] || state[3]);
   }
-  inline bool isEngaged(uint8_t key){
+  inline bool isEngaged(uint8_t key) const {
     if(key < 64){
       if(key < 32)
 	return (state[3] & (1<<key));
@@ -61,10 +61,10 @@ public:
     }else
       return (state[0] & (1<<(key-96)));
   }
-  inline int getFirstEngagedKeyIndex(){
+  inline int getFirstEngagedKeyIndex() const {
     return 127-countLeadingZeros();
   }
-  inline int countLeadingZeros(){
+  inline int countLeadingZeros() const {
     if(state[0])
       return __builtin_clz(state[0]);
     if(state[1])

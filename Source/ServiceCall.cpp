@@ -33,7 +33,6 @@
 #ifndef min
 #define min(a,b) ((a)<(b)?(a):(b))
 #endif
-#include <stdio.h>
 
 #if defined(USE_FFT_TABLES)
 int SERVICE_ARM_CFFT_INIT_F32(arm_cfft_instance_f32* instance, int len){
