@@ -17,6 +17,7 @@ extern bool updateUi;
 extern uint16_t button_values;
 
 Graphics graphics;
+Browser sd_browser SD_BUF;
 
 static SoftwareEncoder encoder(
   ENC_A_GPIO_Port, ENC_A_Pin,

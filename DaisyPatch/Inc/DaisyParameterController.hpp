@@ -87,6 +87,7 @@ public:
 
     enum SystemAction {
         SYS_BOOTLOADER,
+        SYS_RESET,
         SYS_ERASE,
         SYS_DEFRAG,
         SYS_EXIT,
@@ -94,6 +95,7 @@ public:
     };
     const char system_names[SYS_LAST][16] = {
         "Bootloader",
+        "Reset",
         "Erase patches",
         "Defragmentation",
         "Exit",
@@ -122,9 +124,6 @@ public:
     bool resourceDelete;
     bool resourceDeletePressed; // This is used to ensure that we don't delete
                                 // current resourse on menu enter
-
-    char sdPath[36] = {};
-    char sdDirPath[21] = {};
     bool sdSelected;
 
     EncoderSensitivity encoderSensitivity = SENS_STANDARD;
@@ -182,8 +181,6 @@ public:
         displayMode = STANDARD;
         controlMode = SETUP;
         activeEncoder = 1;
-        sdPath[0] = 0;
-        sdDirPath[0] = 0;
         sdSelected = false;
     }
 
@@ -674,7 +671,8 @@ public:
             auto state = sd_browser.getState();
             if (state == Browser::State::FF_NO_CARD) {
                 // No card inserted
-                screen.print(24, offset + 10, "Not inserted");
+                screen.print(28, offset + 10, "Insert card");
+                screen.print(28, offset + 20, "and reboot");
             }
             else {
                 if (state == Browser::State::FF_OPEN) {
@@ -694,7 +692,8 @@ public:
                 offset += 10;
                 bool end_reached = sd_browser.isEndReached();
                 uint32_t num_files = sd_browser.getNumFiles();
-                for (int i = sd_index; i < sd_index + 3; i++) {
+                int last = end_reached ? min(sd_index + 3, num_files) : (sd_index + 3);
+                for (int i = sd_index; i < last; i++) {
                     screen.setCursor(1, offset);
                     if (!end_reached || i < num_files) {
                         screen.print(i + 1);
@@ -714,7 +713,7 @@ public:
         }
         else {
             screen.print(28, offset + 10, "Insert card");
-            screen.print(28, offset + 20, "during boot");
+            screen.print(28, offset + 20, "and reboot");
         }
     }
 
@@ -1173,6 +1172,9 @@ public:
         switch (action) {
         case SYS_BOOTLOADER:
             jump_to_bootloader();
+            break;
+        case SYS_RESET:
+            device_reset();
             break;
         case SYS_ERASE:
             owl.setBackgroundTask(&erase_task);

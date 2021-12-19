@@ -53,13 +53,15 @@ public:
     }
     bool next() {
         bool result = false;
-        if ((!end_reached || file_offset < num_files - max_files) && ffOpen()) {
+        if ((!end_reached || file_offset < num_files - (int)max_files) && ffOpen()) {
+            debugMessage("F", file_offset);
             // Skip files until offset is reached
             for (int i = 0; i < file_offset + max_files; i++) {
                 if (!ffNext(nullptr)) {
                     break;
                 }
             }
+            // Read next file info
             FILINFO tmp;
             if (ffNext(&tmp)) {
                 int i = (file_offset++) % max_files;
@@ -68,7 +70,11 @@ public:
             }
             else {
                 end_reached = true;
-                num_files = file_offset + max_files;
+                num_files = file_offset;
+                //if (num_files > 0)
+                    num_files += max_files;
+                file_offset++;
+                result = true;
             }
         }
         else if (file_offset < num_files - 1) {
@@ -94,6 +100,7 @@ public:
                 else {
                     // Might be due to an error here too?..
                     end_reached = true;
+                    num_files = i;
                     break;
                 }
             }
@@ -111,7 +118,7 @@ public:
     bool isDir(size_t index) const {
         if (index < file_offset || index >= file_offset + max_files)
             return false;
-        else        
+        else
             return dir_flags.get(index % max_files);
     }
     bool isEndReached() const {
@@ -135,14 +142,15 @@ public:
     bool isRoot() const {
         return dir_name[0] == 0;
     }
+
 private:
     char full_path[64] = "";
     char dir_name[21] = "";
     DIR dir CACHE_ALIGNED;
     char file_names[max_files][21];
     DirMap dir_flags; // Bitmap field
-    uint32_t num_files;
-    uint32_t file_offset;
+    int num_files;
+    int file_offset;
     bool end_reached;
     static constexpr const char* default_dir = "0:/OWL/storage";
     State state;
@@ -151,7 +159,7 @@ private:
      * Open current active directory and scroll to current index
      */
     bool ffOpen() {
-        if (f_mount(&SDFatFS, (TCHAR const *)SDPath, 1) == FR_OK) {
+        if (f_mount(&SDFatFS, (TCHAR const*)SDPath, 1) == FR_OK) {
             const char* new_dir;
             if (dir_name[0] == 0) {
                 new_dir = default_dir;
@@ -171,7 +179,7 @@ private:
     /*
      * Move to next file. If dst is given, copy next file to it
      */
-    bool ffNext(FILINFO *dst) {
+    bool ffNext(FILINFO* dst) {
         FILINFO tmp;
         if (f_readdir(&dir, &tmp) == FR_OK && tmp.fname[0] != 0) {
             if (dst != nullptr)

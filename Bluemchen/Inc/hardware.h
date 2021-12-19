@@ -1,7 +1,6 @@
 #include "main.h"
 #include "stm32h7xx_hal.h"
 
-#define USBD_MAX_POWER              100 // 100mA for iPad compatibility
 #define USBD_HANDLE hUsbDeviceFS
 
 #if defined BLUEMCHEN
