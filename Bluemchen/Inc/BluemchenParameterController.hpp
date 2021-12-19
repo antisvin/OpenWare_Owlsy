@@ -531,8 +531,9 @@ public:
         screen.print((int)selected);
         screen.print(".");
         char buf[9];
-        buf[8] = 0;
-        scrollTitle(registry.getPatchName(selected), buf, (selected < 10) ? 8 : 7);
+        int len = (selected < 10) ? 8 : 7;
+        buf[len] = 0;
+        scrollTitle(registry.getPatchName(selected), buf, len);
         screen.print(buf);
         if (selected + 1 < (int)registry.getNumberOfPatches()) {
             screen.setCursor(1, offset + 16);
@@ -566,9 +567,10 @@ public:
             screen.print((int)selected + 1 + MAX_NUMBER_OF_PATCHES);
             screen.print(".");
             char buf[9];
-            buf[8] = 0;
+            int len =  (selected < 10) ? 8 : 7;
+            buf[len] = 0;
             scrollTitle(registry.getResourceName(MAX_NUMBER_OF_PATCHES + 1 + selected),
-                buf, (selected < 10) ? 8 : 7);
+                buf, len);
             screen.print(buf);
         }
         else if (resourceDelete) {
@@ -623,12 +625,25 @@ public:
                 bool end_reached = sd_browser.isEndReached();
                 uint32_t num_files = sd_browser.getNumFiles();
                 int last = end_reached ? min(sd_index + 2, num_files) : (sd_index + 2);
-                for (int i = sd_index; i < last; i++) {
+                for (int i = sd_index; i < last; i++) {                    
                     screen.setCursor(1, offset);
                     if (!end_reached || i < num_files) {
                         screen.print(i + 1);
                         screen.print(".");
-                        screen.print(sd_browser.getFileName(i));
+
+                        if (i == sd_index) {
+                            char buf[9];
+                            int len = (selected < 10) ? 8 : 7;
+                            if (sd_browser.isDir(i))
+                                len -= 3;
+                            buf[len] = 0;
+                            scrollTitle(sd_browser.getFileName(i), buf, len);
+                            screen.print(buf);
+                        }
+                        else {
+                            screen.print(sd_browser.getFileName(i));
+                        }
+
                         if (sd_browser.isDir(i)) {
                             screen.print("/..");
                         }
