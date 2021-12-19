@@ -79,6 +79,13 @@ static int testMagic(){
   return *OWLBOOT_MAGIC_ADDRESS == OWLBOOT_MAGIC_NUMBER;
 }
 
+static int testLoop(){
+  // Prevent reset cycles.
+  // Check if we've been reset without zeroing the magic address,
+  // which might indicate a corrupt firmware.
+  return *OWLBOOT_MAGIC_ADDRESS == OWLBOOT_LOOP_NUMBER;
+}
+
 static int testButton(){
 #ifdef USE_BOOT1_PIN
   return !(BOOT1_GPIO_Port->IDR & BOOT1_Pin);
@@ -157,6 +164,9 @@ int main(void)
     }
     else if(testButton()){
       setMessage("Bootloader requested");
+      }
+    else if(testLoop()){
+      error(RUNTIME_ERROR, "Unexpected firmware reset");
     }
     else if(testWatchdogReset()){
       error(RUNTIME_ERROR, "Watchdog reset");

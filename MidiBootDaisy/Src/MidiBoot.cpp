@@ -129,7 +129,7 @@ FirmwareHeader* getFirmwareHeader(void) {
 
 int loadFirmware(void) {
   FirmwareHeader* header = getFirmwareHeader();
-  if (header->magic == FIRMWARE_HEADER) { // TODO: possibly check checksum here
+  if (header->magic == FIRMWARE_HEADER && header->hardware_id == HARDWARE_ID) { // TODO: possibly check checksum here
     uint32_t* start = &header->section_0_start;
     for (uint32_t i = 0; i < ((header->options >> OPT_NUM_RELOCATIONS_OFFSET) & OPT_NUM_RELOCATIONS_MASK); i++) {
       memcpy((void*)(*start), (void*)(*(start + 2)), *(start + 1) - *start);
@@ -233,18 +233,23 @@ void MidiHandler::handleFirmwareFlashCommand(uint8_t *data, uint16_t size) {
       led_on();
       FirmwareHeader* header = (FirmwareHeader*)loader.getData();
       if (header->magic == HEADER_MAGIC && header->checksum == HEADER_CHECKSUM_PLACEHOLDER){
-        header->checksum = 0xFFFFFFFF; // Not an actual checksum yet
-        checksum = crc32((void*)header, header->header_size - 4, 0);
-        saveToFlash((uint32_t)&_FIRMWARE_STORAGE_BEGIN, loader.getData(), loader.getSize());
-        loader.clear();
-
-        // Now that data is stored, we can update the checksum field to confirm it's successful
-        uint32_t checksum_address = (uint32_t)&(getFirmwareHeader()->checksum);
-        if (updateChecksum(checksum_address, checksum)){
-          led_off();
+        if (header->hardware_id != HARDWARE_ID) {
+          error(PROGRAM_ERROR, "Invalid hardware ID");
         }
         else {
-          error(PROGRAM_ERROR, "Error storing checksum");
+          header->checksum = 0xFFFFFFFF; // Not an actual checksum yet
+          checksum = crc32((void*)header, header->header_size - 4, 0);
+          saveToFlash((uint32_t)&_FIRMWARE_STORAGE_BEGIN, loader.getData(), loader.getSize());
+          loader.clear();
+
+          // Now that data is stored, we can update the checksum field to confirm it's successful
+          uint32_t checksum_address = (uint32_t)&(getFirmwareHeader()->checksum);
+          if (updateChecksum(checksum_address, checksum)){
+            led_off();
+          }
+          else {
+            error(PROGRAM_ERROR, "Error storing checksum");
+          }
         }
       }
       else {
