@@ -51,6 +51,9 @@ static volatile TaskHandle_t audioTask = NULL;
 static TaskHandle_t managerTask = NULL;
 static TaskHandle_t utilityTask = NULL;
 static DynamicPatchDefinition dynamo;
+#ifdef USE_FATFS
+bool sd_initialized = false;
+#endif
 
 #ifdef USE_ADC
 extern uint16_t adc_values[NOF_ADC_VALUES];

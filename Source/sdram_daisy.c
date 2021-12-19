@@ -33,7 +33,7 @@
 #define SDRAM_MODEREG_WRITEBURST_MODE_PROG_BURST ((0 << 9))
 
 
-extern char _EXTRAM, _sdata, _BUFFERS_BEGIN, _FIRMWARE_STORAGE_BEGIN, _PATCHRAM, _RAMHEAP;
+extern char _EXTRAM, _sdata, _BUFFERS_BEGIN, _FIRMWARE_STORAGE_BEGIN, _PATCHRAM, _RAMHEAP, _SD_BUF;
 
 /*
  * MPU settings:
@@ -116,6 +116,20 @@ void MPU_Config(void){
   MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_DISABLE;
   HAL_MPU_ConfigRegion(&MPU_InitStruct);
 
+#if 0
+  // SD card buffers
+  MPU_InitStruct.BaseAddress = (uint32_t)&_SD_BUF;
+  MPU_InitStruct.Size = MPU_REGION_SIZE_2KB;
+  MPU_InitStruct.AccessPermission = MPU_REGION_FULL_ACCESS;
+  MPU_InitStruct.IsBufferable = MPU_ACCESS_NOT_BUFFERABLE;
+  MPU_InitStruct.IsCacheable = MPU_ACCESS_NOT_CACHEABLE;
+  MPU_InitStruct.IsShareable = MPU_ACCESS_SHAREABLE;
+  MPU_InitStruct.Number = MPU_REGION_NUMBER4;
+  MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL1;
+  MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_DISABLE;
+  HAL_MPU_ConfigRegion(&MPU_InitStruct);
+#endif
+
   // Flash - not used by firmware, only for bootloader that runs with cache off
   MPU_InitStruct.BaseAddress = 0x08000000;
   MPU_InitStruct.Size = MPU_REGION_SIZE_128KB;
@@ -123,7 +137,7 @@ void MPU_Config(void){
   MPU_InitStruct.IsBufferable = MPU_ACCESS_NOT_BUFFERABLE;
   MPU_InitStruct.IsCacheable = MPU_ACCESS_NOT_CACHEABLE;
   MPU_InitStruct.IsShareable = MPU_ACCESS_SHAREABLE;
-  MPU_InitStruct.Number = MPU_REGION_NUMBER4;
+  MPU_InitStruct.Number = MPU_REGION_NUMBER5;
   MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL1;
   MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_DISABLE;
   HAL_MPU_ConfigRegion(&MPU_InitStruct);  

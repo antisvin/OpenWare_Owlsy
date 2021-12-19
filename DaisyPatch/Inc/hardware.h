@@ -1,7 +1,6 @@
 #include "main.h"
 #include "stm32h7xx_hal.h"
 
-#define USBD_MAX_POWER              100 // 100mA for iPad compatibility
 #define USBD_HANDLE hUsbDeviceFS
 
 #if defined DAISY_PATCH
@@ -96,3 +95,7 @@
 #define USE_IWDG
 #define IWDG_PERIPH IWDG1
 /* #define INIT_FMC */
+
+#define USE_FATFS
+#define FATFS_USE_DMA
+#define FATFS_SD_HANDLE hsd1

@@ -85,6 +85,9 @@ class Owl {
 };
 extern Owl owl;
 
+#ifdef USE_FATFS
+extern bool sd_initialized;
+#endif
 #endif
 
 #endif /*  __OWL_H__ */
