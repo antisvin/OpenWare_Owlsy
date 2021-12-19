@@ -470,6 +470,9 @@ void runAudioTask(void* p){
 #ifdef USE_CODEC
 	codec.clear();
 #endif
+      // Memory barriers are required for dynamic code loading at least on H7
+      __DSB();
+      __ISB();
       def->run();
       error(PROGRAM_ERROR, "Program exited");
     }else{

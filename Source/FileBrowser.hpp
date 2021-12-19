@@ -54,7 +54,6 @@ public:
     bool next() {
         bool result = false;
         if ((!end_reached || file_offset < num_files - (int)max_files) && ffOpen()) {
-            debugMessage("F", file_offset);
             // Skip files until offset is reached
             for (int i = 0; i < file_offset + max_files; i++) {
                 if (!ffNext(nullptr)) {
