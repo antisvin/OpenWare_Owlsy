@@ -82,6 +82,8 @@
 #define USE_CODEC
 #define DUAL_CODEC
 #define USE_AK4556
+//#define USE_WM8731
+//#define WM8731_I2C_HANDLE hi2c1
 #define USE_USBD_FS
 #define USBD_HANDLE hUsbDeviceFS
 #define AUDIO_BITS_PER_SAMPLE       16
@@ -99,3 +101,4 @@
 #define USE_FATFS
 #define FATFS_USE_DMA
 #define FATFS_SD_HANDLE hsd1
+

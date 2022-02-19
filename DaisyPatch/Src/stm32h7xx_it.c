@@ -65,8 +65,10 @@ extern DAC_HandleTypeDef hdac1;
 extern QSPI_HandleTypeDef hqspi;
 extern DMA_HandleTypeDef hdma_sai1_a;
 extern DMA_HandleTypeDef hdma_sai1_b;
+#ifdef DUAL_CODEC
 extern DMA_HandleTypeDef hdma_sai2_b;
 extern DMA_HandleTypeDef hdma_sai2_a;
+#endif
 extern SAI_HandleTypeDef hsai_BlockA1;
 extern SAI_HandleTypeDef hsai_BlockB1;
 extern SAI_HandleTypeDef hsai_BlockA2;
@@ -188,11 +190,11 @@ void DMA1_Stream3_IRQHandler(void)
 void DMA1_Stream4_IRQHandler(void)
 {
   /* USER CODE BEGIN DMA1_Stream4_IRQn 0 */
-
+#ifdef DUAL_CODEC
   /* USER CODE END DMA1_Stream4_IRQn 0 */
   HAL_DMA_IRQHandler(&hdma_sai2_a);
   /* USER CODE BEGIN DMA1_Stream4_IRQn 1 */
-
+#endif
   /* USER CODE END DMA1_Stream4_IRQn 1 */
 }
 
@@ -202,11 +204,11 @@ void DMA1_Stream4_IRQHandler(void)
 void DMA1_Stream5_IRQHandler(void)
 {
   /* USER CODE BEGIN DMA1_Stream5_IRQn 0 */
-
+#ifdef DUAL_CODEC
   /* USER CODE END DMA1_Stream5_IRQn 0 */
   HAL_DMA_IRQHandler(&hdma_sai2_b);
   /* USER CODE BEGIN DMA1_Stream5_IRQn 1 */
-
+#endif
   /* USER CODE END DMA1_Stream5_IRQn 1 */
 }
 
@@ -348,13 +350,14 @@ void SAI1_IRQHandler(void)
 void SAI2_IRQHandler(void)
 {
   /* USER CODE BEGIN SAI2_IRQn 0 */
+  #ifdef DUAL_CODEC
   //__HAL_SAI_DISABLE_IT(&hsai_BlockA2, SAI_IT_AFSDET);
 
   /* USER CODE END SAI2_IRQn 0 */
   HAL_SAI_IRQHandler(&hsai_BlockA2);
   HAL_SAI_IRQHandler(&hsai_BlockB2);
   /* USER CODE BEGIN SAI2_IRQn 1 */
-
+  #endif
   /* USER CODE END SAI2_IRQn 1 */
 }
 

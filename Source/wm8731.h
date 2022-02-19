@@ -122,7 +122,7 @@
 /* static uint16_t wm8731_registers[WM8731_NUM_REGS]; */
 
 static const uint16_t wm8731_init_data[] = {
-#ifdef OWL_MODULAR
+#if defined OWL_MODULAR || defined DAISY
   WM8731_INVOL_0DB,                   			  // Reg 0x00: Left Line In
   WM8731_INVOL_0DB,			                  // Reg 0x01: Right Line In
   WM8731_HPVOL_0DB,			                  // Reg 0x02: Left Headphone out

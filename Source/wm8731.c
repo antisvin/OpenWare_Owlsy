@@ -13,8 +13,8 @@ void codec_write(uint8_t reg, uint16_t value){
     ((reg<<1)&0xFE) | ((value>>8)&0x01), value&0xFF   
   };
 
-  extern I2C_HandleTypeDef hi2c2;
-  HAL_StatusTypeDef ret = HAL_I2C_Master_Transmit(&hi2c2, CODEC_ADDRESS, data, 2, 10000);
+  extern I2C_HandleTypeDef WM8731_I2C_HANDLE;
+  HAL_StatusTypeDef ret = HAL_I2C_Master_Transmit(&WM8731_I2C_HANDLE, CODEC_ADDRESS, data, 2, 10000);
   if(ret != HAL_OK)
     error(CONFIG_ERROR, "I2C transmit failed");
   /* HAL_I2C_Master_Transmit(I2C_HandleTypeDef *hi2c, uint16_t DevAddress, uint8_t *pData, uint16_t Size, uint32_t Timeout) */
@@ -30,7 +30,11 @@ void codec_init(){
     codec_write(i, wm8731_init_data[i]);
 
   // set WM8731_MS master mode
+  #ifdef DAISY
+  codec_write(DIGITAL_AUDIO_INTERFACE_FORMAT_REGISTER, WM8731_FORMAT_I2S|WM8731_IWL_24BIT);
+  #else
   codec_write(DIGITAL_AUDIO_INTERFACE_FORMAT_REGISTER, WM8731_MS|WM8731_FORMAT_I2S|WM8731_IWL_16BIT);
+  #endif
 
   // clear OSCPD and OUTPD and CLKOUTPD
   codec_write(POWER_DOWN_CONTROL_REGISTER, WM8731_MICPD);
