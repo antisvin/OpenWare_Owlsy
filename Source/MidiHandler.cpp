@@ -294,7 +294,6 @@ void MidiHandler::handleFirmwareFlashCommand(uint8_t* data, uint16_t size){
       else {
         //program.eraseFromFlash(-2);
         program.saveToFlash(-2, loader.getData(), loader.getSize());
-        loader.clear();
         program.resetProgram(true);
       }
     }else{
@@ -303,6 +302,7 @@ void MidiHandler::handleFirmwareFlashCommand(uint8_t* data, uint16_t size){
   }else{
     error(PROGRAM_ERROR, "Invalid FLASH command");
   }
+  loader.clear();
 }
 
 void MidiHandler::handleFirmwareStoreCommand(uint8_t* data, uint16_t size){

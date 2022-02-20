@@ -217,6 +217,14 @@ __weak void loop(void){
 #endif /* OWL_PRISM */
 }
 
+
+void onError(int8_t code, const char* msg){
+#if defined OWL_PEDAL || defined OWL_MODULAR || defined OWL_BIOSIGNALS
+  setLed(0, RED_COLOUR);
+#endif
+  owl.setOperationMode(ERROR_MODE);
+}
+
 __weak void onChangeMode(OperationMode new_mode, OperationMode old_mode){
   setLed(0, new_mode == RUN_MODE ? GREEN_COLOUR : YELLOW_COLOUR);
 }

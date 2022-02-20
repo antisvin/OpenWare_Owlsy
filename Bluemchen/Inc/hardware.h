@@ -56,6 +56,7 @@
 // Parameters A-B are used by ADC, so we can't set values for them
 
 #define USE_EXTERNAL_RAM
+#define USE_PLUS_RAM
 #define USE_CACHE
 
 //#define USE_UART_MIDI_TX
