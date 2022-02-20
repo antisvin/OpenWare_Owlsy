@@ -367,11 +367,29 @@ void updateProgramVector(ProgramVector* pv, PatchDefinition* def){
   };
 #elif defined OWL_ARCH_H7
   extern char _ITCMHEAP, _ITCMHEAP_SIZE;
-  extern char _RAMHEAP, _RAMHEAP_SIZE;
   extern char _EXTRAM, _EXTRAM_SIZE;
+  extern uint8_t _PATCHRAM, _PATCHRAM_END, _PATCHRAM_SIZE;
+  uint8_t* end = (uint8_t*)def->getStackBase(); // program end
+  uint32_t remain = &_PATCHRAM_END - end; // space left
+  if(end < &_PATCHRAM || remain > (uint32_t)&_PATCHRAM_SIZE) // sanity check
+    remain = 0; // prevent errors if program stack is not linked to PATCHRAM  
+#ifdef USE_PLUS_RAM
+  extern uint8_t _PLUSRAM, _PLUSRAM_END, _PLUSRAM_SIZE;
+    uint8_t* plusend = (uint8_t*)&_PLUSRAM;
+  uint32_t plusremain = (uint32_t)&_PLUSRAM_SIZE;
+  if(def->getLinkAddress() == (uint32_t*)&_PLUSRAM){
+    end = (uint8_t*)&_PATCHRAM;
+    remain = (uint32_t)&_PATCHRAM_SIZE; // use all of PATCHRAM for heap
+    plusend = (uint8_t*)def->getStackBase();
+    plusremain = def->getStackSize();
+    plusremain = &_PLUSRAM_END - plusend;
+  }
+#endif  
   static MemorySegment heapSegments[] = {
     { (uint8_t*)&_ITCMHEAP, (uint32_t)(&_ITCMHEAP_SIZE) },
-    { (uint8_t*)&_RAMHEAP, (uint32_t)(&_RAMHEAP_SIZE) },
+#ifdef USE_PLUS_RAM    
+    { plusend, plusremain },
+#endif
     { (uint8_t*)&_EXTRAM, (uint32_t)(&_EXTRAM_SIZE) },
     { NULL, 0 }
   };
@@ -580,9 +598,6 @@ void runManagerTask(void* p){
         extern char _PATCHRAM, _PATCHRAM_SIZE;
         uint8_t* PROGRAMSTACK = ((uint8_t*)&_PATCHRAM )+_PATCHRAM_SIZE-PROGRAMSTACK_SIZE; // put stack at end of program ram (points to first byte of stack array, not last)
 #elif defined OWL_ARCH_H7
-        // NOTE: calculation used for F7 leads to HardFault on Daisy
-        // extern char _RAMHEAP_END;
-        /// uint8_t* PROGRAMSTACK = ((uint8_t*)&_RAMHEAP_END ) - PROGRAMSTACK_SIZE; // put stack at end of D1 RAM (points to first byte of stack array, not last)
 	      static uint8_t PROGRAMSTACK[PROGRAMSTACK_SIZE] __attribute__ ((section (".programstack")));
 #else
         extern char _CCMRAM_END;

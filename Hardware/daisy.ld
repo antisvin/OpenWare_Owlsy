@@ -19,7 +19,7 @@ ITCMHEAP (rw)     : ORIGIN = 0x00008000, LENGTH = 28K
 PROGRAMSTACK(rw)  : ORIGIN = 0x0000f000, LENGTH = 4K
 DTCMRAM (rw)      : ORIGIN = 0x20000000, LENGTH = 48K /* First 48kb of DTCM is used as FW RAM */
 PATCHRAM (rw)     : ORIGIN = 0x2000c000, LENGTH = 80K /* Remaining 80kb of DTCM is used as patch RAM */
-RAMHEAP (rwx)     : ORIGIN = 0x24000000, LENGTH = 510K
+PLUSRAM (rwx)     : ORIGIN = 0x24000000, LENGTH = 510K
 SD_BUF  (rwx)     : ORIGIN = 0x2407f800, LENGTH = 2K
 RAM (rwx)         : ORIGIN = 0x30000000, LENGTH = 256K /* Firmware code, copied by bootloader */
 BUFFERS (rwx)     : ORIGIN = 0x30040000, LENGTH = 32K /* DMA buffer */
@@ -222,17 +222,14 @@ SECTIONS
   	} > DTCMRAM
   	_estack = ORIGIN(DTCMRAM) + LENGTH(DTCMRAM); /* end of firmware RAM */
 
-	.ramheap (NOLOAD):
+	.plusram (NOLOAD):
 	{
 		. = ALIGN(4);
-		PROVIDE(_RAMHEAP = .);
+		PROVIDE(_PLUSRAM = .);
 
-		*(.ramheap)
-		*(.ramheap*)
-
-	} > RAMHEAP
-	_RAMHEAP_SIZE = LENGTH(RAMHEAP);
-	_RAMHEAP_END = ORIGIN(RAMHEAP) + LENGTH(RAMHEAP);
+	} > PLUSRAM
+	_PLUSRAM_SIZE = LENGTH(PLUSRAM);
+	_PLUSRAM_END = ORIGIN(PLUSRAM) + LENGTH(PLUSRAM);
 
 	.sd_buf (NOLOAD):
 	{

@@ -23,6 +23,7 @@
 
 // FW size limit would matter only if we use bootloader, otherwise linker scripts sets this limit
 #define MAX_SYSEX_FIRMWARE_SIZE 512 * 1024
+#define MAX_SYSEX_PROGRAM_SIZE 510 * 1024
 // Program size is limited by patch RAM section size
 //#define MAX_SYSEX_PROGRAM_SIZE 448 * 1024
 //#define MAX_SYSEX_PROGRAM_SIZE 256 * 1024
@@ -59,6 +60,7 @@
 // Parameters A-D are used by ADC, so we can't set values for them
 
 #define USE_EXTERNAL_RAM
+#define USE_PLUS_RAM
 #define USE_CACHE
 
 #define USE_UART_MIDI_TX
