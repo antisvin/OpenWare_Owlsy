@@ -17,6 +17,7 @@ public:
   // ProgramFunction getProgramFunction(){
   //   return function;
   // }
+  virtual void copy(){}
   virtual void run(){}
   virtual bool verify(){
     return false;

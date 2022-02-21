@@ -38,7 +38,7 @@ public:
     programFunction = (ProgramFunction)jumpAddress;
     return true;
   }
-  void copy(){
+  void copy() override {
     /* copy program to ram */
     if (programAddress) {
       if(linkAddress != programAddress)
@@ -65,7 +65,6 @@ public:
   }
   void run(){
     if(linkAddress != programAddress) {
-      copy();
       if(binarySize < programSize) // blank out bss area
         memset(linkAddress+binarySize, 0, programSize - binarySize);
     }

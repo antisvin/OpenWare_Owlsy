@@ -375,7 +375,7 @@ void updateProgramVector(ProgramVector* pv, PatchDefinition* def){
     remain = 0; // prevent errors if program stack is not linked to PATCHRAM  
 #ifdef USE_PLUS_RAM
   extern uint8_t _PLUSRAM, _PLUSRAM_END, _PLUSRAM_SIZE;
-    uint8_t* plusend = (uint8_t*)&_PLUSRAM;
+  uint8_t* plusend = (uint8_t*)&_PLUSRAM;
   uint32_t plusremain = (uint32_t)&_PLUSRAM_SIZE;
   if(def->getLinkAddress() == (uint32_t*)&_PLUSRAM){
     end = (uint8_t*)&_PATCHRAM;
@@ -385,14 +385,20 @@ void updateProgramVector(ProgramVector* pv, PatchDefinition* def){
     plusremain = &_PLUSRAM_END - plusend;
   }
 #endif  
-  static MemorySegment heapSegments[] = {
-    { (uint8_t*)&_ITCMHEAP, (uint32_t)(&_ITCMHEAP_SIZE) },
-#ifdef USE_PLUS_RAM    
-    { plusend, plusremain },
+  static MemorySegment heapSegments[5];
+  size_t segments = 0;
+  heapSegments[segments++] = { (uint8_t*)&_ITCMHEAP, (uint32_t)(&_ITCMHEAP_SIZE) };
+  if(remain >= 32) // minimum heap segment size
+    heapSegments[segments++] = { end, remain };  
+#ifdef USE_PLUS_RAM 
+  if(plusremain >= 32)
+    heapSegments[segments++] = { plusend, plusremain };
 #endif
-    { (uint8_t*)&_EXTRAM, (uint32_t)(&_EXTRAM_SIZE) },
-    { NULL, 0 }
-  };
+#ifdef USE_EXTERNAL_RAM
+  heapSegments[segments++] = 
+    { (uint8_t*)&_EXTRAM, (uint32_t)(&_EXTRAM_SIZE) };
+#endif
+  heapSegments[segments++] = { NULL, 0 };
 #else
   extern char _CCMRAM, _CCMRAM_SIZE;
   static MemorySegment heapSegments[] = {
@@ -474,31 +480,41 @@ void eraseFlashTask(void* p){
   vTaskDelete(NULL);
 }
 
-void runAudioTask(void* p){
+__weak void onStartProgram(){
 #ifdef USE_SCREEN
-    graphics.params.reset();
+  graphics.reset();
+#else
+  memset(parameter_values, 0, sizeof(parameter_values));
 #endif
+}
+
+void runAudioTask(void* p){
     PatchDefinition* def = getPatchDefinition();
     ProgramVector* pv = def == NULL ? NULL : def->getProgramVector();
     if(pv != NULL && def->verify()){
+      def->copy();
       updateProgramVector(pv, def);
       programVector = pv;
       setErrorStatus(NO_ERROR);
       owl.setOperationMode(RUN_MODE);
+      onStartProgram();
 #ifdef USE_CODEC
-	codec.clear();
+	    codec.clear();
 #endif
+      // zero-fill heap memory
+      for(size_t i=0; i<5 && pv->heapSegments[i].location != NULL; ++i)
+        memset(pv->heapSegments[i].location, 0, pv->heapSegments[i].size);
+      // TODO: change MPU settings for PlusRAM?
       // Memory barriers are required for dynamic code loading at least on H7
       __DSB();
       __ISB();
       def->run();
-      error(PROGRAM_ERROR, "Program exited");
+      error(PROGRAM_ERROR, "Program error");
     }else{
       error(PROGRAM_ERROR, "Invalid program");
     }
     audioTask = NULL;
     vTaskDelete(NULL);
-    for(;;);
 }
 
 void bootstrap(){
