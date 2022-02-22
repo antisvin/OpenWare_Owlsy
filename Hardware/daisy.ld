@@ -76,7 +76,6 @@ SECTIONS
 		*/ProgramManager.o (.text .text*)
 		*/ScreenBuffer.o (.text .text*)
 		*/Graphics.o (.text .text*)
-		*/Midi*.o (.text .text*)
 		*/ssd1309.o (.text .text*)
 		*/stm32h7xx_it.o (.text .text*)
 		*/stm32h7xx_hal_spi.o (.text .text*)
