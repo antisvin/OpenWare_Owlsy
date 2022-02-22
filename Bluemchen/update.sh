@@ -1,5 +1,5 @@
 PROJECT=Bluemchen
-DEVICE=hw:3,0,0
+DEVICE=hw:4,0,0
 
 make clean
 
