@@ -16,8 +16,8 @@ jobs:
       with: 
         submodules: true
     - name: Setup arm-none-eabi-gcc
-      uses:  carlosperate/arm-none-eabi-gcc@v1
+      uses: carlosperate/arm-none-eabi-gcc-action@v1.3.0
       with:
-        release: '10.3-2021.07' # The arm-none-eabi-gcc release to use.
+        release: '10.3-2021.10' # The arm-none-eabi-gcc release to use.
     - name: make
       run: make
