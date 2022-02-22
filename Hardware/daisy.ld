@@ -71,7 +71,6 @@ SECTIONS
 		*/Codec.o (.text .text*)
 		*/Daisy.o (.text .text*)
 		*/usbd*.o (.text .text*)
-		*/uart*.o (.text .text*)
 		*/ServiceCalls.o (.text .text*)
 		*/ProgramManager.o (.text .text*)
 		*/ScreenBuffer.o (.text .text*)
