@@ -22,7 +22,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 /* USER CODE BEGIN Includes */
-
+#include "device.h"
 /* USER CODE END Includes */
 extern DMA_HandleTypeDef hdma_adc1;
 
@@ -952,9 +952,10 @@ extern DMA_HandleTypeDef hdma_sai1_a;
 
 extern DMA_HandleTypeDef hdma_sai1_b;
 
+#ifdef DUAL_CODEC
 extern DMA_HandleTypeDef hdma_sai2_b;
-
 extern DMA_HandleTypeDef hdma_sai2_a;
+#endif
 
 static uint32_t SAI1_client =0;
 static uint32_t SAI2_client =0;
@@ -1060,6 +1061,7 @@ void HAL_SAI_MspInit(SAI_HandleTypeDef* hsai)
     __HAL_LINKDMA(hsai,hdmatx,hdma_sai1_b);
     }
 /* SAI2 */
+#ifdef DUAL_CODEC
     if(hsai->Instance==SAI2_Block_A)
     {
     /* Peripheral clock enable */
@@ -1169,6 +1171,7 @@ void HAL_SAI_MspInit(SAI_HandleTypeDef* hsai)
     __HAL_LINKDMA(hsai,hdmarx,hdma_sai2_b);
     __HAL_LINKDMA(hsai,hdmatx,hdma_sai2_b);
     }
+#endif
 }
 
 void HAL_SAI_MspDeInit(SAI_HandleTypeDef* hsai)

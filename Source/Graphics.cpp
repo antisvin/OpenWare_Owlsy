@@ -12,6 +12,7 @@ void Graphics::begin(SPI_HandleTypeDef *spi) {
 #endif
   screen.setBuffer(pixelbuffer);
   screen.clear();
+  reset();
   display();
 }
 
@@ -48,4 +49,9 @@ Graphics::Graphics() :
 __weak void defaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height){
   graphics.params.drawTitle(graphics.screen);
   graphics.params.drawMessage(graphics.screen);
+}
+
+void Graphics::reset(){
+  setCallback((void*)defaultDrawCallback);
+  params.reset();
 }

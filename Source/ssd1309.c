@@ -50,7 +50,9 @@ static const uint8_t OLED_initSequence[] =
 #endif
 	0xd3, 0x00, 	// Display offset
 	0x40, 		// Start line
- 			// Segment re-map: a0: col0 -> SEG0, a1: col127 -> SEG0	
+    0x8D, 0x14, // Set charge pump for SSD1306 - ignored on SSD1309
+    
+ 	// Segment re-map: a0: col0 -> SEG0, a1: col127 -> SEG0	
 #ifdef OLED_UPSIDE_DOWN
 	0xa0,
 #else
@@ -61,11 +63,11 @@ static const uint8_t OLED_initSequence[] =
 	0xd9, 0x22, 	// Pre-charge period
 	0xdb, 0x34, 	// VCOMH deselect level
 	/* 0xa4, 		// Entire display on/off */
-	0xa6, 		// Normal / inverse display
+	0xa6, 	        // Normal / inverse display
 	0x20, 0x01,     // Vertical addressing mode
 	0x21, 0x00, 0x7f, // Set column address
 	0x22, 0x00, 0x07, // Set page address
-	0xaf, 		// Display on
+	0xaf, 	        // Display on
 	/* 0xa6,		// Set Normal/Inverse Display */
 };
 

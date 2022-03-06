@@ -33,6 +33,7 @@ public:
 #endif
   void display();
   void draw();
+  void reset();
   void setCallback(void *callback);
   ParameterController<NOF_PARAMETERS> params;
   ScreenBuffer screen;

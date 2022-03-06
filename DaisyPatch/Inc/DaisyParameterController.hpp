@@ -150,10 +150,10 @@ public:
 
     ParameterController() {
         reset();
-        sd_browser.reset();
     }
 
     void reset() {
+        sd_browser.reset();
         saveSettings = false;
         resourceDelete = false;
         drawCallback = defaultDrawCallback;

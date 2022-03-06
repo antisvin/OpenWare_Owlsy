@@ -12,6 +12,7 @@ private:
   uint32_t* jumpAddress;
   uint32_t* programAddress;
   uint32_t programSize;
+  uint32_t binarySize;
   ProgramHeader* header;
   char programName[24];
 public:
@@ -22,6 +23,7 @@ public:
     load(addr, sz);
   }
   bool load(void* addr, uint32_t sz){
+    binarySize = sz;
     programAddress = (uint32_t*)addr;
     header = (ProgramHeader*)addr;
     linkAddress = header->linkAddress;
@@ -36,14 +38,17 @@ public:
     programFunction = (ProgramFunction)jumpAddress;
     return true;
   }
-  void copy(){
+  void copy() override {
     /* copy program to ram */
-    memcpy((void*)linkAddress, (void*)programAddress, programSize);
-    programAddress = linkAddress;
+    if (programAddress) {
+      if(linkAddress != programAddress)
+        memmove(linkAddress, programAddress, binarySize);
+      programAddress = NULL;    
+    }
   }
   bool verify(){
     // check we've got an entry function
-    if(programFunction == NULL)
+    if(programFunction == NULL || programVector == NULL)
       return false;
     // check magic
     if((*(uint32_t*)programAddress & 0xffffff00) != 0xDADAC000) // was: != 0xDADAC0DE
@@ -59,8 +64,10 @@ public:
     return false;
   }
   void run(){
-    if(linkAddress != programAddress)
-      copy();
+    if(linkAddress != programAddress) {
+      if(binarySize < programSize) // blank out bss area
+        memset(linkAddress+binarySize, 0, programSize - binarySize);
+    }
     // We must verify that there's still a valid program function - it can be set to
     // NULL in copy method
     if (programFunction != NULL)

@@ -74,7 +74,7 @@ typedef int8_t audio_t;
 #endif
 
 static void update_rx_read_index(){
-#if defined USE_CS4271 || defined USE_PCM3168A || defined USE_AK4556
+#if defined USE_CS4271 || defined USE_PCM3168A || defined USE_AK4556 || defined USE_WM8731
   extern DMA_HandleTypeDef HDMA_RX1;
   // NDTR: the number of remaining data units in the current DMA Stream transfer.
   #ifndef DUAL_CODEC
@@ -89,7 +89,7 @@ static void update_rx_read_index(){
 }
 
 static void update_tx_write_index(){
-#if defined USE_CS4271 || defined USE_PCM3168A || defined USE_AK4556
+#if defined USE_CS4271 || defined USE_PCM3168A || defined USE_AK4556 || defined USE_WM8731
   extern DMA_HandleTypeDef HDMA_TX1;
   // NDTR: the number of remaining data units in the current DMA Stream transfer.
   #ifndef DUAL_CODEC
@@ -428,62 +428,7 @@ void Codec::stop(){
 
 #endif // USE_ADS1294
 
-#ifdef USE_WM8731
-
-extern "C" {
-  extern I2S_HandleTypeDef hi2s2;
-}
-
-void Codec::stop(){
-  HAL_I2S_DMAStop(&hi2s2);
-}
-
-void Codec::start(){
-  setInputGain(settings.audio_input_gain);
-  setOutputGain(settings.audio_output_gain);
-  // codec_blocksize = min(CODEC_BUFFER_SIZE/4, settings.audio_blocksize);
-  codec_blocksize = CODEC_BUFFER_SIZE/4;
-  HAL_StatusTypeDef ret;
-  /* See STM32F405 Errata, I2S device limitations */
-  /* The I2S peripheral must be enabled when the external master sets the WS line at: */
-  while(HAL_GPIO_ReadPin(I2S_LRCK_GPIO_Port, I2S_LRCK_Pin)); // wait for low
-  /* High level when the I2S protocol is selected. */
-  while(!HAL_GPIO_ReadPin(I2S_LRCK_GPIO_Port, I2S_LRCK_Pin)); // wait for high
-
-  // When a 16-bit data frame or a 16-bit data frame extended is selected during the I2S
-  // configuration phase, the Size parameter means the number of 16-bit data length
-  // in the transaction and when a 24-bit data frame or a 32-bit data frame is selected
-  // the Size parameter means the number of 16-bit data length.
-  ret = HAL_I2SEx_TransmitReceive_DMA(&hi2s2, (uint16_t*)codec_txbuf, (uint16_t*)codec_rxbuf, codec_blocksize*4);
-  ASSERT(ret == HAL_OK, "Failed to start I2S DMA");
-}
-
-void Codec::pause(){
-  HAL_I2S_DMAPause(&hi2s2);
-}
-
-void Codec::resume(){
-  HAL_I2S_DMAResume(&hi2s2);
-}
-
-extern "C"{
-  
-  void HAL_I2SEx_TxRxHalfCpltCallback(I2S_HandleTypeDef *hi2s){
-    audioCallback(codec_rxbuf, codec_txbuf, codec_blocksize);
-  }
-
-  void HAL_I2SEx_TxRxCpltCallback(I2S_HandleTypeDef *hi2s){
-    audioCallback(codec_rxbuf+codec_blocksize*2, codec_txbuf+codec_blocksize*2, codec_blocksize);
-  }
-
-  void HAL_I2S_ErrorCallback(I2S_HandleTypeDef *hi2s){
-    error(CONFIG_ERROR, "I2S Error");
-  }
-  
-}
-#endif /* USE_WM8731 */
-
-#if defined USE_CS4271 || defined USE_PCM3168A || defined USE_AK4556
+#if defined(USE_CS4271) || defined(USE_PCM3168A) || defined(USE_AK4556) || defined(USE_WM8731)
 
 extern "C" {
   extern SAI_HandleTypeDef HSAI_RX1;
@@ -597,7 +542,7 @@ void Codec::start(){
   // codec_blocksize = min(CODEC_BUFFER_SIZE/(AUDIO_CHANNELS*2), settings.audio_blocksize);
   codec_blocksize = CODEC_BUFFER_SIZE/(AUDIO_CHANNELS*2);
   HAL_StatusTypeDef ret;
-#if defined(USE_CS4271) || (defined(USE_AK4556) && !defined(DUAL_CODEC))
+#if defined(USE_CS4271) || (defined(USE_AK4556) && !defined(DUAL_CODEC)) || defined(USE_WM8731)
   ret = HAL_SAI_Receive_DMA(&HSAI_RX1, (uint8_t*)codec_rxbuf, codec_blocksize*AUDIO_CHANNELS*2);
   if(ret == HAL_OK)
     ret = HAL_SAI_Transmit_DMA(&HSAI_TX1, (uint8_t*)codec_txbuf, codec_blocksize*AUDIO_CHANNELS*2);

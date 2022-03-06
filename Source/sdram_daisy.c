@@ -33,7 +33,10 @@
 #define SDRAM_MODEREG_WRITEBURST_MODE_PROG_BURST ((0 << 9))
 
 
-extern char _EXTRAM, _sdata, _BUFFERS_BEGIN, _FIRMWARE_STORAGE_BEGIN, _PATCHRAM, _RAMHEAP, _SD_BUF;
+extern char _EXTRAM, _sdata, _BUFFERS_BEGIN, _FIRMWARE_STORAGE_BEGIN, _PATCHRAM, _SD_BUF;
+#ifdef USE_PLUS_RAM
+extern char _PLUSRAM;
+#endif
 
 /*
  * MPU settings:
@@ -104,8 +107,9 @@ void MPU_Config(void){
   MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_DISABLE;
   HAL_MPU_ConfigRegion(&MPU_InitStruct);
 
+#ifdef USE_PLUS_RAM
   // AXISRAM (patch RAM)
-  MPU_InitStruct.BaseAddress = (uint32_t)&_RAMHEAP;
+  MPU_InitStruct.BaseAddress = (uint32_t)&_PLUSRAM;
   MPU_InitStruct.Size = MPU_REGION_SIZE_512KB;
   MPU_InitStruct.AccessPermission = MPU_REGION_FULL_ACCESS;
   MPU_InitStruct.IsBufferable = MPU_ACCESS_BUFFERABLE;
@@ -113,8 +117,9 @@ void MPU_Config(void){
   MPU_InitStruct.IsShareable = MPU_ACCESS_NOT_SHAREABLE;
   MPU_InitStruct.Number = MPU_REGION_NUMBER3;
   MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL0; /* 1 ? */
-  MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_DISABLE;
+  MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_ENABLE;
   HAL_MPU_ConfigRegion(&MPU_InitStruct);
+#endif
 
 #if 0
   // SD card buffers

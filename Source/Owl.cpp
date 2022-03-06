@@ -241,6 +241,10 @@ void Owl::setBackgroundTask(BackgroundTask* bt){
 }
 
 void jump_to_bootloader(void){
+#ifdef USE_WM8731
+  codec.stop();
+  codec_reset();
+#endif
 #ifdef USE_USB_HOST
 #if defined USB_HOST_PWR_EN_GPIO_Port && defined USB_HOST_PWR_EN_Pin
   HAL_GPIO_WritePin(USB_HOST_PWR_EN_GPIO_Port, USB_HOST_PWR_EN_Pin, GPIO_PIN_RESET);

@@ -16,6 +16,7 @@ extern "C" {
   uint8_t codec_read(uint8_t reg);
 #ifdef USE_WM8731
   void codec_write(uint8_t reg, uint16_t data);
+  void codec_reset();
 #else
   void codec_write(uint8_t reg, uint8_t data);
 #endif

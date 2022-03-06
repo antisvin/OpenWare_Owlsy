@@ -4,10 +4,10 @@
 #include "hardware.h"
 
 #define FIRMWARE_VERSION_MAJOR       24
-#define FIRMWARE_VERSION_MINOR       0
+#define FIRMWARE_VERSION_MINOR       1
 #define _FW_STR(x)                   #x
 #define _FW_TO_STR(x)                _FW_STR(x)
-#define FIRMWARE_VERSION             "v" _FW_TO_STR(FIRMWARE_VERSION_MAJOR) "." _FW_TO_STR(FIRMWARE_VERSION_MINOR)
+#define FIRMWARE_VERSION             "v" _FW_TO_STR(FIRMWARE_VERSION_MAJOR) "." _FW_TO_STR(FIRMWARE_VERSION_MINOR) "-rc1"
 
 #ifndef AUDIO_OUTPUT_GAIN
 #define AUDIO_OUTPUT_GAIN            112
@@ -87,7 +87,7 @@
 #ifdef USE_BOOTLOADER_MODE // Flag to choose if we're flashing firmware or bootloader from SySex
 #define MAX_SYSEX_PAYLOAD_SIZE       MAX_SYSEX_FIRMWARE_SIZE
 #else
-#define MAX_SYSEX_PAYLOAD_SIZE       MAX_SYSEX_PROGRAM_SIZE
+#define MAX_SYSEX_PAYLOAD_SIZE       (1 * 1024 * 1024) // Maximum resource size
 #endif
 #define BOOTLOADER_MAGIC             0xB007C0DE
 #define BOOTLOADER_VERSION           "v0.3"

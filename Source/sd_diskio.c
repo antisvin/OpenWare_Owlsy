@@ -195,7 +195,7 @@ DRESULT SD_read(BYTE lun, BYTE *buff, DWORD sector, UINT count)
 
 #if defined(ENABLE_SCRATCH_BUFFER)
 #ifdef OWL_ARCH_H7
-  if (!((uint32_t)buff & 0x3) && (uint32_t)buff & 0xFF000000 == 0x24000000)
+  if (!((uint32_t)buff & 0x3) && ((uint32_t)buff & 0xFF000000 == 0x24000000))
 #else
   if (!((uint32_t)buff & 0x3))
 #endif
@@ -330,7 +330,7 @@ DRESULT SD_write(BYTE lun, const BYTE *buff, DWORD sector, UINT count)
 
 #if defined(ENABLE_SCRATCH_BUFFER)
 #ifdef OWL_ARCH_H7
-  if (!((uint32_t)buff & 0x3) && (uint32_t)buff & 0xFF000000 == 0x24000000) {
+  if (!((uint32_t)buff & 0x3) && ((uint32_t)buff & 0xFF000000 == 0x24000000)) {
 #else
   if (!((uint32_t)buff & 0x3)) {
 #endif
