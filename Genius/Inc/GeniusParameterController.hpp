@@ -104,10 +104,12 @@ class GeniusParameterController : public ParameterController {
 private:
 public:
   static constexpr size_t NOF_CV_VALUES = 4;
+  static constexpr size_t NOF_BT_VALUES = 4;
   Page* page;
   int16_t encoders[NOF_ENCODERS]; // last seen encoder values
   int16_t user[NOF_CV_VALUES]; // user set values (ie by encoder or MIDI)
   int8_t cv_assign[NOF_CV_VALUES];
+  int8_t bt_assign[NOF_BT_VALUES];
   uint32_t buttons;
   GeniusParameterController() {
     setDisplayMode(PROGRESS_DISPLAY_MODE);
@@ -127,10 +129,20 @@ public:
       cv_assign[cv] = pid;
     }
   }
+  uint8_t getAssignedButton(uint8_t button){
+    return bt_assign[button];
+  }
+  void setAssignedButton(uint8_t button, uint8_t bid){
+    if(bt_assign[button] != bid){
+      //buttons[cv_assign[cv]] = user[cv];
+      //user[cv] = parameters[pid];
+      bt_assign[button] = bid;
+    }
+  }
   void changePage(Page* page){
     if(this->page != page){
       if(this->page != NULL)
-	this->page->exit();
+        this->page->exit();
       this->page = page;
       page->enter();
     }
@@ -176,14 +188,15 @@ public:
     ParameterController::setName(pid, name);
     if(isInput(pid)){
       if(cv_assign[0] == 0 && !isInput(0))
-  	cv_assign[0] = pid;
+        cv_assign[0] = pid;
       else if(cv_assign[1] == 0)
-  	cv_assign[1] = pid;
-    }else if(isOutput(pid)){
+        cv_assign[1] = pid;
+    }
+    else if(isOutput(pid)){
       if(cv_assign[2] == 0)
-  	cv_assign[2] = pid;
+        cv_assign[2] = pid;
       else if(cv_assign[3] == 0)
-  	cv_assign[3] = pid;
+        cv_assign[3] = pid;
     }      
   }    
   void setValue(uint8_t pid, int16_t value){    
@@ -290,26 +303,41 @@ SelectControlPage selectTwoPage(1, 1);
 class AssignPage : public Page {
 private:
   uint8_t select = 0;
-  static constexpr const char* assignations[] = {"CV A In", "CV B In", "CV A Out", "CV B Out"};
+  static constexpr const char* assignations[] = {
+    "CV A In", "CV B In", "CV A Out", "CV B Out",
+    "Bt 1 In", "Bt 2 In", "Bt 1 Out", "Bt 2 Out",
+  };
 public:
   void encoderChanged(uint8_t encoder, int32_t current, int32_t previous){
     if(encoder == ENCODER_TOP){
-      select = std::clamp(select + getDiscreteEncoderValue(current, previous), 0, 3);
+      select = std::clamp(
+        select + getDiscreteEncoderValue(current, previous), 0,
+        sizeof(assignations) / sizeof(assignations[0]));
     }else{
-      uint8_t assign = params.getAssignedCV(select);
+      uint8_t assign = select < 4 ? params.getAssignedCV(select) : params.getAssignedButton(select - 4);
       int16_t delta = getDiscreteEncoderValue(current, previous);
-      assign = std::clamp(assign + delta, 0, NOF_PARAMETERS-1);
-      if(select < 2 && delta){ // assigning input CV
-	while(params.isOutput(assign))
-	  assign += delta;
-	if(params.isInput(assign))
-	  params.setAssignedCV(select, assign);
-      }else if(delta){ // assigning output CV
-	while(params.isInput(assign))
-	  assign += delta;
-	if(params.isOutput(assign))
-	  params.setAssignedCV(select, assign);	
-      }      
+      assign = select < 4 ?
+        std::clamp(assign + delta, 0, NOF_PARAMETERS - 1) :
+        std::clamp(assign + delta - 5, NOF_BUTTONS - 5);
+      if (delta) {
+        if(select < 2){ // assigning input CV
+          while(params.isOutput(assign))
+            assign += delta;
+          if(params.isInput(assign))
+            params.setAssignedCV(select, assign);
+        }
+        else if(select < 4){ // assigning output CV
+          while(params.isInput(assign))
+            assign += delta;
+          if(params.isOutput(assign))
+            params.setAssignedCV(select, assign);	
+        }
+        else if (select < 8) {
+          assign += delta;
+          // Physical butons are preceded by 4 "virtual"
+          params.setAssignedButton(select - 4, assign);
+        }
+      }
     }
   }
   void buttonsChanged(uint32_t current, uint32_t previous){
@@ -317,12 +345,18 @@ public:
       setDisplayMode(EXIT_DISPLAY_MODE);
   }
   void draw(ScreenBuffer& screen){
-    uint8_t assign = params.getAssignedCV(select);
     params.drawTitle("ASSIGN", screen);
     screen.setTextSize(1);
     screen.print(1, 26, assignations[select]);
     screen.print(": ");
-    screen.print(params.getName(assign));
+    if (select < NOF_PARAMETERS) {
+      uint8_t assign_cv = params.getAssignedCV(select);
+      screen.print(params.getName(assign_cv));
+    }
+    else {
+      uint8_t assign_bt = params.getAssignedButton(select - 4);
+      screen.print(buttons.getName(assign_bt));
+    }
   }
 };
 
@@ -585,6 +619,9 @@ void GeniusParameterController::reset(){
   for(size_t i=0; i<NOF_CV_VALUES; ++i){
     user[i] = 0;
     cv_assign[i] = 0;
+  }
+  for(size_t i=0; i<NOF_BT_VALUES; ++i){
+    bt_assign[i] = i;
   }
   buttons = readButtons();
   selectOnePage.select = 0;
