@@ -91,17 +91,6 @@ extern "C" {
 // #define HYSTERESIS_DELTA 3
 static uint16_t HYSTERESIS_DELTA = 7;
 
-enum ChannelMode {
-  ADC_5TO5,
-  ADC_0TO10,
-  ADC_10TO0,
-  DAC_MODE,
-  DAC_5TO5,
-  DAC_0TO10,
-  DAC_10TO0,
-  CHANNEL_MODES
-};
-
 uint8_t cc_values[MAX11300_CHANNELS] = {0};
 ChannelMode cfg[MAX11300_CHANNELS];
 SmoothFloat dac[MAX11300_CHANNELS];

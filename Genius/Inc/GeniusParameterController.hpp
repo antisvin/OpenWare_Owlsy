@@ -12,6 +12,8 @@
 #include "Owl.h"
 #include "message.h"
 #ifdef USE_DIGITALBUS
+#include "HAL_MAX11300.h"
+#include "bus.h"
 #include "DigitalBusReader.h"
 extern DigitalBusReader bus;
 #endif
@@ -185,7 +187,18 @@ public:
   	cv_assign[2] = pid;
       else if(cv_assign[3] == 0 && cv_assign[2] != pid)
   	cv_assign[3] = pid;
-    }      
+    }
+#ifdef USE_DIGITALBUS
+    if (bus.getStatus() == BUS_STATUS_CONNECTED && pid >= PARAMETER_BE) {
+      if (outputs & (1 << pid)) {
+        bus_tx_command(BUS_CMD_CONFIGURE_IO, ((int16_t)pid - (int16_t)PARAMETER_BE) << 8 | (int16_t)DAC_0TO10);
+      }
+      else {
+        bus_tx_command(BUS_CMD_CONFIGURE_IO, ((int16_t)pid - (int16_t)PARAMETER_BE) << 8 | (int16_t)ADC_0TO10);
+      }
+    }
+
+#endif
   }    
   void setValue(uint8_t pid, int16_t value){    
     if(pid == cv_assign[0]){

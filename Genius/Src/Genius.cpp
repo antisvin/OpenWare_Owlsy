@@ -208,6 +208,16 @@ void onLoop(void){
   // SCB_CleanInvalidateDCache_by_Addr((uint32_t*)graphics.params.user, sizeof(graphics.params.user));
 #endif
   updateEncoders();
+#ifdef USE_DIGITALBUS
+  if (bus.getStatus() == BUS_STATUS_CONNECTED && owl.getOperationMode() == RUN_MODE) {
+    for (int i = 0; i < 20; i++) {
+      PatchParameterId pid = (PatchParameterId)((int)PARAMETER_BE + i);
+      if (graphics.params->isOutput(pid)) {
+        bus_tx_parameter(i, graphics.params->getValue(pid));
+      }
+    }
+  }
+#endif
 }
 
 #ifdef DEBUG_USBD_AUDIO

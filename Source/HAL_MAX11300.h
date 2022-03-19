@@ -8,6 +8,17 @@
 	extern "C" {
 #endif
 
+enum ChannelMode {
+  ADC_5TO5,
+  ADC_0TO10,
+  ADC_10TO0,
+  DAC_MODE,
+  DAC_5TO5,
+  DAC_0TO10,
+  DAC_10TO0,
+  CHANNEL_MODES
+};
+
 // Port Mapping
 #define PORT_1    4
 #define PORT_2    7
