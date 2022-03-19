@@ -420,14 +420,21 @@ public:
     screen.print(bus.getStatusString());
     screen.print(" ");
     extern uint32_t bus_tx_packets, bus_rx_packets;
-    screen.print((int)bus_tx_packets);
-    screen.print("/");
-    screen.print((int)bus_rx_packets);
-    if (bus.getStatus() == BUS_STATUS_CONNECTED) {
-      screen.print(", ");
-      screen.print(bus.getPeers());
-      screen.print(" peers");
-    }
+    int cnt = bus_tx_packets % 1000;
+    if (cnt < 10)
+      screen.print("  ");
+    else if (cnt < 100)
+      screen.print(" ");
+    screen.print(cnt);
+    screen.print("T/");
+    cnt = bus_rx_packets % 1000;
+    if (cnt < 10)
+      screen.print("  ");
+    else if (cnt < 100)
+      screen.print(" ");
+    screen.print(cnt);
+    screen.print("R ");
+    screen.print(msg_itoa(bus.getPeers(), 16));
 #endif
   }
 };

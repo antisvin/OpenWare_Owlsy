@@ -47,13 +47,13 @@ const char* DigitalBusHandler::getStatusString(){
     case BUS_STATUS_IDLE:
       return "IDLE";
     case BUS_STATUS_CONNECTED:
-      return "CONNECT";
+      return "CONN";
     case BUS_STATUS_DISCOVER:
-      return "DISCO";
+      return "DISC";
     case BUS_STATUS_ERROR:
-      return "ERROR";
+      return "ERR ";
     default:
-      return "UNKNOWN";
+      return "????";
   }
 }
 

@@ -20,6 +20,7 @@ extern "C" {
   void setParameterValue(uint8_t pid, int16_t value);
   void setup(void);
   void run(void);
+  void onError(int8_t code, const char* msg);
 }
 
 MidiHandler::MidiHandler(){
@@ -325,4 +326,8 @@ void bus_rx_message(const char* msg){
 
 void bus_rx_data(const uint8_t* data, uint16_t size){
   // debug << "rx data [" << size << "]\r\n" ;
+}
+
+void onError(int8_t code, const char* msg){
+  // TODO
 }
