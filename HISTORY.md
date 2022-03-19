@@ -1,3 +1,80 @@
+22.3.0
+------
+
+* First public Genius release
+* Added CRC checksum to stored resources
+* Critical sections protect task swapping
+* Fixed 64k size limit in flash storage
+* Updated libraries
+
+Known Issues:
+* USB Host does not support reconnecting devices
+
+
+22.2.2
+------
+
+* Updated BioSignals
+* Support for AC/DC and XibecaDevKit subprojects
+* Configurable audio block size
+* Added support for QSPI flash
+* Bootloader refactoring
+* Bootloader support for listing and deleting resources
+
+
+22.2.0
+------
+
+* Improved USB Audio FIFO allocation
+* Refactored Graphics code
+* Move screen handling to separate task
+* Added patch text/message handlers
+* Changed loop/setup callbacks to onLoop and onSetup
+* Support for OWL Pedal mk2
+* Prevent invalid characters in reported patch names
+* Send resource size and checksum with name
+* Improved backwards patch compatibility (CCM linked stack)
+
+
+22.1.rc2
+------
+
+* Process USB messages each audio block, before patch runs (or in loop if no patch is loaded)
+
+
+22.1.rc1
+------
+
+* Fix USBD audio sync issues:
+* rx asynchronous mode with explicit feedback
+* tx asynchronous mode with variable output size
+* Fix USBD audio descriptor issues (Windows support)
+
+
+22.0.0
+------
+
+* Prevent rewriting resources and patches
+* Provide resource size and CRC with name
+* Support SPI flash storage
+* Rewritten storage code
+* Support for new Witch device
+
+Known Issues:
+* USB Host does not support reconnecting devices
+* USB Audio might 'click' due to synchronisation with host
+
+21.2.2
+------
+
+* Fix mode button and LED issue in Wizard
+* Capitalise all USB device names
+
+21.2.1
+------
+
+* Change hardware ID for legacy devices to prevent parameter inversion
+
 21.2.0
 ------
 
@@ -8,12 +85,9 @@
 * Magus TRS MIDI output enabled
 * Updated Magus LED handling, new LED brightness menu
 * Update parameters with MIDI messages from USBH
-* USB devices renamed OWL-Magus, OWL-Wizard et c.
-* MIDI command to retrieve resource names
-
-Known Issues:
-* USB Host does not support reconnecting devices
-* USB Audio might 'click' due to synchronisation problems with host
+* USB devices renamed OWL-MAGUS, OWL-WIZARD et c.
+* MIDI command to retrieve resource names and sizes
+* MIDI command to delete resources
 
 
 21.1.0

@@ -177,11 +177,14 @@ amidi -p hw:2 -S f07d527df7
 # reset to bootloader
 amidi -p hw:2 -S f07d527ef7
 
-# erase flash storage sectors 7-10
-amidi -p "hw:1,0,0" -S f07d52140000000007f7f07d52140000000008f7f07d52140000000009f7f07d5214000000000af7
+# erase flash storage
+amidi -p hw:2 -S f07d5214f7
 
-# erase patch storage
-amidi -p "hw:1,0,0" -S f07d5214f7
+# erase resource 40
+amidi -p hw:2 -S f07d52140000000028f7
+
+# request resource 41
+amidi -p hw:2 -S f07d52180000000029f7
 
 # flash Wizard firmware
 amidi -p hw:2 -s Wizard.syx
@@ -216,6 +219,12 @@ amidi -p hw:1 -S f07d5203424c31f7
 # request button status
 amidi -p hw:1 -S b04319
 
+# set button B1 on
+amidi -p hw:1 -S b01b04
+
+# set button B1 off
+amidi -p hw:1 -S b01c04
+
 # dump all messages received
 amidi -p hw:1 -d -a
 
@@ -231,6 +240,11 @@ OWLPORT=`amidi -l|grep OWL|sed 's/.*\(hw:.*\),.*/\1/g'`
 
 Record 2 seconds 48k 16bit stereo
 arecord -D hw:1 -c 2 -r 48000 -f S16_LE out.wav
+AUDIODEV=hw:1 rec out.wav
+
+Playback 
+aplay -D hw:1 out.wav
+AUDIODEV=hw:1 play out.wav
 
 -----------------------------------------------------------------
 
@@ -265,7 +279,6 @@ MS USB hardware verifier
 
 https://www.usb.org/usb2tools
 http://www.testusb.com/Ch8ck.html
-
 
 -----------------------------------------------------------------
 
@@ -358,6 +371,9 @@ DC Offset removed with 48dB 10Hz hpf
 
 todo:
 - bootloader verify
+- send and receive error messages
+- send error messages without polling
+- bootloader message with reason for bootloader mode (watchdog, magic, no/invalid firmware)
 - disable all: sysex rule
 - IWDG->KR = 0xaaaa only if watchog is enabled, otherwise it hangs
 - fix Noctua bootloader
@@ -377,5 +393,46 @@ Create and upload resource from wav:
 sox sample.wav -r 48k -c 1 -t f32 sample.raw
 play -c 1 -r 48k -t f32 sample.raw 
 FirmwareSender -in sample.raw -out "OWL*" -name "sample.wav"
+
+-----------------------------------------------------------------
+
+H7 ADC:
+set Scan enable, Continuous enable, Conversion End of sequence, and ConversionDataManagement = ADC_CONVERSIONDATA_DMA_CIRCULAR
+
+-----------------------------------------------------------------
+
+ABFSR 0x04: AHBP busfault
+
+-----------------------------------------------------------------
+
+Dynamic module / code loading with Position Independent Code / Executables PIC / PIE
+https://github.com/rgujju/STM32-projects/tree/master/got_plt
+https://community.arm.com/support-forums/f/architectures-and-processors-forum/45919/gcc-does-not-generate-correct-code-while-building-pic
+https://systemoverlord.com/2017/03/19/got-and-plt-for-pwning.html
+https://reverseengineering.stackexchange.com/questions/1992/what-is-plt-got
+
+-----------------------------------------------------------------
+
+CPPFLAGS += -fdata-sections -ffunction-sections
+Required to compile without missing (unused) symbols
+
+-----------------------------------------------------------------
+
+USB audio:
+- pre fx
+- post fx
+- interlace
+
+[usb] -|      |- [usb]
+       +- fx -+
+[adc] -|      |- [dac]
+
+e.g. 4ch adc/dac, 4ch usb tx/rx, 8 ch fx
+
+-----------------------------------------------------------------
+       
+todo:
+- use (if possible) HAL_UARTEx_ReceiveToIdle_DMA
+- make USB Audio interface optional / configurable
 
 -----------------------------------------------------------------

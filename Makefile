@@ -8,16 +8,19 @@ endif
 .PHONY: clean
 
 # To avoid problems on case insensitive filesystems, mark all targets named the same as a directory as phony
-.PHONY: alchemist wizard magus lich owlpedal quadfm player prism effectsbox noctua biosignals witch midiboot tesseract midiboot3 genius
+.PHONY: alchemist wizard magus lich owlpedal quadfm player prism effectsbox noctua biosignals witch midiboot1 midiboot2 midiboot3 tesseract genius acdc xdk
 
 export OPENWARE CONFIG
 
-all: alchemist wizard magus lich witch owlpedal noctua effectsbox biosignals midiboot midiboot3 genius # tesseract prism player quadfm  ## build most targets
+all: alchemist wizard magus lich witch owlpedal genius biosignals acdc xdk midiboot1 midiboot2 midiboot3 # effectsbox tesseract prism player quadfm noctua  ## build most targets
 
-midiboot: ## build MidiBoot project
-	@$(MAKE) -C MidiBoot all
+midiboot1: ## build MidiBoot1 project
+	@$(MAKE) -C MidiBoot1 all
 
-midiboot3: ## build MidiBoot project
+midiboot2: ## build MidiBoot2 project
+	@$(MAKE) -C MidiBoot2 all
+
+midiboot3: ## build MidiBoot3 project
 	@$(MAKE) -C MidiBoot3 all
 
 tesseract: ## build Tesseract project
@@ -25,6 +28,12 @@ tesseract: ## build Tesseract project
 
 genius: ## build Genius project
 	@$(MAKE) -C Genius all
+
+acdc: ## build ACDC project
+	@$(MAKE) -C ACDC all
+
+xdk: ## build XibecaDevKit project
+	@$(MAKE) -C XibecaDevKit all
 
 witch: ## build Witch project
 	@$(MAKE) -C Witch all
@@ -77,7 +86,12 @@ clean: ## remove generated files
 	@$(MAKE) -C EffectsBox clean
 	@$(MAKE) -C Noctua clean
 	@$(MAKE) -C BioSignals clean
-	@$(MAKE) -C MidiBoot clean
+	@$(MAKE) -C Genius clean
+	@$(MAKE) -C ACDC clean
+	@$(MAKE) -C XibecaDevKit clean
+	@$(MAKE) -C MidiBoot1 clean
+	@$(MAKE) -C MidiBoot2 clean
+	@$(MAKE) -C MidiBoot3 clean
 
 docs: ## generate HTML documentation
 	@doxygen Doxyfile

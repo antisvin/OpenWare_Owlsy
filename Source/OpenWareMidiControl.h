@@ -53,21 +53,27 @@ enum PatchParameterId {
   PARAMETER_DH,
 };
 
+#define BUTTON_A   BUTTON_1
+#define BUTTON_B   BUTTON_2
+#define BUTTON_C   BUTTON_3
+#define BUTTON_D   BUTTON_4
+#define BUTTON_E   BUTTON_5
+#define BUTTON_F   BUTTON_6
+#define BUTTON_G   BUTTON_7
+#define BUTTON_H   BUTTON_8
+
 enum PatchButtonId {
-  BYPASS_BUTTON,
-  PUSHBUTTON,
+  PUSHBUTTON = 1,
   GREEN_BUTTON,
   RED_BUTTON,
-  BUTTON_A,
-  BUTTON_B,
-  BUTTON_C,
-  BUTTON_D,
-  BUTTON_E,
-  BUTTON_F,
-  BUTTON_G,
-  BUTTON_H,
-  GATE_BUTTON = 0x7f,
-  MIDI_NOTE_BUTTON = 0x80 // values over 127 are mapped to note numbers
+  BUTTON_1 = 4,
+  BUTTON_2 = 5,
+  BUTTON_3 = 6,
+  BUTTON_4 = 7,
+  BUTTON_5 = 8,
+  BUTTON_6 = 9,
+  BUTTON_7 = 10,
+  BUTTON_8 = 11
 };
 
 #define SYSEX_CONFIGURATION_AUDIO_RATE            "FS"
@@ -89,6 +95,7 @@ enum PatchButtonId {
 #define SYSEX_CONFIGURATION_BUS_ENABLE            "BE"
 #define SYSEX_CONFIGURATION_BUS_FORWARD_MIDI      "BM"
 #define SYSEX_CONFIGURATION_BOOTLOADER_LOCK       "BL"
+#define SYSEX_CONFIGURATION_EXPRESSION_PEDAL      "EP"
 
 enum OpenWareMidiSysexCommand {
   SYSEX_PRESET_NAME_COMMAND       = 0x01,
@@ -105,6 +112,7 @@ enum OpenWareMidiSysexCommand {
   SYSEX_SETTINGS_RESET            = 0x15,
   SYSEX_SETTINGS_STORE            = 0x16,
   SYSEX_FIRMWARE_SAVE             = 0x17,
+  SYSEX_FIRMWARE_SEND             = 0x18,
   SYSEX_FIRMWARE_VERSION          = 0x20,
   SYSEX_DEVICE_ID                 = 0x21,
   SYSEX_PROGRAM_MESSAGE           = 0x22,

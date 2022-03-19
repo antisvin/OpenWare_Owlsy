@@ -4,11 +4,12 @@ ifeq ($(CONFIG),Debug)
   CPPFLAGS = -g3 -Wall -Wcpp -Wunused-function -DDEBUG # -DUSE_FULL_ASSERT
   ASFLAGS  = -g3
   CFLAGS   = -g3
-endif
-ifeq ($(CONFIG),Release)
+else ifeq ($(CONFIG),Release)
   CPPFLAGS = -O2
   ASFLAGS  = -O2
   CFLAGS   = -O2
+else
+  $(error Invalid CONFIG=$(CONFIG))
 endif
 
 # compile with semihosting if Debug is selected
@@ -30,7 +31,7 @@ CPPFLAGS += -fdata-sections
 CPPFLAGS += -ffunction-sections
 CPPFLAGS += -fno-builtin -ffreestanding
 LDFLAGS += -fno-builtin -ffreestanding
-CXXFLAGS = -fno-rtti -fno-exceptions -std=gnu++11
+CXXFLAGS = -fno-rtti -fno-exceptions -std=gnu++17
 CFLAGS  += -std=gnu99
 ARCH_FLAGS = -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16
 ARCH_FLAGS += -fsingle-precision-constant

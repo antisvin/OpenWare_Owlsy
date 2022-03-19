@@ -13,10 +13,10 @@ C_SRC += $(DRIVERS)/Src/stm32h7xx_hal_flash.c
 C_SRC += $(DRIVERS)/Src/stm32h7xx_hal_flash_ex.c
 C_SRC += $(DRIVERS)/Src/stm32h7xx_hal_tim_ex.c
 C_SRC += $(DRIVERS)/Src/stm32h7xx_hal_tim.c
+C_SRC += $(DRIVERS)/Src/stm32h7xx_hal_lptim.c
 C_SRC += $(DRIVERS)/Src/stm32h7xx_hal_cortex.c
 C_SRC += $(DRIVERS)/Src/stm32h7xx_hal_spi.c
 # C_SRC += $(DRIVERS)/Src/stm32h7xx_hal_rng.c
-# C_SRC += $(DRIVERS)/Src/stm32h7xx_hal_qspi.c
 # C_SRC += $(DRIVERS)/Src/stm32h7xx_hal_dma2d.c
 
 # optionals
@@ -29,6 +29,8 @@ C_SRC_RTC = $(DRIVERS)/Src/stm32h7xx_hal_rtc.c
 C_SRC_RTC += $(DRIVERS)/Src/stm32h7xx_hal_pwr.c
 C_SRC_RTC += $(DRIVERS)/Src/stm32h7xx_hal_rtc_ex.c
 C_SRC_IWDG = $(DRIVERS)/Src/stm32h7xx_hal_iwdg.c
+C_SRC_QSPI = $(DRIVERS)/Src/stm32h7xx_hal_qspi.c
+C_SRC_MDMA = $(DRIVERS)/Src/stm32h7xx_hal_mdma.c
 
 # required by OWL 2
 C_SRC_SAI = $(DRIVERS)/Src/stm32h7xx_hal_sai.c
@@ -64,6 +66,7 @@ C_SRC_USBH += $(USB_HOST_FILE)/Core/Src/usbh_core.c
 C_SRC_USBH += $(USB_HOST_FILE)/Core/Src/usbh_pipes.c
 C_SRC_USBH += $(USB_HOST_FILE)/Core/Src/usbh_ioreq.c
 C_SRC_USBH += $(USB_HOST_FILE)/Core/Src/usbh_ctlreq.c
+C_SRC_USBH_HID = $(wildcard $(USB_HOST_FILE)/Class/HID/Src/*.c)
 
 ### CMSIS DSP Library ####
 C_SRC_DSP = $(DSPLIB)/FastMathFunctions/arm_sin_f32.c
@@ -96,10 +99,11 @@ C_SRC_DSP += $(DSPLIB)/CommonTables/arm_const_structs.c
 # C_SRC += $(DSPLIB)/SupportFunctions/arm_q15_to_float.c
 
 ### FreeRTOS ###
-C_SRC_OS = $(FREERTOS_DIR)/CMSIS_RTOS/cmsis_os.c
-# C_SRC_OS = $(FREERTOS_DIR)/CMSIS_RTOS/cmsis_os2.c
-C_SRC_OS += $(FREERTOS_DIR)/portable/GCC/ARM_CM7/r0p1/port.c
-# C_SRC_OS += $(FREERTOS_DIR)/portable/GCC/ARM_CM4F/port.c
+C_SRC_OS  = $(OPENWARE)/Source/freertos.c
+C_SRC_OS += $(FREERTOS_DIR)/CMSIS_RTOS/cmsis_os.c
+# Recommended to use CM4F port for non-r0p1 chip revisions (H7xx is r1p1)
+# C_SRC_OS += $(FREERTOS_DIR)/portable/GCC/ARM_CM7/r0p1/port.c
+C_SRC_OS += $(FREERTOS_DIR)/portable/GCC/ARM_CM4F/port.c
 C_SRC_OS += $(FREERTOS_DIR)/tasks.c
 C_SRC_OS += $(FREERTOS_DIR)/timers.c
 C_SRC_OS += $(FREERTOS_DIR)/queue.c

@@ -63,6 +63,7 @@ C_SRC_USBH += $(USB_HOST_FILE)/Core/Src/usbh_core.c
 C_SRC_USBH += $(USB_HOST_FILE)/Core/Src/usbh_pipes.c
 C_SRC_USBH += $(USB_HOST_FILE)/Core/Src/usbh_ioreq.c
 C_SRC_USBH += $(USB_HOST_FILE)/Core/Src/usbh_ctlreq.c
+C_SRC_USBH_HID = $(wildcard $(USB_HOST_FILE)/Class/HID/Src/*.c)
 
 ### CMSIS DSP Library ####
 C_SRC_DSP = $(DSPLIB)/FastMathFunctions/arm_sin_f32.c
@@ -95,9 +96,8 @@ C_SRC_DSP += $(DSPLIB)/CommonTables/arm_const_structs.c
 # C_SRC += $(DSPLIB)/SupportFunctions/arm_q15_to_float.c
 
 ### FreeRTOS ###
-C_SRC_OS = $(FREERTOS_DIR)/CMSIS_RTOS/cmsis_os.c
-# C_SRC_OS = $(FREERTOS_DIR)/CMSIS_RTOS/cmsis_os2.c
-# C_SRC_OS += $(FREERTOS_DIR)/portable/GCC/ARM_CM7/r0p1/port.c
+C_SRC_OS  = $(OPENWARE)/Source/freertos.c
+C_SRC_OS += $(FREERTOS_DIR)/CMSIS_RTOS/cmsis_os.c
 C_SRC_OS += $(FREERTOS_DIR)/portable/GCC/ARM_CM4F/port.c
 C_SRC_OS += $(FREERTOS_DIR)/tasks.c
 C_SRC_OS += $(FREERTOS_DIR)/timers.c

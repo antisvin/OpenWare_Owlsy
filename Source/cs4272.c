@@ -40,6 +40,9 @@ void codec_reset(){
 #else
   codec_write(CODEC_ADC_CTRL, 0x10 | 0x03 ); // hp filters disabled
 #endif
+#ifdef CODEC_DAC_INVERT
+  codec_write(CODEC_DAC_CTRL, CODEC_DAC_CTRL_INV_POL_AB); // invert DAC signal
+#endif
 }
 
 void codec_init(){
@@ -88,7 +91,7 @@ void codec_init(){
   codec_write(CODEC_DAC_VOL_REG,
   	      CODEC_DAC_VOL_CHB_CHA |
   	      CODEC_DAC_SOFT_RAMP |
-  	      CODEC_DAC_ZERO_CROSS |
+  	      /* CODEC_DAC_ZERO_CROSS | */
 #ifdef CODEC_LR_SWAP
   	      CODEC_DAC_VOL_ATAPI_SWAP);
 #else

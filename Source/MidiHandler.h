@@ -33,10 +33,12 @@ private:
   void handleFirmwareFlashCommand(uint8_t* data, uint16_t size);
   void handleFirmwareStoreCommand(uint8_t* data, uint16_t size);
   void handleFirmwareSaveCommand(uint8_t* data, uint16_t size);
+  void handleFirmwareSendCommand(uint8_t* data, uint16_t size);
   void handleFlashEraseCommand(uint8_t* data, uint16_t size);
   void handleSettingsResetCommand(uint8_t* data, uint16_t size);
   void handleSettingsStoreCommand(uint8_t* data, uint16_t size);
   void handleDeviceResetCommand(uint8_t* data, uint16_t size);
+  void handleProgramMessage(uint8_t* data, uint16_t size);
   void runProgram();
 };
 

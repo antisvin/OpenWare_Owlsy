@@ -16,16 +16,8 @@
 #include "BitState.hpp"
 #include "errorhandlers.h"
 #include "message.h"
-#include "FlashStorage.h"
+#include "Storage.h"
 #include "PatchRegistry.h"
-
-#ifdef OWL_BIOSIGNALS
-#include "ads.h"
-#ifdef USE_KX122
-#include "kx122.h"
-#endif
-#include "ble_midi.h"
-#endif
 
 #if defined USE_RGB_LED
 #include "rainbow.h"
@@ -43,7 +35,9 @@ extern "C"{
 #endif /* USE_DIGITALBUS */
 
 Owl owl;
+#ifdef USE_RGB_LED
 uint32_t ledstatus;
+#endif
 MidiController midi_tx;
 MidiReceiver midi_rx;
 ApplicationSettings settings;
@@ -51,10 +45,7 @@ ApplicationSettings settings;
 Codec codec;
 #endif
 #ifdef USE_ADC
-uint16_t adc_values[NOF_ADC_VALUES] DMA_RAM;
-#endif
-#ifdef USE_DAC
-extern DAC_HandleTypeDef hdac;
+uint16_t adc_values[NOF_ADC_VALUES] DMA_RAM = {};
 #endif
 
 int16_t getAnalogValue(uint8_t ch){
@@ -74,39 +65,6 @@ void midiSetOutputChannel(int8_t channel){
   midi_tx.setOutputChannel(channel);
 }
 
-__weak void initLed(){
-  // Initialise RGB LED PWM timers
-#if defined OWL_TESSERACT
-  extern TIM_HandleTypeDef htim2;
-  extern TIM_HandleTypeDef htim3;
-  // Red
-  HAL_TIM_Base_Start(&htim2);
-  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
-  // Green
-  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2);
-  // Blue
-  HAL_TIM_Base_Start(&htim3);
-  HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
-#elif defined OWL_BIOSIGNALS
-#ifdef USE_LED_PWM
-  extern TIM_HandleTypeDef htim1;
-  HAL_TIM_Base_Start(&htim1);
-  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
-  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
-  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
-#else
-  /*Configure GPIO pin : LED_GREEN_Pin, LED_RED_Pin */
-  GPIO_InitTypeDef GPIO_InitStruct = {0};
-  GPIO_InitStruct.Pin = LED_GREEN_Pin | LED_RED_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(LED_GREEN_GPIO_Port, &GPIO_InitStruct);
-#endif
-#endif
-}
-
-
 extern "C" {
 
 void HAL_GPIO_EXTI_Callback(uint16_t pin){
@@ -117,24 +75,34 @@ void HAL_GPIO_EXTI_Callback(uint16_t pin){
 static TickType_t xLastWakeTime;
 static TickType_t xFrequency;
 
-void Owl::setup(void){
+static void iwdg_setup(){
 #ifdef USE_IWDG
 #ifdef STM32H7xx
   IWDG1->KR = 0xCCCC; // Enable IWDG and turn on LSI
   IWDG1->KR = 0x5555; // ensure watchdog register write is allowed
   IWDG1->PR = 0x05;   // prescaler 128
   IWDG1->RLR = 0x753; // reload 8 seconds
+  while(IWDG1->SR != 0x00u); // wait to count down
+  IWDG1->KR = 0xaaaa; // reset the watchdog timer
 #else
   IWDG->KR = 0xCCCC; // Enable IWDG and turn on LSI
   IWDG->KR = 0x5555; // ensure watchdog register write is allowed
   IWDG->PR = 0x05;   // prescaler 128
   IWDG->RLR = 0x753; // reload 8 seconds
+  while(IWDG->SR != 0x00u); // wait to count down
+  IWDG->KR = 0xaaaa; // reset the watchdog timer
 #endif
-#endif
+#endif  
+}
+
+void Owl::setup(void){
+  iwdg_setup();
 #ifdef USE_BKPSRAM
   HAL_PWR_EnableBkUpAccess();
 #endif
+#ifdef USE_RGB_LED
   ledstatus = 0;
+#endif
   storage.init();
   registry.init();
   settings.init(); // settings need the registry to be initialised first
@@ -147,11 +115,10 @@ void Owl::setup(void){
   codec.setOutputGain(settings.audio_output_gain);
 #endif /* USE_CODEC */
 
-  program.startManager();
-
 #ifdef USE_DAC
-  HAL_DAC_Start(&hdac, DAC_CHANNEL_1);
-  HAL_DAC_Start(&hdac, DAC_CHANNEL_2);
+  extern DAC_HandleTypeDef DAC_HANDLE;
+  HAL_DAC_Start(&DAC_HANDLE, DAC_CHANNEL_1);
+  HAL_DAC_Start(&DAC_HANDLE, DAC_CHANNEL_2);
   setAnalogValue(PARAMETER_F, 0);
   setAnalogValue(PARAMETER_G, 0);
 #endif
@@ -174,6 +141,8 @@ void Owl::setup(void){
   bus_setup();
   bus_set_input_channel(settings.midi_input_channel);
 #endif /* USE_DIGITALBUS */
+
+  program.startManager(); // calls bootstrap, loads patch
 }
 
 #ifdef USE_DIGITALBUS
@@ -200,34 +169,29 @@ void updateLed(){
 }
 #endif /*USE_RGB_LED */
 
-OperationMode Owl::getOperationMode(){
+uint8_t Owl::getOperationMode(){
   return operationMode;
 }
 
-void Owl::setOperationMode(OperationMode mode){
-  onChangeMode(mode, operationMode);
-  operationMode = mode;
+void Owl::setOperationMode(uint8_t mode){
+  if(mode != operationMode){
+    uint8_t old_mode = operationMode;
+    // make sure this is set before calling onChangeMode
+    operationMode = mode;
+    onChangeMode(mode, old_mode);
+  }
 }
 
 void Owl::loop(){
+  if(!program.isProgramRunning()){
+    midi_tx.transmit();
+    midi_rx.receive(); // push queued up MIDI messages through to patch
+  }
 #ifdef USE_DIGITALBUS
   busstatus = bus_status();
 #endif
-#ifdef OLED_DMA
-  // When using OLED_DMA this must delay for a minimum amount to allow screen to update
-  vTaskDelay(xFrequency);
-#else
   vTaskDelayUntil(&xLastWakeTime, xFrequency);
-#endif
-  midi_rx.receive();
-  midi_tx.transmit();
-#ifdef USE_IWDG
-#ifdef STM32H7xx
-  IWDG1->KR = 0xaaaa; // reset the watchdog timer (if enabled)
-#else
-  IWDG->KR = 0xaaaa; // reset the watchdog timer (if enabled)
-#endif
-#endif
+  device_watchdog();
   if(backgroundTask != NULL)
     backgroundTask->loop();
 }
@@ -250,34 +214,18 @@ void jump_to_bootloader(void){
 //   extern USBD_HandleTypeDef USBD_HANDLE;
 //   USBD_DeInit(&USBD_HANDLE);
 // #endif
+#ifdef USE_BKPSRAM
+  extern RTC_HandleTypeDef hrtc;
+  HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, 0);
+#endif
+  /* Disable all interrupts */
+#ifdef STM32H7xx
+  RCC->CIER = 0x00000000;
+#else
+  RCC->CIR = 0x00000000;
+#endif
   *OWLBOOT_MAGIC_ADDRESS = OWLBOOT_MAGIC_NUMBER;
-#ifdef USE_BKPSRAM
-  extern RTC_HandleTypeDef hrtc;
-  HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, 0);
-#endif
-  /* Disable all interrupts */
-#ifdef STM32H7xx
-  RCC->CIER = 0x00000000;
-#else
-  RCC->CIR = 0x00000000;
-#endif
-  NVIC_SystemReset();
-  /* Shouldn't get here */
-  while(1);
-}
-
-void device_reset(){
-  *OWLBOOT_MAGIC_ADDRESS = 0;
-#ifdef USE_BKPSRAM
-  extern RTC_HandleTypeDef hrtc;
-  HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, 0);
-#endif
-  /* Disable all interrupts */
-#ifdef STM32H7xx
-  RCC->CIER = 0x00000000;
-#else
-  RCC->CIR = 0x00000000;
-#endif
+  __DSB(); __ISB(); // memory and instruction barriers
   NVIC_SystemReset();
   /* Shouldn't get here */
   while(1);
@@ -309,12 +257,23 @@ const char* getDeviceName(){
   static char name[22];
   static char* ptr = 0;
   if(ptr == 0){
-    uint32_t* id = (uint32_t*)UID_BASE; // get a pointer to the 96-bit unique device id
-    unsigned int hash = id[0]^id[1]^id[2]; // hash into 32-bit value
+    uint32_t hash = HAL_GetUIDw0() ^ HAL_GetUIDw1() ^ HAL_GetUIDw2(); // hash into 32-bit value
     hash = (hash>>16)^(hash&0xffff); // hash into 16-bit value
     char* p = stpcpy(name, "OWL-" HARDWARE_VERSION "-");
     stpcpy(p, msg_itoa(hash, 16));
     ptr = name;
   }
   return ptr;
+}
+
+void Owl::setMessageCallback(void* callback){
+  messageCallback = (void (*)(const char* msg, size_t len))callback;
+}
+
+/**
+ * This method should not be called from an irq handler
+ */
+void Owl::handleMessage(const char* msg, size_t len){
+  if(messageCallback != NULL)
+    messageCallback(msg, len);
 }

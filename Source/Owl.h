@@ -27,8 +27,6 @@ extern "C" {
   const char* getDeviceName();
   const char* getFirmwareVersion();
   const char* getBootloaderVersion();
-  void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t* adc_values, size_t adc_len);  
-
 #ifdef USE_ENCODERS
   int16_t getEncoderValue(uint8_t encoder);
   void encoderReset(uint8_t encoder, int16_t value);
@@ -41,15 +39,6 @@ extern "C" {
 
   void midiSetInputChannel(int8_t channel);
   void midiSetOutputChannel(int8_t channel);
-			   
-#ifdef OWL_MAGUS
-#define PORT_UNI_INPUT 1
-#define PORT_UNI_OUTPUT 2
-#define PORT_BI_INPUT 3
-#define PORT_BI_OUTPUT 4
-  void setPortMode(uint8_t index, uint8_t mode);
-  uint8_t getPortMode(uint8_t index);
-#endif /* OWL_MAGUS */
 
   int16_t getParameterValue(uint8_t index);
   void setParameterValue(uint8_t ch, int16_t value);
@@ -58,9 +47,6 @@ extern "C" {
   void delay(uint32_t ms);
 
   void audioCallback(int32_t* rx, int32_t* tx, uint16_t size);
-
-  void jump_to_bootloader(void);  
-  void device_reset(void);
   void MX_USB_HOST_Process(void);
 
 #ifdef __cplusplus
@@ -75,15 +61,18 @@ class BackgroundTask {
 
 class Owl {
  private:
-  volatile OperationMode operationMode = STARTUP_MODE;
+  volatile uint8_t operationMode = STARTUP_MODE;
   BackgroundTask* backgroundTask = NULL;
+  void (*messageCallback)(const char* msg, size_t len) = NULL;
   
  public:
   void setup();
   void loop();
-  OperationMode getOperationMode();
-  void setOperationMode(OperationMode mode);
+  uint8_t getOperationMode();
+  void setOperationMode(uint8_t mode);
   void setBackgroundTask(BackgroundTask* bt);
+  void setMessageCallback(void* callback);
+  void handleMessage(const char* msg, size_t len);
 };
 extern Owl owl;
 

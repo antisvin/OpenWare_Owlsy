@@ -3,7 +3,17 @@
 #include "midi.h"
 #include "SerialBuffer.hpp"
 
+/**
+ * USB Host MIDI Driver
+ * Based on code by Xavier Halgand @MrBlueXav
+ */
+
 extern "C" {
+  bool usbh_midi_connected(void);
+  bool usbh_midi_ready(void);
+  void usbh_midi_rx(uint8_t *buffer, uint32_t length);
+  void usbh_midi_tx(uint8_t* buffer, uint32_t length);
+
   static USBH_StatusTypeDef USBH_MIDI_InterfaceInit  (USBH_HandleTypeDef *phost);
 
   static USBH_StatusTypeDef USBH_MIDI_InterfaceDeInit  (USBH_HandleTypeDef *phost);
@@ -29,8 +39,6 @@ extern "C" {
     };
 
   void usbh_midi_push();
-
-  void USBH_MIDI_NotifyURBChange(USBH_HandleTypeDef *phost, uint8_t chnum, HCD_URBStateTypeDef urb_state);
 }
 
 static SerialBuffer<USB_HOST_RX_BUFF_SIZE> rxbuffer;
@@ -38,12 +46,9 @@ static MIDI_HandleTypeDef staticMidiHandle;
 
 static USBH_StatusTypeDef USBH_MIDI_InterfaceInit (USBH_HandleTypeDef *phost){
   USBH_StatusTypeDef status = USBH_FAIL ;
-  uint8_t interface = 0;
-  MIDI_HandleTypeDef *MIDI_Handle;
-
   //USB_MIDI_ChangeConnectionState(0);
 
-  interface = USBH_FindInterface(phost, USB_AUDIO_CLASS, USB_MIDISTREAMING_SUBCLASS, 0xFF);
+  uint8_t interface = USBH_FindInterface(phost, USB_AUDIO_CLASS, USB_MIDISTREAMING_SUBCLASS, 0xFF);
   USBH_DbgLog ("USBH InterfaceInit 0x%x", interface);
 
   if(interface == 0xFF){
@@ -52,8 +57,9 @@ static USBH_StatusTypeDef USBH_MIDI_InterfaceInit (USBH_HandleTypeDef *phost){
     status = USBH_FAIL;
   }else{
     USBH_SelectInterface (phost, interface);
-    phost->pActiveClass->pData = &staticMidiHandle;
-    MIDI_Handle =  &staticMidiHandle;
+    MIDI_HandleTypeDef* MIDI_Handle = &staticMidiHandle;
+    memset(MIDI_Handle, 0, sizeof(staticMidiHandle));
+    phost->pActiveClass->pData = MIDI_Handle;
 
     if(phost->device.CfgDesc.Itf_Desc[phost->device.current_interface].Ep_Desc[0].bEndpointAddress & 0x80){
       MIDI_Handle->InEp = (phost->device.CfgDesc.Itf_Desc[phost->device.current_interface].Ep_Desc[0].bEndpointAddress);
@@ -112,24 +118,24 @@ static USBH_StatusTypeDef USBH_MIDI_InterfaceInit (USBH_HandleTypeDef *phost){
  */
 USBH_StatusTypeDef USBH_MIDI_InterfaceDeInit (USBH_HandleTypeDef *phost){
   USBH_DbgLog ("USBH InterfaceDeInit");
-  MIDI_HandleTypeDef *MIDI_Handle =  &staticMidiHandle;
-
-  if ( MIDI_Handle->OutPipe){
-    USBH_ClosePipe(phost, MIDI_Handle->OutPipe);
-    USBH_FreePipe  (phost, MIDI_Handle->OutPipe);
-    MIDI_Handle->OutPipe = 0;     /* Reset the Channel as Free */
-  }
-
-  if ( MIDI_Handle->InPipe){
-    USBH_ClosePipe(phost, MIDI_Handle->InPipe);
-    USBH_FreePipe  (phost, MIDI_Handle->InPipe);
-    MIDI_Handle->InPipe = 0;     /* Reset the Channel as Free */
-  }
-
   if(phost->pActiveClass->pData){
-    /* statically allocated in init
+    MIDI_HandleTypeDef* MIDI_Handle = (MIDI_HandleTypeDef*)phost->pActiveClass->pData;
+
+    if ( MIDI_Handle->OutPipe){
+      USBH_ClosePipe(phost, MIDI_Handle->OutPipe);
+      USBH_FreePipe  (phost, MIDI_Handle->OutPipe);
+      MIDI_Handle->OutPipe = 0;     /* Reset the Channel as Free */
+    }
+    
+    if ( MIDI_Handle->InPipe){
+      USBH_ClosePipe(phost, MIDI_Handle->InPipe);
+      USBH_FreePipe  (phost, MIDI_Handle->InPipe);
+      MIDI_Handle->InPipe = 0;     /* Reset the Channel as Free */
+    }
+
+    /* statically allocated
        USBH_free (phost->pActiveClass->pData); */
-    phost->pActiveClass->pData = 0;
+    phost->pActiveClass->pData = NULL;
   }
 
   return USBH_OK;
@@ -164,16 +170,14 @@ USBH_StatusTypeDef  USBH_MIDI_Stop(USBH_HandleTypeDef *phost){
   return USBH_OK;
 }
 
-void USBH_MIDI_NotifyURBChange(USBH_HandleTypeDef *phost, uint8_t chnum, HCD_URBStateTypeDef urb_state){
-  MIDI_HandleTypeDef *MIDI_Handle =  &staticMidiHandle;
-  if(urb_state == URB_DONE && chnum == MIDI_Handle->InPipe &&
-     MIDI_Handle->state == MIDI_TRANSFER_DATA){
-    size_t len = USBH_LL_GetLastXferSize(phost, MIDI_Handle->InPipe);
-    if(MIDI_Handle->pRxData[4] == 0)
-      len = 4;
-    // xfer_count is always 64 at this point, even if only 4 bytes of data is transferred
-    // it appears some drivers (e.g. WinXP) send 0-padded 64-length packets
-    USBH_MIDI_ReceiveCallback(phost, MIDI_Handle->pRxData, len);
+extern "C"{
+  void HAL_HCD_HC_NotifyURBChange_Callback(HCD_HandleTypeDef *hhcd, uint8_t chnum, HCD_URBStateTypeDef urb_state){
+    MIDI_HandleTypeDef *MIDI_Handle =  &staticMidiHandle;
+    if(urb_state == URB_DONE && chnum == MIDI_Handle->InPipe &&
+       MIDI_Handle->state == MIDI_TRANSFER_DATA){
+      size_t len = USBH_LL_GetLastXferSize((USBH_HandleTypeDef*)hhcd->pData, MIDI_Handle->InPipe);
+      USBH_MIDI_ReceiveCallback((USBH_HandleTypeDef*)hhcd->pData, MIDI_Handle->pRxData, len);
+    }
   }
 }
 
@@ -215,6 +219,14 @@ static USBH_StatusTypeDef USBH_MIDI_Process (USBH_HandleTypeDef *phost){
   * @retval USBH Status
   */
 static USBH_StatusTypeDef USBH_MIDI_SOFProcess (USBH_HandleTypeDef *phost){
+  MIDI_HandleTypeDef *MIDI_Handle =  &staticMidiHandle;
+
+  USBH_URBStateTypeDef URB_Status = USBH_LL_GetURBState(phost, MIDI_Handle->InPipe);
+  if(URB_Status == USBH_URB_STALL) {
+    USBH_DbgLog("USBH URB Stall");
+    if (USBH_ClrFeature(phost, MIDI_Handle->InEp) == USBH_OK)
+      MIDI_Handle->state = MIDI_TRANSFER_DATA;
+  }
   return USBH_OK;  
 }
   
@@ -380,7 +392,12 @@ bool usbh_midi_ready(void){
 }
 
 void USBH_MIDI_ReceiveCallback(USBH_HandleTypeDef *phost, uint8_t* data, size_t len){
-  rxbuffer.incrementWriteHead(len);
+  // len is always 64 at this point, even if only 4 bytes of data is transferred
+  // it appears some drivers (e.g. WinXP) send 0-padded 64-length packets
+  size_t sz = 0;
+  while(sz<len && data[sz] != 0)
+    sz += 4;
+  rxbuffer.incrementWriteHead(sz);
   USBH_MIDI_Receive(phost, rxbuffer.getWriteHead(), rxbuffer.getContiguousWriteCapacity());
 }
 
@@ -395,6 +412,7 @@ void usbh_midi_tx(uint8_t* buffer, uint32_t length){
 }
 
 void USBH_MIDI_TransmitCallback(USBH_HandleTypeDef *phost){
+  // tx complete callback
 // get ready to send some data
 }
 
