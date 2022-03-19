@@ -25,3 +25,40 @@
 
 /* Adds extra variables for UART DMA that don't get canceled */
 #define NO_DMA_STREAMS
+
+// LED Mapping
+/*
+#define LED_1   15
+#define LED_2   14
+#define LED_3   13
+#define LED_4   12
+#define LED_5   11
+#define LED_6   10
+#define LED_7   9
+#define LED_8   8
+#define LED_9   0
+#define LED_10  1
+#define LED_11  2
+#define LED_12  3
+#define LED_13  4
+#define LED_14  5
+#define LED_15  6
+#define LED_16  7
+*/
+
+#define LED_1   15 // OK
+#define LED_2   14
+#define LED_3   13
+#define LED_4   12
+#define LED_5   11
+#define LED_6   10
+#define LED_7   0 // OK //9
+#define LED_8   8
+#define LED_9   2 // 0
+#define LED_10  1
+#define LED_11  2
+#define LED_12  3
+#define LED_13  4
+#define LED_14  5
+#define LED_15  6
+#define LED_16  7

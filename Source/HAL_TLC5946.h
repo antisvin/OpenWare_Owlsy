@@ -35,6 +35,7 @@ void TLC5946_setRGB_DC(uint8_t val_R, uint8_t val_G, uint8_t val_B);
 void TLC5946_setAll(uint16_t val_R, uint16_t val_G, uint16_t val_B);
 #elif TLC_DEVICES == 1
 void TLC5946_set(uint16_t value); // Updates first device
+void TLC5946_setLed(uint8_t led_id, uint16_t value);
 #endif
 void TLC5946_setAll_DC(uint8_t value);
 

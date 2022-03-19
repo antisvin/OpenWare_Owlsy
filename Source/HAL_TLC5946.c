@@ -24,10 +24,21 @@ static uint8_t rgDCbuf[TLC_DEVICES*TLC_DC_BYTES+1] =
   };
 static SPI_HandleTypeDef* TLC5946_SPIConfig;
 
-#if TLC_DEVICES == 3
-static const uint8_t rgLED_R[16] = {14,12,9,8,7,4,2,0,15,13,11,10,6,5,3,1};
-static const uint8_t rgLED_G[16] = {14,12,10,8,7,4,2,0,15,13,11,9,6,5,3,1};
-static const uint8_t rgLED_B[16] = {14,12,9,8,7,4,2,0,15,13,11,10,6,5,3,1};
+static const uint8_t rgLED[TLC_CHANNELS * TLC_DEVICES] =
+#if TLC_DEVICES == 1 && TLC_CHANNELS == 16
+{
+  LED_1, LED_2, LED_3, LED_4, LED_5, LED_6, LED_7, LED_8,
+  LED_9, LED_10, LED_11, LED_12, LED_13, LED_14, LED_15, LED_16,
+};
+#elif TLC_DEVICES == 3 && TLC_CHANNELS == 16
+{
+  14,12,9,8,7,4,2,0,15,13,11,10,6,5,3,1,
+  14,12,10,8,7,4,2,0,15,13,11,9,6,5,3,1,
+  14,12,9,8,7,4,2,0,15,13,11,10,6,5,3,1,
+};
+static const uint8_t* rgLED_R = &rgLED[0];
+static const uint8_t* rgLED_G = &rgLED[TLC_DEVICES];
+static const uint8_t* rgLED_B = &rgLED[TLC_DEVICES * 2];
 #endif
 
 // see also https://yurichev.com/blog/FAT12/ for optimised ASM
@@ -154,6 +165,9 @@ void TLC5946_set(uint16_t value){
   for(int i=0; i<16; i++){
     TLC5946_SetOutput_GS(0, i, value);
   }
+}
+void TLC5946_setLed(uint8_t led_id, uint16_t value){
+  TLC5946_SetOutput_GS(0, rgLED[led_id], value);
 }
 #endif
 

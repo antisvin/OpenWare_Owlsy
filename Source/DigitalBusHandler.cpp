@@ -92,7 +92,7 @@ void DigitalBusHandler::handleDiscover(uint8_t seq, uint32_t other){
   }else{
     if(settings.bus_enabled && seq < 0x0f)      
       sendDiscover(seq+1, other); // increment seq and pass it on
-    if(settings.bus_enabled && peers == 0)
+    if(settings.bus_enabled && peers == 0 && bus_status() != BUS_STATUS_DISCOVER)
       startDiscover();
   }
 #endif

@@ -204,9 +204,9 @@ void setLed(uint8_t ch, int16_t value){
   if(ch < TLC5946_CHANNELS){
     // note that LED channel index is inverse of MAX channel index
     if(cfg[ch] == DAC_5TO5 || cfg[ch] == ADC_5TO5)
-      TLC5946_SetOutput_GS(0, 15-ch, max(0, min(4095, abs(value-2048)*2)));
+      TLC5946_setLed(ch, max(0, min(4095, abs(value-2048)*2)));
     else
-      TLC5946_SetOutput_GS(0, 15-ch, max(0, min(4095, value)));
+      TLC5946_setLed(ch, max(0, min(4095, value)));
   }
 #endif
 }

@@ -1,5 +1,6 @@
 #include "Owl.h"
 
+#include "ApplicationSettings.h"
 #include "Graphics.h"
 
 
@@ -50,6 +51,10 @@ void setup(){
   __HAL_TIM_SET_COUNTER(&ENCODER_TIM2, INT16_MAX/2);
   HAL_TIM_Encoder_Start_IT(&ENCODER_TIM1, TIM_CHANNEL_ALL);
   HAL_TIM_Encoder_Start_IT(&ENCODER_TIM2, TIM_CHANNEL_ALL);
+
+  // We don't have a functional flash storage, so we just reset
+  // settings to get reasonable defaults
+  settings.reset();
 
   owl.setup();
 }
