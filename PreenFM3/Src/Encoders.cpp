@@ -110,7 +110,7 @@ void Encoders::checkSimpleStatus() {
         // button is pressed
         if (b1) {
             if (buttonTimer_[k] > buttonTimerNext_[k]) {
-                actions_.insert((EncoderAction){ NEXT_BUTTON_TICK, 0, buttonTimer_[k], k, 0});
+                actions_.insert((EncoderAction){ NEXT_BUTTON_TICK, 0, buttonTimer_[k], (uint8_t)k, 0});
                 buttonTimerNext_[k] += BUTTON_TICK;
             }
             buttonTimer_[k]++;
@@ -143,7 +143,7 @@ void Encoders::checkStatus(uint8_t encoderType, uint8_t encoderPush) {
             if (firstButtonDown_ == -1) {
                 actions_.insert((EncoderAction){ ENCODER_TURNED, k, tickSpeed_[k] * inversedEnc, 0, 0});
             } else {
-                actions_.insert((EncoderAction){ ENCODER_TURNED_WHILE_BUTTON_PRESSED, k, tickSpeed_[k] * inversedEnc, firstButtonDown_, 0});
+                actions_.insert((EncoderAction){ ENCODER_TURNED_WHILE_BUTTON_PRESSED, k, tickSpeed_[k] * inversedEnc, (uint8_t)firstButtonDown_, 0});
                 buttonUsedFromSomethingElse_[firstButtonDown_] = true;
             }
 
@@ -154,7 +154,7 @@ void Encoders::checkStatus(uint8_t encoderType, uint8_t encoderPush) {
             if (firstButtonDown_ == -1) {
                 actions_.insert((EncoderAction){ ENCODER_TURNED, k, - tickSpeed_[k] * inversedEnc, 0, 0});
             } else {
-                actions_.insert((EncoderAction){ ENCODER_TURNED_WHILE_BUTTON_PRESSED, k, -tickSpeed_[k] * inversedEnc, firstButtonDown_, 0});
+                actions_.insert((EncoderAction){ ENCODER_TURNED_WHILE_BUTTON_PRESSED, k, -tickSpeed_[k] * inversedEnc, (uint8_t)firstButtonDown_, 0});
                 buttonUsedFromSomethingElse_[firstButtonDown_] = true;
             }
             tickSpeed_[k] += 3;
@@ -191,7 +191,7 @@ void Encoders::checkStatus(uint8_t encoderType, uint8_t encoderPush) {
                     actions_.insert((EncoderAction){ ENCODER_BUTTON_PRESS_STARTED, 0, 0, k, 0});
                     buttonTimerNext_[k] = BUTTON_TICK;
                 } else {
-                    actions_.insert((EncoderAction){ ENCODER_TWO_BUTTON_PRESSED, 0, 0, firstButtonDown_, k});
+                    actions_.insert((EncoderAction){ ENCODER_TWO_BUTTON_PRESSED, 0, 0, (uint8_t)firstButtonDown_, k});
                     buttonUsedFromSomethingElse_[firstButtonDown_] = true;
                     buttonUsedFromSomethingElse_[k] = true;
                 }
@@ -215,7 +215,7 @@ void Encoders::checkStatus(uint8_t encoderType, uint8_t encoderPush) {
                     // Just released
                     if (buttonTimer_[k] > 15) {
                         if (k >= NUMBER_OF_BUTTONS_MIN)
-                            actions_.insert((EncoderAction){ ENCODER_PRESSED, k - NUMBER_OF_BUTTONS_MIN, 0, 0, 0});
+                            actions_.insert((EncoderAction){ ENCODER_PRESSED, (uint8_t)(k - NUMBER_OF_BUTTONS_MIN), 0, 0, 0});
                         else
                             actions_.insert((EncoderAction){ BUTTON_PRESSED, 0, 0, k, 0});
                     }

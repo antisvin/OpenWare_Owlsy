@@ -48,7 +48,7 @@ enum EncoderActionType {
 struct EncoderAction {
     uint8_t actionType;
     uint8_t encoder;
-    int8_t ticks;
+    int ticks;
     uint8_t button1;
     uint8_t button2;
 };
@@ -141,8 +141,8 @@ private:
     int8_t tickSpeed_[NUMBER_OF_ENCODERS];
 
     uint32_t buttonBit_[NUMBER_OF_BUTTONS_MAX];
-    uint32_t buttonTimer_[NUMBER_OF_BUTTONS_MAX];
-    uint32_t buttonTimerNext_[NUMBER_OF_BUTTONS_MAX];
+    int32_t buttonTimer_[NUMBER_OF_BUTTONS_MAX];
+    int32_t buttonTimerNext_[NUMBER_OF_BUTTONS_MAX];
     bool buttonUsedFromSomethingElse_[NUMBER_OF_BUTTONS_MAX];
     bool buttonPreviousState_[NUMBER_OF_BUTTONS_MAX];
     int8_t firstButtonDown_;

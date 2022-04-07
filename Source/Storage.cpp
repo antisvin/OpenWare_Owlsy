@@ -402,7 +402,7 @@ bool Storage::verifyData(Resource* resource, void* data, size_t length){
 #if RESOURCE_HEADER_OFFSET > 0
     return memcmp(data, resource->getHeader(), sizeof(ResourceHeader)) == 0 &&
       memcmp(
-        data + sizeof(ResourceHeader),
+        (uint8_t*)data + sizeof(ResourceHeader),
         (uint8_t*)resource->getHeader() + sizeof(ResourceHeader) + RESOURCE_HEADER_OFFSET,
         length - sizeof(ResourceHeader)) == 0;
 #else
