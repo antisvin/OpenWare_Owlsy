@@ -120,19 +120,18 @@ SECTIONS
     . = ALIGN(4);
     _ebss = .;         /* define a global symbol at bss end */
     __bss_end__ = _ebss;
+
+    end = .;           /* system heap, used e.g. by printf in DEBUG builds */
+    . = . + _Min_Heap_Size;
   } >DTCMRAM
 
   /* User_heap_stack section, used to check that there is enough RAM left */
   ._user_heap_stack :
   {
-    . = ALIGN(8);
-    PROVIDE ( end = . );
-    PROVIDE ( _end = . );
-    . = . + _Min_Heap_Size;
     . = . + _Min_Stack_Size;
     . = ALIGN(8);
-  } >DTCMRAM
-  _estack = ORIGIN(DTCMRAM)+LENGTH(DTCMRAM);
+  } >ITCMRAM
+  _estack = ORIGIN(ITCMRAM)+LENGTH(ITCMRAM);
 
   /* CCM section, vars must be located here explicitly */
   /* Example: int foo __attribute__ ((section (".ccmdata"))); */

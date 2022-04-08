@@ -4,11 +4,12 @@ ifeq ($(CONFIG),Debug)
   CPPFLAGS = -g3 -Wall -Wcpp -Wunused-function -DDEBUG # -DUSE_FULL_ASSERT
   ASFLAGS  = -g3
   CFLAGS   = -g3
-endif
-ifeq ($(CONFIG),Release)
+else ifeq ($(CONFIG),Release)
   CPPFLAGS = -O2 -g
   ASFLAGS  = -O2 -g
   CFLAGS   = -O2 -g
+else
+  $(error Invalid CONFIG=$(CONFIG))
 endif
 
 # compile with semihosting if Debug is selected
@@ -25,14 +26,11 @@ endif
 LDFLAGS += -Wl,--gc-sections
 LDSCRIPT ?= $(OPENWARE)/Hardware/preenfm3.ld
 LDLIBS += -lc -lm
-# CPPFLAGS += -DEXTERNAL_SRAM -DARM_CORTEX
-# CPPFLAGS += -fpic -fpie
-CPPFLAGS += -Wdouble-promotion
-CPPFLAGS += -fdata-sections
-CPPFLAGS += -ffunction-sections
+CPPFLAGS += -Wdouble-promotion -Werror=double-promotion
+CPPFLAGS += -fdata-sections -ffunction-sections
 CPPFLAGS += -fno-builtin -ffreestanding
 LDFLAGS += -fno-builtin -ffreestanding
-CXXFLAGS = -fno-rtti -fno-exceptions -std=gnu++11
+CXXFLAGS = -fno-rtti -fno-exceptions -std=gnu++17
 CFLAGS  += -std=gnu99
 ARCH_FLAGS = -mcpu=cortex-m7 -mthumb -mfloat-abi=hard -mfpu=fpv5-d16
 ARCH_FLAGS += -fsingle-precision-constant
