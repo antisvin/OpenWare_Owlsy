@@ -31,12 +31,8 @@ void pfmDefaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height) {
 extern TIM_HandleTypeDef htim1;
 Encoders encoders;
 
-char* progress_message = NULL;
-uint16_t progress_counter = 0;
-
 void setProgress(uint16_t value, const char* reason){
-  progress_message = (char*)reason;
-  progress_counter = value;
+    params.setProgress(value, reason);
 }
 
 extern bool tftPushed, pushToTftInProgress;

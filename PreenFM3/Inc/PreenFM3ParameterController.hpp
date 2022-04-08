@@ -29,6 +29,7 @@ extern DigitalBusReader bus;
 #define ENC_MULTIPLIER 6 // shift left by this many steps
 
 #define MAX_MESSAGE 256
+#define PROGRESS_LEN 32
 
 extern VersionToken* bootloader_token;
 
@@ -60,6 +61,9 @@ public:
     Menu menu = MENU_MAIN;
     uint8_t menu_key = 0;
     uint8_t custom_callback = 0;
+    uint8_t owl_mode = 0xff;
+    uint16_t progress;
+    char progress_message[PROGRESS_LEN + 1] = {0};
     // Section 5
     uint8_t active_buttons = 0;
     uint8_t active_param_id = 0;
@@ -116,8 +120,15 @@ public:
         reset();
         debugMessage("Das also war des Pudels Kern!");
     }
-    void setTitle(const char* str) {
+    void setTitle(const char* str) override {
         strncpy(current_state.title, str, 16);
+    }
+    const char* getTitle() override {
+        return current_state.title;
+    }
+    void setProgress(uint16_t progress, const char* progress_message) {
+        current_state.progress = progress;
+        strncpy(current_state.progress_message, progress_message, PROGRESS_LEN);
     }
     void reset() {
         dirty = 0b111111;
@@ -147,7 +158,10 @@ public:
             dirty |= 4;
         if (current_state.custom_callback ||
             current_state.menu_key != prev_state.menu_key ||
-            current_state.menu != prev_state.menu)
+            current_state.menu != prev_state.menu ||
+            current_state.owl_mode != prev_state.owl_mode ||
+            current_state.progress != prev_state.progress ||
+            strncmp(current_state.progress_message, prev_state.progress_message, PROGRESS_LEN) != -1)
             dirty |= 8;
         if (memcmp((void*)&current_state.active_buttons,
                 (void*)&prev_state.active_buttons, 17) != 0)
@@ -172,6 +186,7 @@ public:
     }
 
     void draw(ScreenBuffer& screen) {
+        current_state.owl_mode = owl.getOperationMode();
         if (dirty & 1) {
             drawTitle(screen);
             tftDirtyBits |= 1;
@@ -189,50 +204,44 @@ public:
         }
         else if (dirty & 8) { // 8 or 16
             screen.fillRectangle(0, 0, 240, 214, BLACK);
-            switch (current_state.menu) {
-            case MENU_MAIN:
-                /*
-                    screen.setTextSize(2);
-                    screen.setCursor(0, 20);
-                    screen.setTextColour(RED);
-                    screen.print("RED");
-                    screen.setCursor(0, 40);
-                    screen.setTextColour(GREEN);
-                    screen.print("GREEN");
-                    screen.setCursor(0, 60);
-                    screen.setTextColour(BLUE);
-                    screen.print("BLUE");
-                    screen.setCursor(0, 80);
-                    screen.setTextColour(CYAN);
-                    screen.print("CYAN");
-                    screen.setCursor(0, 100);
-                    screen.setTextColour(MAGENTA);
-                    screen.print("MAGENTA");
-                    screen.setCursor(0, 120);
-                    screen.setTextColour(YELLOW);
-                    screen.print("YELLOW");
-                    screen.setCursor(0, 140);
-                    screen.setTextColour(WHITE);
-                    screen.print("WHITE");
-                    screen.setCursor(0, 160);
-                    screen.setTextColour(BLACK);
-                    screen.print("BLACK");
-                    screen.setTextSize(1);
-                */
-                drawCallback(screen.getBuffer(), 240, 214);
-                break;
-            case MENU_PARAMS:
-                drawParamsMenu(screen);
-                break;
-            case MENU_PATCHES:
-                drawPatchesMenu(screen);
-                break;
-            case MENU_RESOURCES:
-                drawResourcesMenu(screen);
-                break;
-            case MENU_SYSTEM:
-                drawSystemMenu(screen);
-                break;
+            if (
+                current_state.owl_mode == STARTUP_MODE ||
+                current_state.owl_mode == STREAM_MODE ||
+                current_state.owl_mode == LOAD_MODE) {
+                screen.fillRectangle(0, 100, 240, 5, CYAN);
+                screen.fillRectangle(0, 105, 5, 45, CYAN);
+                screen.fillRectangle(235, 105, 5, 45, CYAN);
+                screen.fillRectangle(0, 150, 240, 5, CYAN);
+                screen.fillRectangle(5, 135, 230 * current_state.progress / 4095, 15, CYAN);
+                screen.setCursor(10, 130);
+                screen.setTextSize(2);
+                screen.setTextColour(CYAN);
+                if (current_state.progress_message == NULL) {
+                    screen.print("Loading...");
+                }
+                else {
+                    screen.print(current_state.progress_message);
+                }
+                screen.setTextSize(1);
+            }
+            else {
+                switch (current_state.menu) {
+                case MENU_MAIN:
+                    drawCallback(screen.getBuffer(), 240, 214);
+                    break;
+                case MENU_PARAMS:
+                    drawParamsMenu(screen);
+                    break;
+                case MENU_PATCHES:
+                    drawPatchesMenu(screen);
+                    break;
+                case MENU_RESOURCES:
+                    drawResourcesMenu(screen);
+                    break;
+                case MENU_SYSTEM:
+                    drawSystemMenu(screen);
+                    break;
+                }
             }
             tftDirtyBits |= 8;
             dirty &= ~8;

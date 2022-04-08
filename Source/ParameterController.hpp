@@ -50,10 +50,10 @@ public:
   size_t getSize(){
     return NOF_PARAMETERS;
   }
-  void setTitle(const char* str){
+  virtual void setTitle(const char* str){
     strncpy(title, str, sizeof(title)-1);    
   }
-  const char* getTitle(){
+  virtual const char* getTitle(){
     return title;
   }
 };  
