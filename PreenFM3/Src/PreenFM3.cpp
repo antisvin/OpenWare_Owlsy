@@ -3,30 +3,13 @@
 #include "Graphics.h"
 #include "Encoders.h"
 
+#ifdef USE_SCREEN
+#include "PreenFM3ParameterController.hpp"
+#endif
+
 static uint32_t nextDrawTime;
 
 extern "C" {
-#if 0
-  void eeprom_unlock(){}
-  int eeprom_write_block(uint32_t address, void* data, uint32_t size)
-  {return 0;}
-  int eeprom_write_word(uint32_t address, uint32_t data)
-  {return 0;}
-  int eeprom_write_byte(uint32_t address, uint8_t data)
-  {return 0;}
-  int eeprom_erase(uint32_t address)
-  {return 0;}
-  int eeprom_wait()
-  {return 0;}
-  int eeprom_erase_sector(uint32_t sector)
-  {return 0;}
-  int eeprom_write_unlock(uint32_t wrp_sectors)
-  {return 0;}
-  int eeprom_write_lock(uint32_t wrp_sectors)
-  {return 0;}
-  uint32_t eeprom_write_protection(uint32_t wrp_sectors)
-  {return 0;}
-#endif
 void setPortMode(uint8_t index, uint8_t mode) {
 }
 uint8_t getPortMode(uint8_t index) {
@@ -39,6 +22,7 @@ uint8_t getPortMode(uint8_t index) {
 
 #ifdef USE_SCREEN
 Graphics graphics GRAPHICS_RAM;
+PreenFM3ParameterController params;
 
 void pfmDefaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height) {
 }
@@ -47,12 +31,18 @@ void pfmDefaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height) {
 extern TIM_HandleTypeDef htim1;
 Encoders encoders;
 
+char* progress_message = NULL;
+uint16_t progress_counter = 0;
+
+void setProgress(uint16_t value, const char* reason){
+  progress_message = (char*)reason;
+  progress_counter = value;
+}
+
 extern bool tftPushed, pushToTftInProgress;
 
-void setup() {
-    owl.setup();
-
-    encoders.insertListener(&graphics.params);
+void onSetup() {
+    encoders.insertListener(&params);
 
 #ifdef USE_SCREEN
     // clearPin(OLED_RST_GPIO_Port, OLED_RST_Pin);
@@ -61,7 +51,7 @@ void setup() {
     setPin(LED_TEST_GPIO_Port, LED_TEST_Pin);
     setPin(LED_CONTROL_GPIO_Port, LED_CONTROL_Pin);
     extern SPI_HandleTypeDef OLED_SPI;
-    graphics.begin(&OLED_SPI);
+    graphics.begin(&params, &OLED_SPI);
     tftPushed = true;
     //  clearPin(BACKLIGHT1_GPIO_Port, BACKLIGHT1_Pin);
 
@@ -89,12 +79,12 @@ void updateEncoders() {
       int16_t value = __HAL_TIM_GET_COUNTER(&ENCODER_TIM1);
       int16_t delta = value - encoder_values[0];
       if(delta)
-        graphics.params.encoderChanged(0, delta);
+        params.encoderChanged(0, delta);
       encoder_values[0] = value;
       value = __HAL_TIM_GET_COUNTER(&ENCODER_TIM2);
       delta = value - encoder_values[1];
       if(delta)
-        graphics.params.encoderChanged(1, delta);
+        params.encoderChanged(1, delta);
       encoder_values[1] = value;
     */
 }
@@ -118,12 +108,12 @@ EraseStorageTask erase_task;
 static uint32_t prev_fps_update = 0;
 static uint16_t num_frames = 0;
 
-void loop(void) {
+void onLoop(void) {
     uint32_t tick = HAL_GetTick();
 
 #if defined USE_DCACHE
-    // SCB_CleanInvalidateDCache_by_Addr((uint32_t*)graphics.params.user,
-    // sizeof(graphics.params.user));
+    // SCB_CleanInvalidateDCache_by_Addr((uint32_t*)params.user,
+    // sizeof(params.user));
 #endif
 
     // updateEncoders();
@@ -134,7 +124,7 @@ void loop(void) {
         if (tftPushed && tick >= nextDrawTime) {
             if (tick - prev_fps_update > 500) {
                 if (prev_fps_update)
-                    graphics.params.current_state.fps = num_frames * 1000 / (tick - prev_fps_update);
+                    params.current_state.fps = num_frames * 1000 / (tick - prev_fps_update);
                 num_frames = 0;
                 prev_fps_update = tick;
             }
@@ -143,12 +133,12 @@ void loop(void) {
             num_frames++;
 
             //    graphics.screen.clear();
-            graphics.params.updateState();
-//            graphics.params.dirty |= 2;
-//            graphics.params.dirty |= 63;
+            params.updateState();
+//            params.dirty |= 2;
+//            params.dirty |= 63;
             nextDrawTime = tick + 20;
         }
-        if (graphics.params.dirty && !tftDirtyBits) {
+        if (params.dirty && !tftDirtyBits) {
             graphics.draw();
 //            graphics.display();
         }
@@ -166,6 +156,4 @@ void loop(void) {
     encoders.processActions();    
 
 #endif /* USE_SCREEN */
-
-    owl.loop();
 }

@@ -20,7 +20,7 @@ ProgramManager::ProgramManager(){}
 void ProgramManager::exitProgram(bool isr){}
 void setParameterValue(uint8_t ch, int16_t value){}
 void SystemMidiReader::reset(){}
-void Owl::setOperationMode(OperationMode mode){}
+void Owl::setOperationMode(uint8_t mode){}
 
 const char* getFirmwareVersion(){ 
   return (const char*)(HARDWARE_VERSION " " FIRMWARE_VERSION) ;
@@ -64,20 +64,31 @@ void sendMessage(){
   }
 }
 
-void eraseFromFlash(uint8_t sector){
+static void setBankForSector(uint32_t &sector, uint32_t &bank) {
+  if (sector > FLASH_SECTOR_7) {
+    sector -= 8;
+    bank = FLASH_BANK_2;
+  }
+}
+
+void eraseFromFlash(uint8_t erase_sector){
   eeprom_unlock();
+  uint32_t bank = FLASH_BANK_1;
+  uint32_t sector = erase_sector;
   if(sector == 0xff){
     extern char _FLASH_STORAGE_BEGIN, _FLASH_STORAGE_END;
     uint32_t address = (uint32_t)&_FLASH_STORAGE_BEGIN;
     uint32_t sector = FLASH_SECTOR_4;
     while (address < (uint32_t)&_FLASH_STORAGE_END) {
-      eeprom_erase_sector(sector++);
+      eeprom_erase_sector(sector++, bank);
       address += FLASH_SECTOR_SIZE;
+      setBankForSector(sector, bank);
     }
     setMessage("Erased patch storage");
     led_on();
   }else{
-    eeprom_erase_sector(sector);
+    setBankForSector(sector, bank);
+    eeprom_erase_sector(sector, bank);
     setMessage("Erased flash sector");
     led_on();
   }
@@ -88,11 +99,11 @@ void saveToFlash(uint8_t sector, void* data, uint32_t length){
   // TODO!
   if(sector == FIRMWARE_SECTOR && length <= (3*128)*1024){
     eeprom_unlock();
-    eeprom_erase_sector(FLASH_SECTOR_1);
+    eeprom_erase_sector(FLASH_SECTOR_1, FLASH_BANK_1);
     if(length > 128*1024){
-      eeprom_erase_sector(FLASH_SECTOR_2);
+      eeprom_erase_sector(FLASH_SECTOR_2, FLASH_BANK_1);
       if(length > (128+128)*1024){
-        eeprom_erase_sector(FLASH_SECTOR_3);
+        eeprom_erase_sector(FLASH_SECTOR_3, FLASH_BANK_1);
       }
     }
     extern char _BOOTLOADER_END;

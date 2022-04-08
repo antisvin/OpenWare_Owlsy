@@ -45,8 +45,8 @@ typedef uint16_t Colour;
 #define MAGENTA         COLOR565(0xff, 0x00, 0xff)
 #define YELLOW          COLOR565(0xff, 0xff, 0x00)
 #define WHITE           COLOR565(0xff, 0xff, 0xff)
-#else
-#error "Invalid configuration"
+#elif defined USE_SCREEN
+#error "Invalid screen configuration"
 #endif
 
 class ScreenBuffer {

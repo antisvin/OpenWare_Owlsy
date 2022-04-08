@@ -1,5 +1,5 @@
-#ifndef __ParameterController_hpp__
-#define __ParameterController_hpp__
+#ifndef __PreenFM3ParameterController_hpp__
+#define __PreenFM3ParameterController_hpp__
 
 #include <algorithm>
 #include "EncodersListener.h"
@@ -9,6 +9,7 @@
 #include "ProgramVector.h"
 #include "PatchRegistry.h"
 #include "ProgramManager.h"
+#include "Graphics.h"
 #include "ScreenBuffer.h"
 #include "VersionToken.h"
 #include "device.h"
@@ -83,11 +84,10 @@ public:
 
 /* shows a single parameter selected and controlled with a single encoder
  */
-template <uint8_t SIZE>
-class ParameterController : public EncodersListener {
+class PreenFM3ParameterController : public EncodersListener, public ParameterController {
 public:
-    int16_t parameters[SIZE];
-    char names[SIZE][12];
+    //int16_t parameters[NOF_PARAMETERS];
+    //char names[NOF_PARAMETERS][12];
     int8_t selected = 0;
     ControllerState<NOF_VISIBLE_PARAMETERS> current_state;
     ControllerState<NOF_VISIBLE_PARAMETERS> prev_state;
@@ -110,7 +110,7 @@ public:
     // Sensitivity is currently not stored in settings, but it's not reset either.
     bool sensitivitySelected;
 
-    ParameterController() {
+    PreenFM3ParameterController() {
         nextListener = 0;
         dirty = 0;
         reset();
@@ -122,7 +122,7 @@ public:
     void reset() {
         dirty = 0b111111;
         drawCallback = pfmDefaultDrawCallback;
-        for (int i = 0; i < SIZE; ++i) {
+        for (int i = 0; i < NOF_PARAMETERS; ++i) {
             strncpy(names[i], "Parameter  ", 12);
             parameters[i] = 0;
             if (i < 8)
@@ -431,12 +431,12 @@ public:
             first_item = 0;
             last_item = 10;
         }
-        else if (current_state.menu_key < SIZE - 2) {
+        else if (current_state.menu_key < NOF_PARAMETERS - 2) {
             highlight_pos = 10;
             first_item = current_state.menu_key - 9;
             last_item = current_state.menu_key;
         }
-        else if (current_state.menu_key < SIZE - 1) {
+        else if (current_state.menu_key < NOF_PARAMETERS - 1) {
             highlight_pos = 10;
             first_item = current_state.menu_key - 9;
             last_item = current_state.menu_key + 1;
@@ -463,7 +463,7 @@ public:
         uint8_t y = first_item == 0 ? 32 : 48;
         if (current_state.menu_key > 10)
             screen.print(1, 32, " ...");
-        if (current_state.menu_key < SIZE - 2)
+        if (current_state.menu_key < NOF_PARAMETERS - 2)
             screen.print(1, 16 * 13, " ...");
         for (uint8_t i = first_item; i <= last_item; i++) {
             screen.print(1, y, names[i]);
@@ -602,11 +602,11 @@ public:
     }
 
     void setName(uint8_t pid, const char* name) {
-        if (pid < SIZE)
+        if (pid < NOF_PARAMETERS)
             strncpy(names[pid], name, 11);
     }
     uint8_t getSize() {
-        return SIZE;
+        return NOF_PARAMETERS;
     }
 
     void drawMessage(int16_t y, ScreenBuffer& screen) {
@@ -917,6 +917,8 @@ public:
             break;
         }
     }
+
+    void updateEncoders(int16_t* data, uint8_t size) override {}
 
 private:
     void (*drawCallback)(uint8_t*, uint16_t, uint16_t);

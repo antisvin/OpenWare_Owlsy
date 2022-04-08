@@ -14,7 +14,7 @@
 #define USE_ICACHE
 #define USE_DCACHE
 
-#define MAX_SYSEX_PROGRAM_SIZE      (512*1024)
+#define MAX_SYSEX_PAYLOAD_SIZE      (512*1024)
 
 #define hdac hdac1
 

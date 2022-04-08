@@ -65,6 +65,10 @@ public:
 #ifdef USE_EXTERNAL_RAM
     extern char _EXTRAM; // defined in link script
     buffer = (uint8_t*)&_EXTRAM;
+#elif defined USE_PLUS_RAM
+    // required by devices with no ext mem
+    extern char _PLUSRAM;
+    buffer = (uint8_t*)&_PLUSRAM;
 #else
     // required by devices with no ext mem
     extern char _PATCHRAM;
