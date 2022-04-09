@@ -291,7 +291,6 @@ void oled_init(SPI_HandleTypeDef* spi) {
 #define TFT_NUMBER_OF_PARTS 6
 uint32_t tftDirtyBits = 0;
 uint8_t tftPart = 0;
-bool tftPushed = false;
 bool pushToTftInProgress = false;
 static uint16_t areaHeight[TFT_NUMBER_OF_PARTS] = { 16, 10, 10, 214, 30, 40 };
 static uint16_t screenY[TFT_NUMBER_OF_PARTS] = { 0, 16, 26, 36, 250, 280 };
@@ -370,7 +369,6 @@ void oled_write(const uint8_t* data, uint32_t length) {
         }
         tftPart = (tftPart + 1) % TFT_NUMBER_OF_PARTS;
     }
-    tftPushed = true;
 }
 
 // SPI callback

@@ -35,7 +35,7 @@ extern VersionToken* bootloader_token;
 
 extern uint32_t tftDirtyBits;
 
-extern void pfmDefaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height);
+//extern void pfmDefaultDrawCallback(uint8_t* pixels, uint16_t width, uint16_t height);
 
 enum Menu : uint8_t {
     MENU_MAIN,
@@ -132,7 +132,7 @@ public:
     }
     void reset() {
         dirty = 0b111111;
-        drawCallback = pfmDefaultDrawCallback;
+        //graphics.setCallback(defaultDrawCallback);
         for (int i = 0; i < NOF_PARAMETERS; ++i) {
             strncpy(names[i], "Parameter  ", 12);
             parameters[i] = 0;
@@ -227,7 +227,7 @@ public:
             else {
                 switch (current_state.menu) {
                 case MENU_MAIN:
-                    drawCallback(screen.getBuffer(), 240, 214);
+                    graphics.drawCallback(screen.getBuffer(), 240, 214);
                     break;
                 case MENU_PARAMS:
                     drawParamsMenu(screen);
@@ -640,6 +640,7 @@ public:
         //    dirty |= 8;
     }
 
+/*
     void setCallback(void* callback) {
         if (callback == NULL || callback == pfmDefaultDrawCallback) {
             drawCallback = pfmDefaultDrawCallback;
@@ -650,7 +651,7 @@ public:
             current_state.custom_callback = true;
         }
     }
-
+*/
     void encoderPressed(int encoder) override {
         uint8_t active = current_state.blocks[encoder] * 6 + encoder;
         current_state.active_param_id = active;

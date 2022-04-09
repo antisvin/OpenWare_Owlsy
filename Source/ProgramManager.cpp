@@ -515,7 +515,7 @@ __weak void onStartProgram(){
 }
 
 #ifdef USE_SCREEN
-void runScreenTask(void* p){
+__weak void runScreenTask(void* p){
   TickType_t xLastWakeTime;
   TickType_t xFrequency;
   xFrequency = SCREEN_LOOP_SLEEP_MS / portTICK_PERIOD_MS;
