@@ -261,6 +261,85 @@ void HAL_DAC_MspDeInit(DAC_HandleTypeDef* hdac)
 }
 
 /**
+* @brief I2C MSP Initialization
+* This function configures the hardware resources used in this example
+* @param hi2c: I2C handle pointer
+* @retval None
+*/
+void HAL_I2C_MspInit(I2C_HandleTypeDef* hi2c)
+{
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
+  RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {0};
+  if(hi2c->Instance==I2C1)
+  {
+  /* USER CODE BEGIN I2C1_MspInit 0 */
+
+  /* USER CODE END I2C1_MspInit 0 */
+  /** Initializes the peripherals clock
+  */
+    PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_I2C1;
+    PeriphClkInitStruct.I2c123ClockSelection = RCC_I2C123CLKSOURCE_D2PCLK1;
+    if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
+    {
+      Error_Handler();
+    }
+
+    __HAL_RCC_GPIOB_CLK_ENABLE();
+    /**I2C1 GPIO Configuration
+    PB11    ------> I2C1_SDA
+    PH4     ------> I2C1_SCL
+    */
+    GPIO_InitStruct.Pin = GPIO_PIN_11;
+    GPIO_InitStruct.Mode = GPIO_MODE_AF_OD;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    GPIO_InitStruct.Alternate = GPIO_AF4_I2C1;
+    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+    GPIO_InitStruct.Pin = GPIO_PIN_4;
+    HAL_GPIO_Init(GPIOH, &GPIO_InitStruct);
+
+    /* Peripheral clock enable */
+    __HAL_RCC_I2C1_CLK_ENABLE();
+  /* USER CODE BEGIN I2C1_MspInit 1 */
+
+  /* USER CODE END I2C1_MspInit 1 */
+  }
+
+}
+
+/**
+* @brief I2C MSP De-Initialization
+* This function freeze the hardware resources used in this example
+* @param hi2c: I2C handle pointer
+* @retval None
+*/
+void HAL_I2C_MspDeInit(I2C_HandleTypeDef* hi2c)
+{
+  if(hi2c->Instance==I2C1)
+  {
+  /* USER CODE BEGIN I2C1_MspDeInit 0 */
+
+  /* USER CODE END I2C1_MspDeInit 0 */
+    /* Peripheral clock disable */
+    __HAL_RCC_I2C1_CLK_DISABLE();
+
+    /**I2C1 GPIO Configuration
+    PB11    ------> I2C1_SDA
+    PH4     ------> I2C1_SCL
+    */
+    HAL_GPIO_DeInit(GPIOB, GPIO_PIN_11);
+
+    HAL_GPIO_DeInit(GPIOH, GPIO_PIN_4);
+
+  /* USER CODE BEGIN I2C1_MspDeInit 1 */
+
+  /* USER CODE END I2C1_MspDeInit 1 */
+  }
+
+}
+
+/**
 * @brief QSPI MSP Initialization
 * This function configures the hardware resources used in this example
 * @param hqspi: QSPI handle pointer
@@ -948,11 +1027,11 @@ void HAL_SDRAM_MspDeInit(SDRAM_HandleTypeDef* hsdram){
   /* USER CODE END SDRAM_MspDeInit 1 */
 }
 
+#if !defined(EXTERNAL_CODEC)
 extern DMA_HandleTypeDef hdma_sai1_a;
-
 extern DMA_HandleTypeDef hdma_sai1_b;
-
-#ifdef DUAL_CODEC
+#endif
+#if defined(DUAL_CODEC) || defined(EXTERNAL_CODEC)
 extern DMA_HandleTypeDef hdma_sai2_b;
 extern DMA_HandleTypeDef hdma_sai2_a;
 #endif
@@ -965,6 +1044,7 @@ void HAL_SAI_MspInit(SAI_HandleTypeDef* hsai)
 
   GPIO_InitTypeDef GPIO_InitStruct;
 /* SAI1 */
+#if !defined(EXTERNAL_CODEC)
     if(hsai->Instance==SAI1_Block_A)
     {
     /* Peripheral clock enable */
@@ -1060,8 +1140,9 @@ void HAL_SAI_MspInit(SAI_HandleTypeDef* hsai)
     __HAL_LINKDMA(hsai,hdmarx,hdma_sai1_b);
     __HAL_LINKDMA(hsai,hdmatx,hdma_sai1_b);
     }
+#endif
 /* SAI2 */
-#ifdef DUAL_CODEC
+#if defined(DUAL_CODEC) || defined(EXTERNAL_CODEC)
     if(hsai->Instance==SAI2_Block_A)
     {
     /* Peripheral clock enable */
@@ -1177,6 +1258,7 @@ void HAL_SAI_MspInit(SAI_HandleTypeDef* hsai)
 void HAL_SAI_MspDeInit(SAI_HandleTypeDef* hsai)
 {
 /* SAI1 */
+#if !defined(EXTERNAL_CODEC)
     if(hsai->Instance==SAI1_Block_A)
     {
     SAI1_client --;
@@ -1220,7 +1302,9 @@ void HAL_SAI_MspDeInit(SAI_HandleTypeDef* hsai)
     HAL_DMA_DeInit(hsai->hdmarx);
     HAL_DMA_DeInit(hsai->hdmatx);
     }
+#endif
 /* SAI2 */
+#if defined(DUAL_CODEC) || defined(EXTERNAL_CODEC)
     if(hsai->Instance==SAI2_Block_A)
     {
     SAI2_client --;
@@ -1266,6 +1350,7 @@ void HAL_SAI_MspDeInit(SAI_HandleTypeDef* hsai)
     HAL_DMA_DeInit(hsai->hdmarx);
     HAL_DMA_DeInit(hsai->hdmatx);
     }
+#endif
 }
 
 /* USER CODE BEGIN 1 */

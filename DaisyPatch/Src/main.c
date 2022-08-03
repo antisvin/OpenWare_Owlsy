@@ -59,15 +59,15 @@ QSPI_HandleTypeDef hqspi;
 #ifdef USE_WM8731
 I2C_HandleTypeDef hi2c1;
 #endif
+#if !defined(EXTERNAL_CODEC)
 SAI_HandleTypeDef hsai_BlockA1;
 SAI_HandleTypeDef hsai_BlockB1;
-#ifdef DUAL_CODEC
-SAI_HandleTypeDef hsai_BlockA2;
-SAI_HandleTypeDef hsai_BlockB2;
-#endif
 DMA_HandleTypeDef hdma_sai1_a;
 DMA_HandleTypeDef hdma_sai1_b;
-#ifdef DUAL_CODEC
+#endif
+#if defined(DUAL_CODEC) || defined(EXTERNAL_CODEC)
+SAI_HandleTypeDef hsai_BlockA2;
+SAI_HandleTypeDef hsai_BlockB2;
 DMA_HandleTypeDef hdma_sai2_b;
 DMA_HandleTypeDef hdma_sai2_a;
 #endif
@@ -602,7 +602,7 @@ static void MX_SAI1_Init(void)
 {
 
   /* USER CODE BEGIN SAI1_Init 0 */
-#ifdef USE_AK4556
+#if defined(USE_AK4556) && !defined(EXTERNAL_CODEC)
   /* USER CODE END SAI1_Init 0 */
 
   /* USER CODE BEGIN SAI1_Init 1 */
@@ -679,7 +679,7 @@ static void MX_SAI2_Init(void)
 {
 
   /* USER CODE BEGIN SAI2_Init 0 */
-#ifdef DUAL_CODEC
+#if defined(DUAL_CODEC) || defined(EXTERNAL_CODEC)
 
   /* USER CODE END SAI2_Init 0 */
 

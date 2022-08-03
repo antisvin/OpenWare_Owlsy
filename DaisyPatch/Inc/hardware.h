@@ -82,15 +82,24 @@
 
 
 #define USE_CODEC
+#if 1
 #define DUAL_CODEC
 #define USE_AK4556
-//#define USE_WM8731
-//#define WM8731_I2C_HANDLE hi2c1
+#define AUDIO_CHANNELS              4
+#elif 0
+#define USE_AK4556
+#define AUDIO_CHANNELS              2
+#define EXTERNAL_CODEC
+#else
+#define USE_WM8731
+#define WM8731_I2C_HANDLE hi2c1
+#define AUDIO_CHANNELS              2
+#endif
+
 #define USE_USBD_FS
 #define USBD_HANDLE hUsbDeviceFS
 #define AUDIO_BITS_PER_SAMPLE       16
 #define AUDIO_BYTES_PER_SAMPLE      (AUDIO_BITS_PER_SAMPLE/8)
-#define AUDIO_CHANNELS              4
 
 #define QSPI_HANDLE hqspi
 //#define QSPI_DEVICE_IS25LP080D
