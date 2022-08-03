@@ -22,6 +22,7 @@
 #define AXOLOTI_HARDWARE            0xa2
 #define LOOP_HARDWARE               0xa3
 #define BLUEMCHEN_HARDWARE          0xa4
+#define PATCH_INIT_HARDWARE         0xa5
 #define OTHER_HARDWARE              0xf0
 
 #endif /* __HARDWARE_IDS_H */

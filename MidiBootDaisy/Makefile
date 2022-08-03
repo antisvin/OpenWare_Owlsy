@@ -29,6 +29,9 @@ ifeq ($(PLATFORM),DaisyPatch)
 else ifeq ($(PLATFORM),Bluemchen)
 	CPPFLAGS += -Iusbd-hs -DDAISY -DBLUEMCHEN -DUSE_USBD_FS
 	vpath %.c usbd-hs
+else ifeq ($(PLATFORM),PatchInit)
+	CPPFLAGS += -Iusbd-hs -DDAISY -DPATCH_INIT -DPATCH_SM -DUSE_USBD_FS
+	vpath %.c usbd-hs
 endif
 
 # CPP_SRC += MidiReader.cpp

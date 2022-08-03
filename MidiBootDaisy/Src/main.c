@@ -467,12 +467,15 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(USER_LED_GPIO_Port, &GPIO_InitStruct);
 
+#ifdef ENC_CLICK_Pin
   /*Configure GPIO pin : ENC_CLICK_Pin */
   GPIO_InitStruct.Pin = ENC_CLICK_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(ENC_CLICK_GPIO_Port, &GPIO_InitStruct);
+#endif
 
+#if !defined(PATCH_SM)
   /*Configure GPIO pins : PB14 PB15 */
   GPIO_InitStruct.Pin = GPIO_PIN_14|GPIO_PIN_15;
   GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
@@ -480,6 +483,7 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   GPIO_InitStruct.Alternate = GPIO_AF12_OTG2_FS;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+#endif
 
 #ifdef USE_BOOT1_PIN
   /*Configure GPIO pin : BOOT1_Pin */

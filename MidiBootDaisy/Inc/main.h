@@ -54,7 +54,7 @@ extern "C" {
 void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
-
+#if !defined(PATCH_SM)
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
@@ -63,6 +63,7 @@ void Error_Handler(void);
 #define ENC_CLICK_Pin GPIO_PIN_12
 #define ENC_CLICK_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
+#endif
 
 /* USER CODE END Private defines */
 

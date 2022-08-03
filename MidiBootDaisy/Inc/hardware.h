@@ -23,6 +23,15 @@
   #define USE_BOOT1_PIN
   #define BOOT1_Pin GPIO_PIN_2
   #define BOOT1_GPIO_Port GPIOA
+#elif defined PATCH_INIT
+  #define HARDWARE_ID         PATCH_INIT_HARDWARE
+  #define HARDWARE_VERSION    "Init Boot"
+  #define APPLICATION_ADDRESS 0x90000000
+  #define USE_BOOT1_PIN
+  #define BOOT1_Pin GPIO_PIN_8
+  #define BOOT1_GPIO_Port GPIOB
+  #define USER_LED_Pin GPIO_PIN_5
+  #define USER_LED_GPIO_Port GPIOA
 #else
   #error Invalid configuration
 #endif
