@@ -6,15 +6,19 @@
 // Yeah this codec's implementation is brain dead, but nothing else is exposed to us
 
 void codec_init(){
+#if !defined(EXTERNAL_CODEC)
     clearPin(CODEC_RESET1_GPIO_Port, CODEC_RESET1_Pin);
-#ifdef DUAL_CODEC
+#endif
+#if defined(DUAL_CODEC) || defined (EXTERNAL_CODEC)
     clearPin(CODEC_RESET2_GPIO_Port, CODEC_RESET2_Pin);
 #endif
     HAL_Delay(1);
     // Datasheet specifies minimum 150ns delay. We don't really need it as codec would be
     // running longer than that by now, but better safe than sorry.
+#if !defined(EXTERNAL_CODEC)
     setPin(CODEC_RESET1_GPIO_Port, CODEC_RESET1_Pin);
-#ifdef DUAL_CODEC
+#endif
+#if defined(DUAL_CODEC) || defined (EXTERNAL_CODEC)
     setPin(CODEC_RESET2_GPIO_Port, CODEC_RESET2_Pin);
 #endif
 }

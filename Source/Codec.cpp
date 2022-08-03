@@ -43,10 +43,17 @@ extern "C" {
 }
 
 #if defined(USE_CS4271) || defined(USE_AK4556)
-  #define HSAI_RX1 hsai_BlockB1
-  #define HSAI_TX1 hsai_BlockA1
-  #define HDMA_RX1 hdma_sai1_b
-  #define HDMA_TX1 hdma_sai1_a
+  #if defined(EXTERNAL_CODEC)
+    #define HSAI_RX1 hsai_BlockB2
+    #define HSAI_TX1 hsai_BlockA2
+    #define HDMA_RX1 hdma_sai2_b
+    #define HDMA_TX1 hdma_sai2_a
+  #else
+    #define HSAI_RX1 hsai_BlockB1
+    #define HSAI_TX1 hsai_BlockA1
+    #define HDMA_RX1 hdma_sai1_b
+    #define HDMA_TX1 hdma_sai1_a
+  #endif
   #if defined(USE_AK4556) && defined(DUAL_CODEC)
     #define HSAI_RX2 hsai_BlockB2
     #define HSAI_TX2 hsai_BlockA2
