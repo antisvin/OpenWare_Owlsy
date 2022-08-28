@@ -428,7 +428,7 @@ void Codec::stop(){
 
 #endif // USE_ADS1294
 
-#if defined(USE_CS4271) || defined(USE_PCM3168A) || defined(USE_AK4556) || defined(USE_WM8731)
+#if defined(USE_CS4271) || defined(USE_PCM3168A) || defined(USE_AK4556) || defined(USE_WM8731) || defined(USE_PCM3060)
 
 extern "C" {
   extern SAI_HandleTypeDef HSAI_RX1;

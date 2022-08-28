@@ -12,7 +12,6 @@ C_SRC = $(wildcard Src/*.c)
 CPP_SRC = $(wildcard Src/*.cpp)
 C_SRC += $(OPENWARE)/Source/usbd_audio.c
 C_SRC += $(OPENWARE)/Source/sdram_daisy.c
-C_SRC += $(OPENWARE)/Source/ssd1309.c
 C_SRC += $(OPENWARE)/Source/pcm3060.c
 C_SRC += $(OPENWARE)/Source/bsp_driver_sd.c
 C_SRC += $(OPENWARE)/Source/sd_diskio.c
@@ -26,6 +25,7 @@ include $(OPENWARE)/Hardware/sources.mk
 
 C_SRC += $(C_SRC_DAC)
 C_SRC += $(C_SRC_SDRAM)
+C_SRC += $(C_SRC_I2C)
 C_SRC += $(C_SRC_SAI)
 C_SRC += $(C_SRC_DSP)
 C_SRC += $(C_SRC_OS)

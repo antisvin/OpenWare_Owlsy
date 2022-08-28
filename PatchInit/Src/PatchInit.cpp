@@ -3,7 +3,6 @@
 #include <stdio.h>
 #include "device.h"
 #include "Owl.h"
-#include "Graphics.h"
 //#include "errorhandlers.h"
 #include "message.h"
 #include "gpio.h"
@@ -19,11 +18,10 @@ extern uint16_t button_values;
 
 void setGateValue(uint8_t bid, int16_t value){
   if (bid == BUTTON_C || bid == PUSHBUTTON) {
-    HAL_GPIO_WritePin(GATE_OUT_GPIO_Port, GATE_OUT_Pin, value ? GPIO_PIN_SET :  GPIO_PIN_RESET);
-    // We have to update button values here, because currently it's not propagated from program vector. A bug?
-    // setButtonValue(BUTTON_C, value);
-    //button_values &= ~((!value) << BUTTON_C);
-    //button_values |= (bool(value) << BUTTON_C);
+    HAL_GPIO_WritePin(GATE_OUT1_GPIO_Port, GATE_OUT1_Pin, value ? GPIO_PIN_SET :  GPIO_PIN_RESET);
+  }
+  else if (bid == BUTTON_D) {
+    HAL_GPIO_WritePin(GATE_OUT2_GPIO_Port, GATE_OUT2_Pin, value ? GPIO_PIN_SET :  GPIO_PIN_RESET);
   }
 }
 
@@ -44,10 +42,12 @@ void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t*
   //SCB_InvalidateDCache_by_Addr((uint32_t*)adc_values, sizeof(adc_values));
 #endif
   // Note that updateValue will apply smoothing, so we don't have to do it here
+  /*
   graphics.params.updateValue(0, 4095 - adc_values[0]);
   graphics.params.updateValue(1, 4095 - adc_values[1]);
   graphics.params.updateValue(2, 4095 - adc_values[2]);
   graphics.params.updateValue(3, 4095 - adc_values[3]);
+  */
 }
 
 void onChangePin(uint16_t pin){
@@ -67,8 +67,6 @@ void onChangePin(uint16_t pin){
 }
 
 void setup(){
-  HAL_GPIO_WritePin(OLED_RST_GPIO_Port, OLED_RST_Pin, GPIO_PIN_RESET); // OLED off
-
   qspi_init(QSPI_MODE_MEMORY_MAPPED);
   
   /* This doesn't work with bootloader, need to find how to deinit it earlier*/
@@ -79,9 +77,6 @@ void setup(){
   }
   #endif
 
-  extern SPI_HandleTypeDef OLED_SPI;
-  graphics.begin(&OLED_SPI);
-
   owl.setup();
   setButtonValue(PUSHBUTTON, 0);
 }
@@ -89,6 +84,7 @@ void setup(){
 static int16_t enc_data[2];
 
 void loop(){
+/*
   updateEncoderCounter();
   if (updateUi){
 #if defined USE_CACHE
@@ -107,6 +103,7 @@ void loop(){
     graphics.draw();
     graphics.display();
   }
+*/
   
   owl.loop();
 }

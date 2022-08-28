@@ -67,7 +67,7 @@
 #define USBD_LANGID_STRING     1033
 #define USBD_MANUFACTURER_STRING     "Electrosmith"
 #define USBD_PID_FS     0xDADA
-#define USBD_PRODUCT_STRING_FS     "OWL-DAISY"
+#define USBD_PRODUCT_STRING_FS     "OWL-INIT"
 #define USBD_CONFIGURATION_STRING_FS     "AUDIO Config"
 #define USBD_INTERFACE_STRING_FS     "AUDIO Interface"
 
@@ -391,4 +391,3 @@ static void IntToUnicode(uint32_t value, uint8_t * pbuf, uint8_t len)
   * @}
   */
 
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

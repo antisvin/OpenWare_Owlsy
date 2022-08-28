@@ -58,38 +58,40 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define ENC_B_Pin GPIO_PIN_8
-#define ENC_B_GPIO_Port GPIOB
-#define OLED_DC_Pin GPIO_PIN_4
-#define OLED_DC_GPIO_Port GPIOB
-#define ENC_A_Pin GPIO_PIN_9
-#define ENC_A_GPIO_Port GPIOB
+#define SW1_Pin GPIO_PIN_8
+#define SW1_GPIO_Port GPIOB
+#define GATE_IN2_Pin GPIO_PIN_14
+#define GATE_IN2_GPIO_Port GPIOG
+#define GATE_IN1_Pin GPIO_PIN_13
+#define GATE_IN1_GPIO_Port GPIOG
+#define SW2_Pin GPIO_PIN_9
+#define SW2_GPIO_Port GPIOB
+#define GATE_OUT1_Pin GPIO_PIN_13
+#define GATE_OUT1_GPIO_Port GPIOC
+#define GATE_OUT2_Pin GPIO_PIN_14
+#define GATE_OUT2_GPIO_Port GPIOC
 #define USER_LED_Pin GPIO_PIN_7
 #define USER_LED_GPIO_Port GPIOC
-#define ADC1_Pin GPIO_PIN_0
-#define ADC1_GPIO_Port GPIOC
-#define GATE_IN1_Pin GPIO_PIN_1
-#define GATE_IN1_GPIO_Port GPIOC
-#define GATE_IN1_EXTI_IRQn EXTI1_IRQn
-#define ADC3_Pin GPIO_PIN_4
-#define ADC3_GPIO_Port GPIOC
-#define GATE_IN2_Pin GPIO_PIN_6
-#define GATE_IN2_GPIO_Port GPIOA
-#define GATE_IN2_EXTI_IRQn EXTI9_5_IRQn
-#define ENC_CLICK_Pin GPIO_PIN_12
-#define ENC_CLICK_GPIO_Port GPIOB
-#define ADC2_Pin GPIO_PIN_3
+#define ADC7_Pin GPIO_PIN_0
+#define ADC7_GPIO_Port GPIOC
+#define ADC8_Pin GPIO_PIN_1
+#define ADC8_GPIO_Port GPIOC
+#define DAC2_Pin GPIO_PIN_4
+#define DAC2_GPIO_Port GPIOA
+#define ADC6_Pin GPIO_PIN_4
+#define ADC6_GPIO_Port GPIOC
+#define ADC3_Pin GPIO_PIN_2
+#define ADC3_GPIO_Port GPIOA
+#define ADC2_Pin GPIO_PIN_6
 #define ADC2_GPIO_Port GPIOA
+#define DAC1_Pin GPIO_PIN_5
+#define DAC1_GPIO_Port GPIOA
+#define ADC1_Pin GPIO_PIN_3
+#define ADC1_GPIO_Port GPIOA
 #define ADC4_Pin GPIO_PIN_7
 #define ADC4_GPIO_Port GPIOA
-#define GATE_OUT_Pin GPIO_PIN_1
-#define GATE_OUT_GPIO_Port GPIOB
-#define CODEC_RESET1_Pin GPIO_PIN_11
-#define CODEC_RESET1_GPIO_Port GPIOB
-#define CODEC_RESET2_Pin GPIO_PIN_14
-#define CODEC_RESET2_GPIO_Port GPIOB
-#define OLED_RST_Pin GPIO_PIN_15
-#define OLED_RST_GPIO_Port GPIOB
+#define ADC5_Pin GPIO_PIN_1
+#define ADC5_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
@@ -99,5 +101,3 @@ void Error_Handler(void);
 #endif
 
 #endif /* __MAIN_H */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
