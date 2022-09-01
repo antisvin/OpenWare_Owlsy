@@ -157,16 +157,14 @@ int main(void)
   MX_DAC1_Init();
   MX_SAI1_Init();
   MX_QUADSPI_Init();
+  //MX_SDMMC1_SD_Init();
   MX_I2C2_Init();
   /* USER CODE BEGIN 2 */
-  #ifdef USE_WM7371
-  MX_I2C1_Init();
-  #endif
+
   //HAL_NVIC_SetPriority(EXTI2_IRQn, 3, 0);
   //HAL_NVIC_EnableIRQ(EXTI2_IRQn);
-  //HAL_NVIC_EnableIRQ(OTG_FS_IRQn);
-
-
+  //HAL_NVIC_EnableIRQ(OTG_FS_IRQn)
+  
   SDRAM_Initialization_Sequence(&hsdram1);
   MX_SDMMC1_SD_Init();
 
@@ -595,7 +593,7 @@ static void MX_SAI1_Init(void)
 
   /* USER CODE END SAI1_Init 1 */
   hsai_BlockA1.Instance = SAI1_Block_A;
-  hsai_BlockA1.Init.AudioMode = SAI_MODEMASTER_TX;
+  hsai_BlockA1.Init.AudioMode = SAI_MODEMASTER_RX;
   hsai_BlockA1.Init.Synchro = SAI_ASYNCHRONOUS;
   hsai_BlockA1.Init.OutputDrive = SAI_OUTPUTDRIVE_DISABLE;
   hsai_BlockA1.Init.NoDivider = SAI_MASTERDIVIDER_ENABLE;
@@ -610,7 +608,7 @@ static void MX_SAI1_Init(void)
     Error_Handler();
   }
   hsai_BlockB1.Instance = SAI1_Block_B;
-  hsai_BlockB1.Init.AudioMode = SAI_MODESLAVE_RX;
+  hsai_BlockB1.Init.AudioMode = SAI_MODESLAVE_TX;
   hsai_BlockB1.Init.Synchro = SAI_SYNCHRONOUS;
   hsai_BlockB1.Init.OutputDrive = SAI_OUTPUTDRIVE_DISABLE;
   hsai_BlockB1.Init.FIFOThreshold = SAI_FIFOTHRESHOLD_EMPTY;

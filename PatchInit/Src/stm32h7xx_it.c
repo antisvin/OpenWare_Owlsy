@@ -81,6 +81,7 @@ extern SD_HandleTypeDef hsd1;
 void SysTick_Handler(void)
 {
   /* USER CODE BEGIN SysTick_IRQn 0 */
+  /* USER CODE END SysTick_IRQn 0 */
   HAL_IncTick();
 #if (INCLUDE_xTaskGetSchedulerState == 1 )
   if (xTaskGetSchedulerState() != taskSCHEDULER_NOT_STARTED)
@@ -90,8 +91,6 @@ void SysTick_Handler(void)
 #if (INCLUDE_xTaskGetSchedulerState == 1 )
   }
 #endif /* INCLUDE_xTaskGetSchedulerState */
-  /* USER CODE END SysTick_IRQn 0 */
-
   /* USER CODE BEGIN SysTick_IRQn 1 */
   /* USER CODE END SysTick_IRQn 1 */
 }

@@ -74,7 +74,7 @@ typedef int8_t audio_t;
 #endif
 
 static void update_rx_read_index(){
-#if defined USE_CS4271 || defined USE_PCM3168A || defined USE_AK4556 || defined USE_WM8731
+#if defined USE_CS4271 || defined USE_PCM3168A || defined USE_PCM3060 || defined USE_AK4556 || defined USE_WM8731
   extern DMA_HandleTypeDef HDMA_RX1;
   // NDTR: the number of remaining data units in the current DMA Stream transfer.
   #ifndef DUAL_CODEC
@@ -89,7 +89,7 @@ static void update_rx_read_index(){
 }
 
 static void update_tx_write_index(){
-#if defined USE_CS4271 || defined USE_PCM3168A || defined USE_AK4556 || defined USE_WM8731
+#if defined USE_CS4271 || defined USE_PCM3168A || defined USE_PCM3060 || defined USE_AK4556 || defined USE_WM8731
   extern DMA_HandleTypeDef HDMA_TX1;
   // NDTR: the number of remaining data units in the current DMA Stream transfer.
   #ifndef DUAL_CODEC
@@ -428,7 +428,7 @@ void Codec::stop(){
 
 #endif // USE_ADS1294
 
-#if defined(USE_CS4271) || defined(USE_PCM3168A) || defined(USE_AK4556) || defined(USE_WM8731) || defined(USE_PCM3060)
+#if defined(USE_CS4271) || defined(USE_PCM3168A) || defined(USE_PCM3060) || defined(USE_AK4556) || defined(USE_WM8731)
 
 extern "C" {
   extern SAI_HandleTypeDef HSAI_RX1;
@@ -505,7 +505,8 @@ extern "C" {
           audioCallback(
       codec_rxbuf + codec_blocksize * AUDIO_CHANNELS,
       codec_txbuf + codec_blocksize * AUDIO_CHANNELS,
-      codec_blocksize);}
+      codec_blocksize);
+    }
 #endif
   }
   void HAL_SAI_ErrorCallback(SAI_HandleTypeDef *hsai){
