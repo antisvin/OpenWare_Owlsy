@@ -65,7 +65,6 @@
 
 
 #define USE_CODEC
-#define DUAL_CODEC
 #define USE_PCM3060
 #define CODEC_I2C hi2c2
 #define USE_USBD_FS
