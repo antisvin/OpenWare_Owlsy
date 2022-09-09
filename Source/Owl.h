@@ -25,7 +25,6 @@ extern "C" {
   int16_t getAnalogValue(uint8_t index);
   const char* getFirmwareVersion();
   const char* getBootloaderVersion();
-  void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t* adc_values, size_t adc_len);  
 
 #ifdef USE_ENCODERS
   int16_t getEncoderValue(uint8_t encoder);

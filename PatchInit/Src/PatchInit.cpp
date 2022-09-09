@@ -2,7 +2,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "device.h"
+#include "ApplicationSettings.h"
+#include "Codec.h"
 #include "Owl.h"
+#include "Pin.h"
 //#include "errorhandlers.h"
 #include "message.h"
 #include "gpio.h"
@@ -15,12 +18,14 @@
 
 Pin sw1(SW1_GPIO_Port, SW1_Pin);
 Pin sw2(SW2_GPIO_Port, SW2_Pin);
-Pin sw3(SW3_GPIO_Port, SW3_Pin);
-Pin sw4(SW4_GPIO_Port, SW4_Pin);
+//Pin sw3(SW3_GPIO_Port, SW3_Pin);
+//Pin sw4(SW4_GPIO_Port, SW4_Pin);
 
 TakeoverControls<8, int16_t> takeover;
 volatile uint8_t patchselect;
-
+volatile bool b1_pressed;
+#define MAX_B1_PRESS 2000
+uint16_t b1_counter;
 extern int16_t parameter_values[NOF_PARAMETERS];
 
 int16_t getParameterValue(uint8_t pid) {
@@ -68,7 +73,8 @@ void setAnalogValue(uint8_t ch, int16_t value) {
 }
 
 bool isModeButtonPressed() {
-    return !sw5.get(); // HAL_GPIO_ReadPin(SW5_GPIO_Port, SW5_Pin) == GPIO_PIN_RESET;
+    return b1_counter >= MAX_B1_PRESS;
+    //return !sw5.get(); // HAL_GPIO_ReadPin(SW5_GPIO_Port, SW5_Pin) == GPIO_PIN_RESET;
 }
 
 int16_t getAttenuatedCV(uint8_t index, uint16_t* adc_values) {
@@ -78,16 +84,16 @@ int16_t getAttenuatedCV(uint8_t index, uint16_t* adc_values) {
 
 static uint16_t smooth_adc_values[NOF_ADC_VALUES];
 extern "C" {
-void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) {
-    // this runs at apprx 7.5kHz
-    // with 144 cycles sample time and PCLK2 = 84MHz, div 8
-    // giving a filter settling time of less than 3ms
+  void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc){
+    // this runs at apprx 3.3kHz
+    // with 64.5 cycles sample time, 30 MHz ADC clock, and ClockPrescaler = 32
     extern uint16_t adc_values[NOF_ADC_VALUES];
-    for (size_t i = 0; i < NOF_ADC_VALUES; ++i) {
-        // IIR exponential filter with lambda 0.75: y[n] = 0.75*y[n-1] + 0.25*x[n]
-        smooth_adc_values[i] = (smooth_adc_values[i] * 3 + adc_values[i]) >> 2;
+    for(size_t i=0; i<NOF_ADC_VALUES; ++i){
+      // IIR exponential filter with lambda 0.75: y[n] = 0.75*y[n-1] + 0.25*x[n]
+      smooth_adc_values[i] = (smooth_adc_values[i]*3 + adc_values[i]) >> 2;
     }
-}
+    // tr_out_a_pin.toggle();
+  }
 }
 
 void updateParameters(int16_t* parameter_values, size_t parameter_len,
@@ -134,6 +140,9 @@ void onChangePin(uint16_t pin) {
     case GATE_IN1_Pin: {
         bool state = HAL_GPIO_ReadPin(SW1_GPIO_Port, SW1_Pin) == GPIO_PIN_RESET ||
             HAL_GPIO_ReadPin(GATE_IN1_GPIO_Port, GATE_IN1_Pin) == GPIO_PIN_RESET;
+        b1_pressed = state;
+        if (!state)
+            b1_counter = 0;
         setButtonValue(BUTTON_A, state);
         setButtonValue(PUSHBUTTON, state);
         break;
@@ -146,9 +155,10 @@ void onChangePin(uint16_t pin) {
         break;
     }
     }
+}
 
-    void setup() {
-        qspi_init(QSPI_MODE_MEMORY_MAPPED);
+void setup() {
+    qspi_init(QSPI_MODE_MEMORY_MAPPED);
 
 /* This doesn't work with bootloader, need to find how to deinit it earlier*/
 #if 0
@@ -158,10 +168,91 @@ void onChangePin(uint16_t pin) {
   }
 #endif
 
-        owl.setup();
-        setButtonValue(PUSHBUTTON, 0);
-    }
+    owl.setup();
+    setButtonValue(PUSHBUTTON, 0);
+}
 
-    void loop() {
-        owl.loop();
+#define PATCH_RESET_COUNTER (600 / MAIN_LOOP_SLEEP_MS)
+uint16_t progress = 0;
+void setProgress(uint16_t value, const char* msg) {
+    // debugMessage(msg, (int)(100*value/4095));
+    progress = value == 4095 ? 0 : value * 6;
+}
+
+static uint32_t counter = 0;
+static void update_preset() {
+    switch (owl.getOperationMode()) {
+    case STARTUP_MODE:
+    case STREAM_MODE:
+    case LOAD_MODE: {
+        uint16_t value = progress;
+        if (value == 0)
+            value = counter * 4095 * 6 / PATCH_RESET_COUNTER;
+        if (getErrorStatus() != NO_ERROR || isModeButtonPressed())
+            owl.setOperationMode(ERROR_MODE);
+        break;
     }
+    case RUN_MODE:
+        if (isModeButtonPressed()) {
+            owl.setOperationMode(CONFIGURE_MODE);
+        }
+        else if (getErrorStatus() != NO_ERROR) {
+            owl.setOperationMode(ERROR_MODE);
+        }
+        break;
+    case CONFIGURE_MODE:
+        /// XXX
+        if (isModeButtonPressed()) {
+            for (int i = 1; i <= 4; ++i) {
+                uint32_t colour = NO_COLOUR;
+                if (patchselect == i)
+                    colour = YELLOW_COLOUR;
+                else if (patchselect == i + 4)
+                    colour = RED_COLOUR;
+                setLed(6 + i, colour);
+            }
+            if (takeover.taken(9)) {
+                uint8_t value = (takeover.get(9) >> 6) + 63;
+                if (settings.audio_output_gain != value) {
+                    settings.audio_output_gain = value;
+                    codec.setOutputGain(value);
+                }
+            }
+        }
+        else {
+            if (program.getProgramIndex() != patchselect &&
+                registry.getPatchBlock(patchselect) != NULL) {
+                // change patch on mode button release
+                program.loadProgram(patchselect); // enters load mode (calls onChangeMode)
+                program.resetProgram(false);
+            }
+            else {
+                owl.setOperationMode(RUN_MODE);
+            }
+            takeover.reset(false);
+        }
+        break;
+    case ERROR_MODE:
+        //setLed(1, counter > PATCH_RESET_COUNTER * 0.5 ? 4095 : 0);
+        if (isModeButtonPressed()) {
+            setErrorStatus(NO_ERROR);
+            owl.setOperationMode(CONFIGURE_MODE);
+        }
+        break;
+    }
+    if (++counter >= PATCH_RESET_COUNTER)
+        counter = 0;
+}
+
+void loop() {
+    if (b1_pressed && b1_counter < MAX_B1_PRESS) {
+        b1_counter++;
+    }
+    owl.loop();
+    /*
+    static bool sw4_state = false;
+    if (sw4_state != !sw4.get())
+        sw4_state = updatePin(4, sw4);
+    */
+    update_preset();
+}
