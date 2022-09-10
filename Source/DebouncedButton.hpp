@@ -19,7 +19,7 @@ public:
         // This assumes that button is pulled up, so pin input gets inverted. We
         // could have an option to remove inverting, or better a template parameter
         click_state |= !getPin(port_click, pin_click);
-    }        
+    }
 
     inline bool isPressed() const {
         return (click_state & short_click_mask) == short_click_mask;
@@ -31,6 +31,10 @@ public:
 
     inline bool isFallingEdge() const {
         return (click_state & short_click_mask) == click_mask_falling; 
+    }
+
+    inline bool isChanged() const {
+        return isRisingEdge() || isFallingEdge();
     }
 
     inline bool isLongPress() const {
@@ -50,9 +54,9 @@ private:
     uint32_t pin_click;
     uint32_t click_state;
 
-    static constexpr uint32_t click_mask_rising       = 0x7;
-    static constexpr uint32_t click_mask_falling      = 0xe;
-    static constexpr uint32_t short_click_mask        = 0xf;
+    static constexpr uint32_t click_mask_falling      = 0xfe;
+    static constexpr uint32_t click_mask_rising       = 0x7f;
+    static constexpr uint32_t short_click_mask        = 0xff;
     static constexpr uint32_t click_mask_long_rising  = 0x7fffffff;
     static constexpr uint32_t click_mask_long_falling = 0xfffffffe;
     static constexpr uint32_t long_click_mask         = 0xffffffff;

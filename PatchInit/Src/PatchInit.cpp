@@ -6,6 +6,7 @@
 #include "Codec.h"
 #include "Owl.h"
 #include "Pin.h"
+#include "DebouncedButton.hpp"
 //#include "errorhandlers.h"
 #include "message.h"
 #include "gpio.h"
@@ -27,6 +28,8 @@ volatile bool b1_pressed;
 #define MAX_B1_PRESS 2000
 uint16_t b1_counter;
 extern int16_t parameter_values[NOF_PARAMETERS];
+static DebouncedButton b1(SW1_GPIO_Port, SW1_Pin);
+
 
 int16_t getParameterValue(uint8_t pid) {
     if (pid < 4)
@@ -120,10 +123,10 @@ void updateParameters(int16_t* parameter_values, size_t parameter_len,
     else {
         for (size_t i = 0; i < 4; ++i) {
             takeover.update(i, smooth_adc_values[i * 2 + 1], 31);
-            if (takeover.taken(i))
-                setLed(i + 1, abs(getAttenuatedCV(i, smooth_adc_values)));
-            else
-                setLed(i + 1, 4095);
+//            if (takeover.taken(i))
+//                setLed(i + 1, abs(getAttenuatedCV(i, smooth_adc_values)));
+//            else
+//                setLed(i + 1, 4095);
         }
         for (size_t i = 0; i < 4; ++i) {
             int16_t x = takeover.get(i);
@@ -138,7 +141,8 @@ void onChangePin(uint16_t pin) {
     switch (pin) {
     case SW1_Pin:
     case GATE_IN1_Pin: {
-        bool state = HAL_GPIO_ReadPin(SW1_GPIO_Port, SW1_Pin) == GPIO_PIN_RESET ||
+        bool state = //HAL_GPIO_ReadPin(SW1_GPIO_Port, SW1_Pin) == GPIO_PIN_RESET;
+            b1.isRisingEdge() ||
             HAL_GPIO_ReadPin(GATE_IN1_GPIO_Port, GATE_IN1_Pin) == GPIO_PIN_RESET;
         b1_pressed = state;
         if (!state)
@@ -245,6 +249,10 @@ static void update_preset() {
 }
 
 void loop() {
+    b1.debounce();
+    if (b1.isChanged()){
+        onChangePin(SW1_Pin);
+    }
     if (b1_pressed && b1_counter < MAX_B1_PRESS) {
         b1_counter++;
     }

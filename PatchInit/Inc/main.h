@@ -62,10 +62,13 @@ void Error_Handler(void);
 #define SW1_GPIO_Port GPIOB
 #define GATE_IN2_Pin GPIO_PIN_14
 #define GATE_IN2_GPIO_Port GPIOG
+#define GATE_IN2_EXTI_IRQn EXTI15_10_IRQn
 #define GATE_IN1_Pin GPIO_PIN_13
 #define GATE_IN1_GPIO_Port GPIOG
+#define GATE_IN1_EXTI_IRQn EXTI15_10_IRQn
 #define SW2_Pin GPIO_PIN_9
 #define SW2_GPIO_Port GPIOB
+#define SW2_EXTI_IRQn EXTI9_5_IRQn
 #define GATE_OUT1_Pin GPIO_PIN_13
 #define GATE_OUT1_GPIO_Port GPIOC
 #define GATE_OUT2_Pin GPIO_PIN_14
