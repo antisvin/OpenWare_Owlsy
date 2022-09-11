@@ -19,8 +19,8 @@
 
 Pin sw1(SW1_GPIO_Port, SW1_Pin);
 Pin sw2(SW2_GPIO_Port, SW2_Pin);
-//Pin sw3(SW3_GPIO_Port, SW3_Pin);
-//Pin sw4(SW4_GPIO_Port, SW4_Pin);
+// Pin sw3(SW3_GPIO_Port, SW3_Pin);
+// Pin sw4(SW4_GPIO_Port, SW4_Pin);
 
 TakeoverControls<8, int16_t> takeover;
 volatile uint8_t patchselect;
@@ -30,6 +30,11 @@ uint16_t b1_counter;
 extern int16_t parameter_values[NOF_PARAMETERS];
 static DebouncedButton b1(SW1_GPIO_Port, SW1_Pin);
 
+// 12x12 bit multiplication with unsigned operands and result
+#define U12_MUL_U12(a, b) (__USAT(((uint32_t)(a) * (b)) >> 12, 12))
+
+#define CV_ATTENUATION_DEFAULT 2186 // calibrated to provide 1V/oct over 5V
+// TODO
 
 int16_t getParameterValue(uint8_t pid) {
     if (pid < 4)
@@ -77,26 +82,33 @@ void setAnalogValue(uint8_t ch, int16_t value) {
 
 bool isModeButtonPressed() {
     return b1_counter >= MAX_B1_PRESS;
-    //return !sw5.get(); // HAL_GPIO_ReadPin(SW5_GPIO_Port, SW5_Pin) == GPIO_PIN_RESET;
+    // return !sw5.get(); // HAL_GPIO_ReadPin(SW5_GPIO_Port, SW5_Pin) == GPIO_PIN_RESET;
 }
 
-int16_t getAttenuatedCV(uint8_t index, uint16_t* adc_values) {
+int16_t getAttenuatedCV(uint8_t index, int16_t* adc_values) {
     // 12x12 bit multiplication with signed operands and no saturation
     return ((int32_t)adc_values[index * 2] * takeover.get(index + 4)) >> 12;
 }
 
-static uint16_t smooth_adc_values[NOF_ADC_VALUES];
+static int16_t smooth_adc_values[NOF_ADC_VALUES];
 extern "C" {
-  void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc){
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) {
     // this runs at apprx 3.3kHz
     // with 64.5 cycles sample time, 30 MHz ADC clock, and ClockPrescaler = 32
     extern uint16_t adc_values[NOF_ADC_VALUES];
-    for(size_t i=0; i<NOF_ADC_VALUES; ++i){
-      // IIR exponential filter with lambda 0.75: y[n] = 0.75*y[n-1] + 0.25*x[n]
-      smooth_adc_values[i] = (smooth_adc_values[i]*3 + adc_values[i]) >> 2;
+    for (size_t i = 0; i < NOF_ADC_VALUES; i++) {
+        // IIR exponential filter with lambda 0.75: y[n] = 0.75*y[n-1] + 0.25*x[n]
+        // CV is bipolar
+        smooth_adc_values[i] =
+            __SSAT((smooth_adc_values[i] * 3 + 4095 - 2 * adc_values[i]) >> 2, 13);
+        i++;
+        // Knobs are unipolar
+        smooth_adc_values[i] =
+            __USAT((smooth_adc_values[i] * 3 + 4095 - 2 * adc_values[i]) >> 2, 12);
+        i++;
     }
     // tr_out_a_pin.toggle();
-  }
+}
 }
 
 void updateParameters(int16_t* parameter_values, size_t parameter_len,
@@ -114,19 +126,19 @@ void updateParameters(int16_t* parameter_values, size_t parameter_len,
                 value = -(value * value) >> 9;
             }
             takeover.update(i + 4, value, 31);
-            if (takeover.taken(i + 4))
-                setLed(i + 1, 0);
-            else
-                setLed(i + 1, 4095);
+            // if (takeover.taken(i + 4))
+            //     setLed(i + 1, 0);
+            // else
+            //     setLed(i + 1, 4095);
         }
     }
     else {
         for (size_t i = 0; i < 4; ++i) {
             takeover.update(i, smooth_adc_values[i * 2 + 1], 31);
-//            if (takeover.taken(i))
-//                setLed(i + 1, abs(getAttenuatedCV(i, smooth_adc_values)));
-//            else
-//                setLed(i + 1, 4095);
+            //            if (takeover.taken(i))
+            //                setLed(i + 1, abs(getAttenuatedCV(i, smooth_adc_values)));
+            //            else
+            //                setLed(i + 1, 4095);
         }
         for (size_t i = 0; i < 4; ++i) {
             int16_t x = takeover.get(i);
@@ -141,7 +153,7 @@ void onChangePin(uint16_t pin) {
     switch (pin) {
     case SW1_Pin:
     case GATE_IN1_Pin: {
-        bool state = //HAL_GPIO_ReadPin(SW1_GPIO_Port, SW1_Pin) == GPIO_PIN_RESET;
+        bool state = // HAL_GPIO_ReadPin(SW1_GPIO_Port, SW1_Pin) == GPIO_PIN_RESET;
             b1.isRisingEdge() ||
             HAL_GPIO_ReadPin(GATE_IN1_GPIO_Port, GATE_IN1_Pin) == GPIO_PIN_RESET;
         b1_pressed = state;
@@ -174,6 +186,14 @@ void setup() {
 
     owl.setup();
     setButtonValue(PUSHBUTTON, 0);
+
+    HAL_GPIO_WritePin(GATE_OUT1_GPIO_Port, GATE_OUT1_Pin, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(GATE_OUT2_GPIO_Port, GATE_OUT2_Pin, GPIO_PIN_SET);
+    for (size_t i = 4; i < 8; ++i) {
+        takeover.set(i, CV_ATTENUATION_DEFAULT);
+        takeover.reset(i, false);
+    }
+    patchselect = program.getProgramIndex();
 }
 
 #define PATCH_RESET_COUNTER (600 / MAIN_LOOP_SLEEP_MS)
@@ -237,7 +257,7 @@ static void update_preset() {
         }
         break;
     case ERROR_MODE:
-        //setLed(1, counter > PATCH_RESET_COUNTER * 0.5 ? 4095 : 0);
+        // setLed(1, counter > PATCH_RESET_COUNTER * 0.5 ? 4095 : 0);
         if (isModeButtonPressed()) {
             setErrorStatus(NO_ERROR);
             owl.setOperationMode(CONFIGURE_MODE);
@@ -250,7 +270,7 @@ static void update_preset() {
 
 void loop() {
     b1.debounce();
-    if (b1.isChanged()){
+    if (b1.isChanged()) {
         onChangePin(SW1_Pin);
     }
     if (b1_pressed && b1_counter < MAX_B1_PRESS) {
