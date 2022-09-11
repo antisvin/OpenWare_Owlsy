@@ -98,13 +98,14 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) {
     extern uint16_t adc_values[NOF_ADC_VALUES];
     for (size_t i = 0; i < NOF_ADC_VALUES; i++) {
         // IIR exponential filter with lambda 0.75: y[n] = 0.75*y[n-1] + 0.25*x[n]
+        // We include offset to match 0 point too, but it may differ between devices
         // CV is bipolar
         smooth_adc_values[i] =
-            __SSAT((smooth_adc_values[i] * 3 + 4095 - 2 * adc_values[i]) >> 2, 13);
+            __SSAT((smooth_adc_values[i] * 3 + 4095 + 121 - 2 * adc_values[i]) >> 2, 13);
         i++;
         // Knobs are unipolar
         smooth_adc_values[i] =
-            __USAT((smooth_adc_values[i] * 3 + 4095 - 2 * adc_values[i]) >> 2, 12);
+            __USAT((smooth_adc_values[i] * 3 + 4095 + 132 - 2 * adc_values[i]) >> 2, 12);
         i++;
     }
     // tr_out_a_pin.toggle();
