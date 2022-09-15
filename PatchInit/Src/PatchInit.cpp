@@ -107,7 +107,7 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) {
     // this runs at apprx 3.3kHz
     // with 64.5 cycles sample time, 30 MHz ADC clock, and ClockPrescaler = 32
     extern uint16_t adc_values[NOF_ADC_VALUES];
-    for (size_t i = 0; i < NOF_ADC_VALUES; i++) {
+    for (size_t i = 0; i < NOF_ADC_VALUES;) {
         // IIR exponential filter with lambda 0.75: y[n] = 0.75*y[n-1] +
         // 0.25*x[n] We include offset to match 0 point too, but it may differ
         // between devices CV is bipolar
@@ -139,8 +139,9 @@ void updateParameters(int16_t* parameter_values, size_t parameter_len,
             int16_t x = takeover.get(i);
             int16_t cv = getAttenuatedCV(i, smooth_adc_values);
             parameter_values[i] = __USAT(x + cv, 12);
+            //if (i == 2)
+            //    debugMessage("X =", (int)cv);
         }
-        parameter_values[4] = __USAT(takeover.get(4), 12);
     }
 }
 
@@ -251,7 +252,9 @@ static void updatePreset() {
         if (patchSelection) {
             if (isModeButtonPressed()) {
                 // update patch control
-                int16_t value = getAnalogValue(PATCH_CONFIG_PROGRAM_CONTROL);
+                int16_t value = smooth_adc_values[1];
+                // 4095 - 2 * getAnalogValue(1);
+
                 if (abs(takeover.get(8) - value) >= PATCH_CONFIG_KNOB_THRESHOLD) {
                     takeover.set(8, value);
 
@@ -294,10 +297,6 @@ static void updatePreset() {
                         value = -(value * value) >> 9;
                     }
                     takeover.update(i + 4, value, 31);
-                    // if (takeover.taken(i + 4))
-                    //     setLed(i + 1, 0);
-                    // else
-                    //     setLed(i + 1, 4095);
                 }
             }
             else {
@@ -326,7 +325,6 @@ void onChangeMode(OperationMode new_mode, OperationMode old_mode) {
     //     saved_led = getParameterValue(PARAMETER)); // leaving RUN_MODE, save LED state
     // }
     setLed(0, 0);
-    debugMessage("MODE =", (int)new_mode);
     if (new_mode == CONFIGURE_MODE) {
         if (HAL_GPIO_ReadPin(SW2_GPIO_Port, SW2_Pin) == GPIO_PIN_RESET) {
             // Switch is on, patch selection mode
