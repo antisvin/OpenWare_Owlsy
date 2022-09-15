@@ -198,6 +198,10 @@ bool PatchRegistry::hasPatches(){
   return patchCount > 0 || dynamicPatchDefinition != NULL;
 }
 
+bool PatchRegistry::hasPatch(uint8_t idx) {
+  return getPatchDefinition(idx) != NULL;
+}
+
 PatchDefinition* PatchRegistry::getPatchDefinition(unsigned int index){
   PatchDefinition *def = NULL;
   if(index == 0)
