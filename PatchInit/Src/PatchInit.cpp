@@ -130,10 +130,6 @@ void updateParameters(int16_t* parameter_values, size_t parameter_len,
     if (owl.getOperationMode() == RUN_MODE) {
         for (size_t i = 0; i < 4; ++i) {
             takeover.update(i, smooth_adc_values[i * 2 + 1], 31);
-            //            if (takeover.taken(i))
-            //                setLed(i + 1, abs(getAttenuatedCV(i, smooth_adc_values)));
-            //            else
-            //                setLed(i + 1, 4095);
         }
     }
     for (size_t i = 0; i < 4; ++i) {
@@ -196,7 +192,7 @@ void setProgress(uint16_t value, const char* msg) {
 }
 
 void setLed(uint8_t led, uint32_t rgb) {
-    setAnalogValue(0, rgb);
+    setAnalogValue(PARAMETER_G, rgb);
     led_level = rgb;
 }
 
@@ -238,11 +234,11 @@ static void updatePreset() {
         }
         break;
     case CONFIGURE_MODE_ENTERED:
-        if (counter % 128 == 0) {
-            toggleLed(0);
-        }
         if (counter == PATCH_RESET_COUNTER - 1)
             owl.setOperationMode(CONFIGURE_MODE);
+        if (counter % 32 == 0) {
+            toggleLed(0);
+        }
         break;
     case CONFIGURE_MODE:
         /// XXX
@@ -275,9 +271,7 @@ static void updatePreset() {
                         patchselect); // enters load mode (calls onChangeMode)
                     program.resetProgram(false);
                 }
-                else {
-                    owl.setOperationMode(RUN_MODE);
-                }
+                owl.setOperationMode(RUN_MODE);
             }
         }
         else {
@@ -304,7 +298,7 @@ static void updatePreset() {
 
         break;
     case ERROR_MODE:
-        // setLed(1, counter > PATCH_RESET_COUNTER * 0.5 ? 4095 : 0);
+        setLed(0, counter > PATCH_RESET_COUNTER * 0.5 ? 4095 : 0);
         if (isModeButtonPressed()) {
             setErrorStatus(NO_ERROR);
             owl.setOperationMode(CONFIGURE_MODE_ENTERED);
@@ -317,10 +311,6 @@ static void updatePreset() {
 
 void onChangeMode(OperationMode new_mode, OperationMode old_mode) {
     counter = 0;
-    // static uint32_t saved_led = NO_COLOUR;
-    // if (old_mode == RUN_MODE) {
-    //     saved_led = getParameterValue(PARAMETER)); // leaving RUN_MODE, save LED state
-    // }
     setLed(0, 0);
     if (new_mode == CONFIGURE_MODE) {
         if (HAL_GPIO_ReadPin(SW2_GPIO_Port, SW2_Pin) == GPIO_PIN_RESET) {
@@ -335,7 +325,7 @@ void onChangeMode(OperationMode new_mode, OperationMode old_mode) {
         }
     }
     else if (new_mode == RUN_MODE) {
-        setLed(0, takeover.get(LOAD_INDICATOR_PARAMETER)); // restore to saved LED state
+        setLed(0, getParameterValue(LOAD_INDICATOR_PARAMETER)); // restore to saved LED state
     }
 }
 
