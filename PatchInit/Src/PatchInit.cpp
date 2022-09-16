@@ -135,13 +135,11 @@ void updateParameters(int16_t* parameter_values, size_t parameter_len,
             //            else
             //                setLed(i + 1, 4095);
         }
-        for (size_t i = 0; i < 4; ++i) {
-            int16_t x = takeover.get(i);
-            int16_t cv = getAttenuatedCV(i, smooth_adc_values);
-            parameter_values[i] = __USAT(x + cv, 12);
-            //if (i == 2)
-            //    debugMessage("X =", (int)cv);
-        }
+    }
+    for (size_t i = 0; i < 4; ++i) {
+        int16_t x = takeover.get(i);
+        int16_t cv = getAttenuatedCV(i, smooth_adc_values);
+        parameter_values[i] = __USAT(x + cv, 12);
     }
 }
 
@@ -194,7 +192,6 @@ void setup() {
 
 uint16_t progress = 0;
 void setProgress(uint16_t value, const char* msg) {
-    // debugMessage(msg, (int)(100*value/4095));
     progress = value == 4095 ? 0 : value * 6;
 }
 
