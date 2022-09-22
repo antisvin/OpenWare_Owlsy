@@ -59,6 +59,8 @@ void setParameterValue(uint8_t pid, int16_t value) {
     else if (pid < NOF_PARAMETERS) {
         parameter_values[pid] = value;
     }
+    if (pid == LOAD_INDICATOR_PARAMETER && owl.getOperationMode() == LOAD_MODE)
+        setLed(0, value);
 }
 
 void setGateValue(uint8_t bid, int16_t value) {
@@ -76,17 +78,15 @@ void setAnalogValue(uint8_t ch, int16_t value) {
     extern DAC_HandleTypeDef DAC_PERIPH;
     switch (ch) {
     case PARAMETER_F:
+        // CV output
         HAL_DAC_SetValue(
             &DAC_PERIPH, DAC_CHANNEL_1, DAC_ALIGN_12B_R, __USAT(value, 12));
-        break;
-    case PARAMETER_G:
-        if (owl.getOperationMode() == RUN_MODE) {
+        // LED brightness
+        OperationMode mode = owl.getOperationMode();
+        if (mode == RUN_MODE || mode == LOAD_MODE) {
             HAL_DAC_SetValue(
                 &DAC_PERIPH, DAC_CHANNEL_2, DAC_ALIGN_12B_R, __USAT(value, 12));
         }
-        else {
-            HAL_DAC_SetValue(&DAC_PERIPH, DAC_CHANNEL_2, DAC_ALIGN_12B_R, led_level);
-        };
         break;
     }
 }
@@ -192,8 +192,11 @@ void setProgress(uint16_t value, const char* msg) {
 }
 
 void setLed(uint8_t led, uint32_t rgb) {
-    setAnalogValue(PARAMETER_G, rgb);
-    led_level = rgb;
+    extern DAC_HandleTypeDef DAC_PERIPH;
+    if (led == 0) {
+        led_level = rgb;
+        HAL_DAC_SetValue(&DAC_PERIPH, DAC_CHANNEL_2, DAC_ALIGN_12B_R, led_level);
+    }
 }
 
 uint32_t getLed(uint8_t led) {
@@ -234,8 +237,9 @@ static void updatePreset() {
         }
         break;
     case CONFIGURE_MODE_ENTERED:
-        if (counter == PATCH_RESET_COUNTER - 1)
-            owl.setOperationMode(CONFIGURE_MODE);
+        if (counter == PATCH_RESET_COUNTER - 1) {
+            owl.setOperationMode(isModeButtonPressed() ? CONFIGURE_MODE : RUN_MODE);
+        }
         if (counter % 32 == 0) {
             toggleLed(0);
         }

@@ -48,7 +48,7 @@
 #define NOF_PARAMETERS               40
 #define NOF_BUTTONS                  (4 + 2)
 
-#define LOAD_INDICATOR_PARAMETER     PARAMETER_G
+#define LOAD_INDICATOR_PARAMETER     PARAMETER_F
 // Parameters A-D are used by ADC, so we can't set values for them
 
 #define USE_EXTERNAL_RAM
