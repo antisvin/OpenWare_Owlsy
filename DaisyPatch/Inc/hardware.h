@@ -83,9 +83,12 @@
 
 #define USE_CODEC
 #define DUAL_CODEC
-#define USE_AK4556
-//#define USE_WM8731
-//#define WM8731_I2C_HANDLE hi2c1
+#ifdef SEED11
+  #define USE_WM8731
+  #define WM8731_I2C_HANDLE hi2c2
+#else
+  #define USE_AK4556
+#endif
 #define USE_USBD_FS
 #define USBD_HANDLE hUsbDeviceFS
 #define AUDIO_BITS_PER_SAMPLE       16

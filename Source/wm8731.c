@@ -2,6 +2,10 @@
 #include "wm8731.h"
 #include "errorhandlers.h"
 
+#if defined(DAISY) && defined(DUAL_CODEC)
+#include "gpio.h"
+#endif
+
 void codec_write(uint8_t reg, uint16_t value){
 /* void codec_write(uint8_t reg, uint8_t data){ */
 
@@ -41,6 +45,15 @@ void codec_init(){
 
   // set active control
   codec_write(ACTIVE_CONTROL_REGISTER, WM8731_ACTIVE);
+
+#if defined(DAISY) && defined(DUAL_CODEC)
+  // very hacky - init the second AK4556 here for Daisy Patch
+    clearPin(CODEC_RESET2_GPIO_Port, CODEC_RESET2_Pin);
+    HAL_Delay(1);
+    // Datasheet specifies minimum 150ns delay. We don't really need it as codec would be
+    // running longer than that by now, but better safe than sorry.
+    setPin(CODEC_RESET2_GPIO_Port, CODEC_RESET2_Pin);
+#endif
 }
 
 void codec_bypass(int bypass){

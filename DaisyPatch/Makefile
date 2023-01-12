@@ -1,4 +1,4 @@
-PROJECT = DaisyPatch
+PROJECT ?= DaisyPatch
 BUILDROOT = .
 OPENWARE ?= $(BUILDROOT)/..
 
@@ -13,8 +13,6 @@ CPP_SRC = $(wildcard Src/*.cpp)
 C_SRC += $(OPENWARE)/Source/usbd_audio.c
 C_SRC += $(OPENWARE)/Source/sdram_daisy.c
 C_SRC += $(OPENWARE)/Source/ssd1309.c
-C_SRC += $(OPENWARE)/Source/ak4556.c
-#C_SRC += $(OPENWARE)/Source/wm8731.c # For WM8731
 C_SRC += $(OPENWARE)/Source/bsp_driver_sd.c
 C_SRC += $(OPENWARE)/Source/sd_diskio.c
 C_SRC += $(OPENWARE)/Source/fatfs.c
@@ -26,16 +24,21 @@ CPP_SRC += $(OPENWARE)/Source/ScreenBuffer.cpp
 CPP_SRC += $(OPENWARE)/Source/ScreenBufferMono.cpp
 CPP_SRC += $(OPENWARE)/Source/Graphics.cpp
 
-
 CPPFLAGS += -DDAISY -DDAISY_PATCH
-#  vpath %.c usbd-hs
+
+ifeq ($(PROJECT),DaisyPatch-seed1.1)
+	CPPFLAGS += -DSEED11
+	C_SRC += $(OPENWARE)/Source/wm8731.c
+	C_SRC += $(C_SRC_I2C) # For WM8731
+else
+	C_SRC += $(OPENWARE)/Source/ak4556.c
+endif
 
 include $(OPENWARE)/Hardware/sources.mk
 
 C_SRC += $(C_SRC_DAC)
 C_SRC += $(C_SRC_SDRAM)
 C_SRC += $(C_SRC_SAI)
-#C_SRC += $(C_SRC_I2C) # For WM8731
 C_SRC += $(C_SRC_DSP)
 C_SRC += $(C_SRC_OS)
 C_SRC += $(C_SRC_USBD)
