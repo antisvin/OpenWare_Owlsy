@@ -47,18 +47,18 @@ extern "C" {
   #define HSAI_TX1 hsai_BlockA1
   #define HDMA_RX1 hdma_sai1_b
   #define HDMA_TX1 hdma_sai1_a
-  #if defined(USE_AK4556) && defined(DUAL_CODEC)
-    #define HSAI_RX2 hsai_BlockB2
-    #define HSAI_TX2 hsai_BlockA2
-    #define HDMA_RX2 hdma_sai2_b
-    #define HDMA_TX2 hdma_sai2_a
-  #endif  
 #else
   #define HSAI_RX1 hsai_BlockA1
   #define HSAI_TX1 hsai_BlockB1
   #define HDMA_RX1 hdma_sai1_a
   #define HDMA_TX1 hdma_sai1_b
 #endif
+#if defined(DUAL_CODEC)
+  #define HSAI_RX2 hsai_BlockB2
+  #define HSAI_TX2 hsai_BlockA2
+  #define HDMA_RX2 hdma_sai2_b
+  #define HDMA_TX2 hdma_sai2_a
+#endif  
 
 #ifdef USE_USBD_AUDIO
 #include "usbd_audio.h"
@@ -543,11 +543,11 @@ void Codec::start(){
   // codec_blocksize = min(CODEC_BUFFER_SIZE/(AUDIO_CHANNELS*2), settings.audio_blocksize);
   codec_blocksize = CODEC_BUFFER_SIZE/(AUDIO_CHANNELS*2);
   HAL_StatusTypeDef ret;
-#if defined(USE_CS4271) || (defined(USE_AK4556) && !defined(DUAL_CODEC)) || defined(USE_WM8731)
+#if defined(USE_CS4271) || (defined(USE_AK4556) && !defined(DUAL_CODEC)) || (defined(USE_WM8731) && !defined(DUAL_CODEC))
   ret = HAL_SAI_Receive_DMA(&HSAI_RX1, (uint8_t*)codec_rxbuf, codec_blocksize*AUDIO_CHANNELS*2);
   if(ret == HAL_OK)
     ret = HAL_SAI_Transmit_DMA(&HSAI_TX1, (uint8_t*)codec_txbuf, codec_blocksize*AUDIO_CHANNELS*2);
-#elif defined(USE_AK4556) && defined(DUAL_CODEC)
+#elif (defined(USE_AK4556) && defined(DUAL_CODEC)) || (defined(USE_WM8731) && defined(DUAL_CODEC))
   ret = HAL_SAI_Receive_DMA(&HSAI_RX1, (uint8_t*)codec_rxbuf1, codec_blocksize * AUDIO_CHANNELS);  
   if(ret == HAL_OK)
     ret = HAL_SAI_Transmit_DMA(&HSAI_TX1, (uint8_t*)codec_txbuf1, codec_blocksize * AUDIO_CHANNELS);

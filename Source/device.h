@@ -3,8 +3,8 @@
 
 #include "hardware.h"
 
-#define FIRMWARE_VERSION_MAJOR       24
-#define FIRMWARE_VERSION_MINOR       2
+#define FIRMWARE_VERSION_MAJOR       25
+#define FIRMWARE_VERSION_MINOR       0
 #define _FW_STR(x)                   #x
 #define _FW_TO_STR(x)                _FW_STR(x)
 #define FIRMWARE_VERSION             "v" _FW_TO_STR(FIRMWARE_VERSION_MAJOR) "." _FW_TO_STR(FIRMWARE_VERSION_MINOR)

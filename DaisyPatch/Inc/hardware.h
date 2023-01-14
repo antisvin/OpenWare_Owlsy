@@ -91,8 +91,6 @@
 #endif
 #define USE_USBD_FS
 #define USBD_HANDLE hUsbDeviceFS
-#define AUDIO_BITS_PER_SAMPLE       16
-#define AUDIO_BYTES_PER_SAMPLE      (AUDIO_BITS_PER_SAMPLE/8)
 #define AUDIO_CHANNELS              4
 
 #define QSPI_HANDLE hqspi
