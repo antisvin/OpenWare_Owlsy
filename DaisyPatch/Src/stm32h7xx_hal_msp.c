@@ -23,6 +23,7 @@
 #include "main.h"
 /* USER CODE BEGIN Includes */
 #include "device.h"
+#include <stdbool.h>
 /* USER CODE END Includes */
 extern DMA_HandleTypeDef hdma_adc1;
 
@@ -49,7 +50,7 @@ extern DMA_HandleTypeDef hdma_usart1_tx;
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
-
+extern bool is_seed_11;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -1082,11 +1083,10 @@ void HAL_SAI_MspInit(SAI_HandleTypeDef* hsai)
 
     hdma_sai1_a.Instance = DMA1_Stream6;
     hdma_sai1_a.Init.Request = DMA_REQUEST_SAI1_A;
-#if defined USE_WM8731
-    hdma_sai1_a.Init.Direction = DMA_PERIPH_TO_MEMORY;
-#else
-    hdma_sai1_a.Init.Direction = DMA_MEMORY_TO_PERIPH;
-#endif
+    if (is_seed_11)
+      hdma_sai1_a.Init.Direction = DMA_PERIPH_TO_MEMORY;
+    else
+      hdma_sai1_a.Init.Direction = DMA_MEMORY_TO_PERIPH;
     hdma_sai1_a.Init.PeriphInc = DMA_PINC_DISABLE;
     hdma_sai1_a.Init.MemInc = DMA_MINC_ENABLE;
     hdma_sai1_a.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
@@ -1134,11 +1134,10 @@ void HAL_SAI_MspInit(SAI_HandleTypeDef* hsai)
 
     hdma_sai1_b.Instance = DMA1_Stream7;
     hdma_sai1_b.Init.Request = DMA_REQUEST_SAI1_B;
-#if defined USE_WM8731
-    hdma_sai1_b.Init.Direction = DMA_MEMORY_TO_PERIPH;
-#else
-    hdma_sai1_b.Init.Direction = DMA_PERIPH_TO_MEMORY;
-#endif
+    if (is_seed_11)
+      hdma_sai1_b.Init.Direction = DMA_MEMORY_TO_PERIPH;
+    else
+      hdma_sai1_b.Init.Direction = DMA_PERIPH_TO_MEMORY;
     hdma_sai1_b.Init.PeriphInc = DMA_PINC_DISABLE;
     hdma_sai1_b.Init.MemInc = DMA_MINC_ENABLE;
     hdma_sai1_b.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;

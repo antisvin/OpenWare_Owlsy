@@ -75,13 +75,21 @@ typedef int8_t audio_t;
 
 static void update_rx_read_index(){
 #if defined USE_CS4271 || defined USE_PCM3168A || defined USE_PCM3060 || defined USE_AK4556 || defined USE_WM8731
-  extern DMA_HandleTypeDef HDMA_RX1;
+  extern DMA_HandleTypeDef HDMA_RX1, HDMA_TX1;
   // NDTR: the number of remaining data units in the current DMA Stream transfer.
+  DMA_HandleTypeDef* hdma_rx1;
+  #if defined DAISY && defined USE_WM8731
+  extern bool is_seed_11;
+  hdma_rx1 = is_seed_11? &HDMA_RX1 : &HDMA_TX1;
+  #else
+  hdma_rx1 = &HDMA_RX1;
+  #endif
+
   #ifndef DUAL_CODEC
-  size_t pos = audio_rx_buffer.getCapacity() - __HAL_DMA_GET_COUNTER(&HDMA_RX1);
+  size_t pos = audio_rx_buffer.getCapacity() - __HAL_DMA_GET_COUNTER(hdma_rx1);
   audio_rx_buffer.setReadIndex(pos);
   #else
-  size_t pos = audio_rx1_buffer.getCapacity() - __HAL_DMA_GET_COUNTER(&HDMA_RX1);
+  size_t pos = audio_rx1_buffer.getCapacity() - __HAL_DMA_GET_COUNTER(hdma_rx1);
   audio_rx1_buffer.setReadIndex(pos);
   audio_rx2_buffer.setReadIndex(pos);
   #endif
@@ -90,14 +98,21 @@ static void update_rx_read_index(){
 
 static void update_tx_write_index(){
 #if defined USE_CS4271 || defined USE_PCM3168A || defined USE_PCM3060 || defined USE_AK4556 || defined USE_WM8731
-  extern DMA_HandleTypeDef HDMA_TX1;
+  extern DMA_HandleTypeDef HDMA_TX1, HDMA_RX1;
   // NDTR: the number of remaining data units in the current DMA Stream transfer.
+  DMA_HandleTypeDef* hdma_tx1;
+  #if defined DAISY && defined USE_WM8731
+  extern bool is_seed_11;
+  hdma_tx1 = is_seed_11? &HDMA_TX1 : &HDMA_RX1;
+  #else
+  hdma_tx1 = &HDMA_TX1;
+  #endif  
   #ifndef DUAL_CODEC
-  size_t pos = audio_tx_buffer.getCapacity() - __HAL_DMA_GET_COUNTER(&HDMA_TX1);
+  size_t pos = audio_tx_buffer.getCapacity() - __HAL_DMA_GET_COUNTER(hdma_tx1);
   audio_tx_buffer.setWriteIndex(pos);
   #else
   // Assuming that both SAI codecs are in sync
-  size_t pos = audio_tx1_buffer.getCapacity() - __HAL_DMA_GET_COUNTER(&HDMA_TX1);
+  size_t pos = audio_tx1_buffer.getCapacity() - __HAL_DMA_GET_COUNTER(hdma_tx1);
   audio_tx1_buffer.setWriteIndex(pos);
   audio_tx2_buffer.setWriteIndex(pos);
   #endif
@@ -439,7 +454,8 @@ extern "C" {
 #endif
   void HAL_SAI_RxHalfCpltCallback(SAI_HandleTypeDef *hsai){
 #ifdef DUAL_CODEC
-    if (hsai->Instance == HSAI_RX1.Instance){
+    extern bool is_seed_11;
+    if (hsai->Instance == (is_seed_11 ? HSAI_RX1.Instance : HSAI_TX1.Instance)){
       if (num_channels == 2){
         audioCallback(codec_rxbuf1, codec_txbuf1, codec_blocksize);
       }
@@ -469,8 +485,9 @@ extern "C" {
   }
   void HAL_SAI_RxCpltCallback(SAI_HandleTypeDef *hsai){
 #ifdef DUAL_CODEC
+    extern bool is_seed_11;
     // Merge codec buffers
-    if (hsai->Instance == HSAI_RX1.Instance) {
+    if (hsai->Instance == (is_seed_11 ? HSAI_RX1.Instance : HSAI_TX1.Instance)) {
       if (num_channels == 2){
         audioCallback(
           codec_rxbuf1 + codec_blocksize * AUDIO_CHANNELS / 2,
@@ -501,7 +518,8 @@ extern "C" {
       }      
     }
 #else
-    if (hsai->Instance == HSAI_RX1.Instance) {
+    extern bool is_seed_11;
+    if (hsai->Instance == (is_seed_11 ? HSAI_RX1.Instance : HSAI_TX1.Instance)) {
           audioCallback(
       codec_rxbuf + codec_blocksize * AUDIO_CHANNELS,
       codec_txbuf + codec_blocksize * AUDIO_CHANNELS,
@@ -548,9 +566,23 @@ void Codec::start(){
   if(ret == HAL_OK)
     ret = HAL_SAI_Transmit_DMA(&HSAI_TX1, (uint8_t*)codec_txbuf, codec_blocksize*AUDIO_CHANNELS*2);
 #elif (defined(USE_AK4556) && defined(DUAL_CODEC)) || (defined(USE_WM8731) && defined(DUAL_CODEC))
+  #if defined(DAISY) && defined(USE_WM8731)
+  extern bool is_seed_11;
+  if (is_seed_11) {
+    ret = HAL_SAI_Receive_DMA(&HSAI_RX1, (uint8_t*)codec_rxbuf1, codec_blocksize * AUDIO_CHANNELS);  
+    if(ret == HAL_OK)
+      ret = HAL_SAI_Transmit_DMA(&HSAI_TX1, (uint8_t*)codec_txbuf1, codec_blocksize * AUDIO_CHANNELS);
+  }
+  else {
+    ret = HAL_SAI_Receive_DMA(&HSAI_TX1, (uint8_t*)codec_rxbuf1, codec_blocksize * AUDIO_CHANNELS);  
+    if(ret == HAL_OK)
+      ret = HAL_SAI_Transmit_DMA(&HSAI_RX1, (uint8_t*)codec_txbuf1, codec_blocksize * AUDIO_CHANNELS);
+  }
+  #else
   ret = HAL_SAI_Receive_DMA(&HSAI_RX1, (uint8_t*)codec_rxbuf1, codec_blocksize * AUDIO_CHANNELS);  
   if(ret == HAL_OK)
     ret = HAL_SAI_Transmit_DMA(&HSAI_TX1, (uint8_t*)codec_txbuf1, codec_blocksize * AUDIO_CHANNELS);
+  #endif
   if(ret == HAL_OK)
     ret = HAL_SAI_Transmit_DMA(&HSAI_TX2, (uint8_t*)codec_txbuf2, codec_blocksize * AUDIO_CHANNELS);
   if (ret == HAL_OK)

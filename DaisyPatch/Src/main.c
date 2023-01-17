@@ -56,9 +56,7 @@ DAC_HandleTypeDef hdac1;
 IWDG_HandleTypeDef hiwdg1;
 
 QSPI_HandleTypeDef hqspi;
-#ifdef USE_WM8731
-I2C_HandleTypeDef hi2c2;
-#endif
+
 SAI_HandleTypeDef hsai_BlockA1;
 SAI_HandleTypeDef hsai_BlockB1;
 #ifdef DUAL_CODEC
@@ -85,7 +83,11 @@ SDRAM_HandleTypeDef hsdram1;
 
 osThreadId defaultTaskHandle;
 /* USER CODE BEGIN PV */
-
+extern bool is_seed_11;
+extern bool get_seed_11();
+#ifdef USE_WM8731
+I2C_HandleTypeDef hi2c2;
+#endif
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -183,7 +185,8 @@ int main(void)
   MX_QUADSPI_Init();
   /* USER CODE BEGIN 2 */
   #ifdef USE_WM8731
-  MX_I2C2_Init();
+  if (is_seed_11)
+    MX_I2C2_Init();
   #endif
   //HAL_NVIC_SetPriority(EXTI2_IRQn, 3, 0);
   //HAL_NVIC_EnableIRQ(EXTI2_IRQn);
@@ -639,7 +642,10 @@ static void MX_SAI1_Init(void)
   /* USER CODE BEGIN SAI1_Init 2 */
 #elif defined USE_WM8731
   hsai_BlockA1.Instance = SAI1_Block_A;
-  hsai_BlockA1.Init.AudioMode = SAI_MODEMASTER_RX;
+  if (is_seed_11)
+    hsai_BlockA1.Init.AudioMode = SAI_MODEMASTER_RX;
+  else
+    hsai_BlockA1.Init.AudioMode = SAI_MODEMASTER_TX;
   hsai_BlockA1.Init.Synchro = SAI_ASYNCHRONOUS;
   hsai_BlockA1.Init.OutputDrive = SAI_OUTPUTDRIVE_DISABLE;
   hsai_BlockA1.Init.NoDivider = SAI_MASTERDIVIDER_ENABLE;
@@ -648,12 +654,15 @@ static void MX_SAI1_Init(void)
   hsai_BlockA1.Init.SynchroExt = SAI_SYNCEXT_DISABLE;
   hsai_BlockA1.Init.MonoStereoMode = SAI_STEREOMODE;
   hsai_BlockA1.Init.CompandingMode = SAI_NOCOMPANDING;
-  if (HAL_SAI_InitProtocol(&hsai_BlockA1, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_24BIT, 2) != HAL_OK)
+  if (HAL_SAI_InitProtocol(&hsai_BlockA1, SAI_I2S_MSBJUSTIFIED, SAI_PROTOCOL_DATASIZE_24BIT, 2) != HAL_OK)
   {
     Error_Handler();
   }
   hsai_BlockB1.Instance = SAI1_Block_B;
-  hsai_BlockB1.Init.AudioMode = SAI_MODESLAVE_TX;
+  if (is_seed_11)
+    hsai_BlockB1.Init.AudioMode = SAI_MODESLAVE_TX;
+  else
+    hsai_BlockB1.Init.AudioMode = SAI_MODESLAVE_RX;
   hsai_BlockB1.Init.Synchro = SAI_SYNCHRONOUS;
   hsai_BlockB1.Init.OutputDrive = SAI_OUTPUTDRIVE_DISABLE;
   hsai_BlockB1.Init.FIFOThreshold = SAI_FIFOTHRESHOLD_EMPTY;
@@ -661,7 +670,7 @@ static void MX_SAI1_Init(void)
   hsai_BlockB1.Init.MonoStereoMode = SAI_STEREOMODE;
   hsai_BlockB1.Init.CompandingMode = SAI_NOCOMPANDING;
   hsai_BlockB1.Init.TriState = SAI_OUTPUT_NOTRELEASED;
-  if (HAL_SAI_InitProtocol(&hsai_BlockB1, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_24BIT, 2) != HAL_OK)
+  if (HAL_SAI_InitProtocol(&hsai_BlockB1, SAI_I2S_MSBJUSTIFIED, SAI_PROTOCOL_DATASIZE_24BIT, 2) != HAL_OK)
   {
     Error_Handler();
   }
@@ -967,9 +976,7 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, OLED_DC_Pin|GATE_OUT_Pin|CODEC_RESET2_Pin
                           |OLED_RST_Pin, GPIO_PIN_RESET);
-#ifndef SEED11
-  HAL_GPIO_WritePin(GPIOB, CODEC_RESET1_Pin, GPIO_PIN_RESET);
-#endif
+
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(USER_LED_GPIO_Port, USER_LED_Pin, GPIO_PIN_RESET);
@@ -988,11 +995,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-#ifndef SEED11
-  GPIO_InitStruct.Pin = CODEC_RESET1_Pin;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-#endif
 
   /*Configure GPIO pin : USER_LED_Pin */
   GPIO_InitStruct.Pin = USER_LED_Pin;
@@ -1020,6 +1022,23 @@ static void MX_GPIO_Init(void)
   HAL_NVIC_SetPriority(EXTI9_5_IRQn, 8, 0);
   HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
 
+  #ifdef USE_AK4556
+  HAL_GPIO_WritePin(GPIOB, CODEC_RESET1_Pin, GPIO_PIN_RESET);
+  GPIO_InitStruct.Pin = CODEC_RESET1_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+  #elif defined(USE_WM8731)
+  if (!get_seed_11()) {
+    HAL_GPIO_WritePin(GPIOB, CODEC_RESET1_Pin, GPIO_PIN_RESET);
+    GPIO_InitStruct.Pin = CODEC_RESET1_Pin;
+    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+  }
+  #endif
 }
 
 /* USER CODE BEGIN 4 */

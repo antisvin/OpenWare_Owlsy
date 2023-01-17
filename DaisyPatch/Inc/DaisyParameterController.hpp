@@ -264,6 +264,11 @@ public:
         scope.update();
         // scope.resync();
         uint8_t offset = 36;
+
+        extern bool is_seed_11;
+        screen.setTextSize(1);
+        screen.print(0, offset + 15, is_seed_11 ? "Seed 1.1" : "Seed 1.0");
+
         uint8_t y_prev = int16_t(scope.getBufferData()) * 32 / 128 + offset;
         // uint16_t(data[0]) * 36U / 255U;
         uint16_t step = 4;

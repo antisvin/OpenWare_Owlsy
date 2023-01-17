@@ -16,6 +16,8 @@ C_SRC += $(OPENWARE)/Source/ssd1309.c
 C_SRC += $(OPENWARE)/Source/bsp_driver_sd.c
 C_SRC += $(OPENWARE)/Source/sd_diskio.c
 C_SRC += $(OPENWARE)/Source/fatfs.c
+#C_SRC += $(OPENWARE)/Source/ak4556.c
+C_SRC += $(OPENWARE)/Source/wm8731_daisy.c
 CPP_SRC += $(OPENWARE)/Source/FirmwareHeader.cpp
 CPP_SRC += $(OPENWARE)/Source/uart.cpp
 CPP_SRC += $(OPENWARE)/Source/uart_midi.cpp
@@ -26,13 +28,6 @@ CPP_SRC += $(OPENWARE)/Source/Graphics.cpp
 
 CPPFLAGS += -DDAISY -DDAISY_PATCH
 
-ifeq ($(PROJECT),DaisyPatch-seed1.1)
-	CPPFLAGS += -DSEED11
-	C_SRC += $(OPENWARE)/Source/wm8731.c
-	C_SRC += $(C_SRC_I2C) # For WM8731
-else
-	C_SRC += $(OPENWARE)/Source/ak4556.c
-endif
 
 include $(OPENWARE)/Hardware/sources.mk
 
@@ -47,6 +42,7 @@ C_SRC += $(C_SRC_IWDG)
 C_SRC += $(C_SRC_QSPI)
 C_SRC += $(C_SRC_SD)
 C_SRC += $(C_SRC_FAT)
+C_SRC += $(C_SRC_I2C) # For WM8731
 
 include $(OPENWARE)/Hardware/h7.mk
 
