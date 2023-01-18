@@ -78,11 +78,11 @@
 
 
 #define USE_CODEC
-#define USE_AK4556
+#define USE_WM8731
+#define WM8731_I2C_HANDLE hi2c2
+//#define USE_AK4556
 #define USE_USBD_FS
 #define USBD_HANDLE hUsbDeviceFS
-#define AUDIO_BITS_PER_SAMPLE       16
-#define AUDIO_BYTES_PER_SAMPLE      (AUDIO_BITS_PER_SAMPLE/8)
 #define AUDIO_CHANNELS              2
 
 #define QSPI_HANDLE hqspi

@@ -2,9 +2,7 @@
 #include "wm8731.h"
 #include "errorhandlers.h"
 
-#if defined(DAISY) && defined(DUAL_CODEC)
 #include "gpio.h"
-#endif
 
 bool is_seed_11 = false;
 

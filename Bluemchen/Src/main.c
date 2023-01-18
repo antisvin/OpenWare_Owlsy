@@ -72,7 +72,11 @@ SDRAM_HandleTypeDef hsdram1;
 
 osThreadId defaultTaskHandle;
 /* USER CODE BEGIN PV */
-
+extern bool is_seed_11;
+extern bool get_seed_11();
+#ifdef USE_WM8731
+I2C_HandleTypeDef hi2c2;
+#endif
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -96,7 +100,9 @@ void loop(void);
 //void MX_USB_HOST_Process(void);
 void SDRAM_Initialization_Sequence(SDRAM_HandleTypeDef *hsdram);
 void initialise_monitor_handles(void);
-
+#ifdef USE_WM8731
+static void MX_I2C2_Init(void);
+#endif
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -162,7 +168,10 @@ int main(void)
   MX_QUADSPI_Init();
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
-
+  #ifdef USE_WM8731
+  if (is_seed_11)
+    MX_I2C2_Init();
+  #endif
   //HAL_NVIC_SetPriority(EXTI2_IRQn, 3, 0);
   //HAL_NVIC_EnableIRQ(EXTI2_IRQn);
   //HAL_NVIC_EnableIRQ(OTG_FS_IRQn);
@@ -454,6 +463,54 @@ static void MX_I2C1_Init(void)
 
 }
 
+
+
+/**
+  * @brief I2C2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_I2C2_Init(void)
+{
+
+  /* USER CODE BEGIN I2C2_Init 0 */
+#ifdef USE_WM8731
+  /* USER CODE END I2C2_Init 0 */
+
+  /* USER CODE BEGIN I2C2_Init 1 */
+
+  /* USER CODE END I2C2_Init 1 */
+  hi2c2.Instance = I2C2;
+  hi2c2.Init.Timing = 0x00B03FDB;
+  hi2c2.Init.OwnAddress1 = 0;
+  hi2c2.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+  hi2c2.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+  hi2c2.Init.OwnAddress2 = 0;
+  hi2c2.Init.OwnAddress2Masks = I2C_OA2_NOMASK;
+  hi2c2.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+  hi2c2.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+  if (HAL_I2C_Init(&hi2c2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /** Configure Analogue filter
+  */
+  if (HAL_I2CEx_ConfigAnalogFilter(&hi2c2, I2C_ANALOGFILTER_ENABLE) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /** Configure Digital filter
+  */
+  if (HAL_I2CEx_ConfigDigitalFilter(&hi2c2, 0) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN I2C2_Init 2 */
+#endif
+  /* USER CODE END I2C2_Init 2 */
+
+}
+
 /**
   * @brief IWDG1 Initialization Function
   * @param None
@@ -528,7 +585,7 @@ static void MX_SAI1_Init(void)
 {
 
   /* USER CODE BEGIN SAI1_Init 0 */
-
+#ifdef USE_AK4556
   /* USER CODE END SAI1_Init 0 */
 
   /* USER CODE BEGIN SAI1_Init 1 */
@@ -563,7 +620,41 @@ static void MX_SAI1_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN SAI1_Init 2 */
-
+#elif defined USE_WM8731
+  hsai_BlockA1.Instance = SAI1_Block_A;
+  if (is_seed_11)
+    hsai_BlockA1.Init.AudioMode = SAI_MODEMASTER_RX;
+  else
+    hsai_BlockA1.Init.AudioMode = SAI_MODEMASTER_TX;
+  hsai_BlockA1.Init.Synchro = SAI_ASYNCHRONOUS;
+  hsai_BlockA1.Init.OutputDrive = SAI_OUTPUTDRIVE_DISABLE;
+  hsai_BlockA1.Init.NoDivider = SAI_MASTERDIVIDER_ENABLE;
+  hsai_BlockA1.Init.FIFOThreshold = SAI_FIFOTHRESHOLD_EMPTY;
+  hsai_BlockA1.Init.AudioFrequency = SAI_AUDIO_FREQUENCY_48K;
+  hsai_BlockA1.Init.SynchroExt = SAI_SYNCEXT_DISABLE;
+  hsai_BlockA1.Init.MonoStereoMode = SAI_STEREOMODE;
+  hsai_BlockA1.Init.CompandingMode = SAI_NOCOMPANDING;
+  if (HAL_SAI_InitProtocol(&hsai_BlockA1, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_24BIT, 2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  hsai_BlockB1.Instance = SAI1_Block_B;
+  if (is_seed_11)
+    hsai_BlockB1.Init.AudioMode = SAI_MODESLAVE_TX;
+  else
+    hsai_BlockB1.Init.AudioMode = SAI_MODESLAVE_RX;
+  hsai_BlockB1.Init.Synchro = SAI_SYNCHRONOUS;
+  hsai_BlockB1.Init.OutputDrive = SAI_OUTPUTDRIVE_DISABLE;
+  hsai_BlockB1.Init.FIFOThreshold = SAI_FIFOTHRESHOLD_EMPTY;
+  hsai_BlockB1.Init.SynchroExt = SAI_SYNCEXT_DISABLE;
+  hsai_BlockB1.Init.MonoStereoMode = SAI_STEREOMODE;
+  hsai_BlockB1.Init.CompandingMode = SAI_NOCOMPANDING;
+  hsai_BlockB1.Init.TriState = SAI_OUTPUT_NOTRELEASED;
+  if (HAL_SAI_InitProtocol(&hsai_BlockB1, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_24BIT, 2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+#endif
   /* USER CODE END SAI1_Init 2 */
 
 }
@@ -759,9 +850,6 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(USER_LED_GPIO_Port, USER_LED_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(CODEC_RESET1_GPIO_Port, CODEC_RESET1_Pin, GPIO_PIN_RESET);
-
   /*Configure GPIO pin : ENC_A_Pin */
   GPIO_InitStruct.Pin = ENC_A_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
@@ -787,13 +875,23 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(ENC_CLICK_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : CODEC_RESET1_Pin */
+  #ifdef USE_AK4556
+  HAL_GPIO_WritePin(GPIOB, CODEC_RESET1_Pin, GPIO_PIN_RESET);
   GPIO_InitStruct.Pin = CODEC_RESET1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(CODEC_RESET1_GPIO_Port, &GPIO_InitStruct);
-
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+  #elif defined(USE_WM8731)
+  if (!get_seed_11()) {
+    HAL_GPIO_WritePin(GPIOB, CODEC_RESET1_Pin, GPIO_PIN_RESET);
+    GPIO_InitStruct.Pin = CODEC_RESET1_Pin;
+    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+  }
+  #endif
 }
 
 /* USER CODE BEGIN 4 */

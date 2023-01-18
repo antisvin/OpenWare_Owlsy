@@ -1,9 +1,9 @@
-PROJECT=Bluemchen
+PROJECT=Bluemchen-seed1.1
 DEVICE=hw:3,0,0
 
 make clean
 
-TOOLROOT=`pwd`/../Tools/gcc-arm-none-eabi-9-2020-q2-update/bin/ make -j17 CONFIG=Release PLATFORM=Daisy || exit 1
+TOOLROOT=`pwd`/../Tools/gcc-arm-none-eabi-9-2020-q2-update/bin/ make -j17 CONFIG=Release PLATFORM=Daisy PROJECT=${PROJECT} || exit 1
 
 FirmwareSender -in Build/${PROJECT}.bin -flash `crc32 Build/${PROJECT}.bin` -save Build/${PROJECT}.syx || exit 1
 

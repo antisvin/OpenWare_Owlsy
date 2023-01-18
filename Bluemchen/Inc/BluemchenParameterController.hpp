@@ -241,8 +241,10 @@ public:
 
     void drawScope(uint8_t selected, ScreenBuffer& screen) {
         scope.update();
+        screen.setTextSize(1);
         // scope.resync();
         uint8_t offset = 34;
+
         uint8_t y_prev = int16_t(scope.getBufferData()) * 12 / 128 + offset - 12;
         // uint16_t(data[0]) * 36U / 255U;
         uint16_t step = 4;
@@ -255,7 +257,6 @@ public:
 
         // Channel selection overlay
         if (activeEncoder == 1) {
-            screen.setTextSize(1);
             offset = 22;
             for (int i = 0; i < num_channels; i++) {
                 screen.print(2 + i * 32, offset, "IN ");
@@ -273,6 +274,10 @@ public:
                 screen.drawRectangle(1 + (selectedPid[1] - num_channels) * 32,
                     offset, 30, 10, WHITE);
             }
+        }
+        else {
+            extern bool is_seed_11;
+            screen.print(0, offset - 2, is_seed_11 ? "Seed 1.1" : "Seed 1.0");
         }
     }
 
