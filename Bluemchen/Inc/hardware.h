@@ -80,7 +80,6 @@
 #define USE_CODEC
 #define USE_WM8731
 #define WM8731_I2C_HANDLE hi2c2
-//#define USE_AK4556
 #define USE_USBD_FS
 #define USBD_HANDLE hUsbDeviceFS
 #define AUDIO_CHANNELS              2

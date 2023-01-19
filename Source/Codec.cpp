@@ -6,10 +6,6 @@
 #include <cstring>
 #include "ProgramManager.h"
 
-#ifdef USE_AK4556
-#include "gpio.h"
-#endif
-
 #include "SerialBuffer.hpp"
 SerialBuffer<CODEC_BUFFER_SIZE, int32_t> audio_rx_buffer
 #ifndef DUAL_CODEC
@@ -42,7 +38,7 @@ extern "C" {
 #endif
 }
 
-#if defined(USE_CS4271) || defined(USE_AK4556)
+#if defined(USE_CS4271)
   #define HSAI_RX1 hsai_BlockB1
   #define HSAI_TX1 hsai_BlockA1
   #define HDMA_RX1 hdma_sai1_b
@@ -74,7 +70,7 @@ typedef int8_t audio_t;
 #endif
 
 static void update_rx_read_index(){
-#if defined USE_CS4271 || defined USE_PCM3168A || defined USE_PCM3060 || defined USE_AK4556 || defined USE_WM8731
+#if defined USE_CS4271 || defined USE_PCM3168A || defined USE_PCM3060 || defined USE_WM8731
   extern DMA_HandleTypeDef HDMA_RX1, HDMA_TX1;
   // NDTR: the number of remaining data units in the current DMA Stream transfer.
   DMA_HandleTypeDef* hdma_rx1;
@@ -97,7 +93,7 @@ static void update_rx_read_index(){
 }
 
 static void update_tx_write_index(){
-#if defined USE_CS4271 || defined USE_PCM3168A || defined USE_PCM3060 || defined USE_AK4556 || defined USE_WM8731
+#if defined USE_CS4271 || defined USE_PCM3168A || defined USE_PCM3060 || defined USE_WM8731
   extern DMA_HandleTypeDef HDMA_TX1, HDMA_RX1;
   // NDTR: the number of remaining data units in the current DMA Stream transfer.
   DMA_HandleTypeDef* hdma_tx1;
@@ -443,7 +439,7 @@ void Codec::stop(){
 
 #endif // USE_ADS1294
 
-#if defined(USE_CS4271) || defined(USE_PCM3168A) || defined(USE_PCM3060) || defined(USE_AK4556) || defined(USE_WM8731)
+#if defined(USE_CS4271) || defined(USE_PCM3168A) || defined(USE_PCM3060) || defined(USE_WM8731)
 
 extern "C" {
   extern SAI_HandleTypeDef HSAI_RX1;
@@ -561,11 +557,11 @@ void Codec::start(){
   // codec_blocksize = min(CODEC_BUFFER_SIZE/(AUDIO_CHANNELS*2), settings.audio_blocksize);
   codec_blocksize = CODEC_BUFFER_SIZE/(AUDIO_CHANNELS*2);
   HAL_StatusTypeDef ret;
-#if defined(USE_CS4271) || (defined(USE_AK4556) && !defined(DUAL_CODEC)) || (defined(USE_WM8731) && !defined(DUAL_CODEC))
+#if defined(USE_CS4271) || (defined(USE_WM8731) && !defined(DUAL_CODEC))
   ret = HAL_SAI_Receive_DMA(&HSAI_RX1, (uint8_t*)codec_rxbuf, codec_blocksize*AUDIO_CHANNELS*2);
   if(ret == HAL_OK)
     ret = HAL_SAI_Transmit_DMA(&HSAI_TX1, (uint8_t*)codec_txbuf, codec_blocksize*AUDIO_CHANNELS*2);
-#elif (defined(USE_AK4556) && defined(DUAL_CODEC)) || (defined(USE_WM8731) && defined(DUAL_CODEC))
+#elif defined(USE_WM8731) && defined(DUAL_CODEC)
   #if defined(DAISY) && defined(USE_WM8731)
   extern bool is_seed_11;
   if (is_seed_11) {
