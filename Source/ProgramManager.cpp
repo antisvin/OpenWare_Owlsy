@@ -301,15 +301,15 @@ void onRegisterPatch(const char* name, uint8_t inputChannels, uint8_t outputChan
 #if defined USE_SCREEN
   graphics.params.setTitle(name);
 #endif /* OWL_MAGUS */
-  num_channels = 2;
 #ifdef DUAL_CODEC
   ProgramVector* pv = getProgramVector();
-  if (inputChannels == 4 && outputChannels == 4) {
+  if (settings.all_audio_channels || (inputChannels == 4 && outputChannels == 4)) {
     pv->audio_format = AUDIO_FORMAT_24B32_4X;
-    num_channels =4;
+    num_channels = 4;
   }
   else {
     pv->audio_format = AUDIO_FORMAT_24B32;
+    num_channels = 2;
   }
 #endif
 }

@@ -264,11 +264,6 @@ public:
         scope.update();
         // scope.resync();
         uint8_t offset = 36;
-
-        extern bool is_seed_11;
-        screen.setTextSize(1);
-        screen.print(0, offset + 15, is_seed_11 ? "Seed 1.1" : "Seed 1.0");
-
         uint8_t y_prev = int16_t(scope.getBufferData()) * 32 / 128 + offset;
         // uint16_t(data[0]) * 36U / 255U;
         uint16_t step = 4;
@@ -291,14 +286,38 @@ public:
                 screen.print(7 + i * 30, offset + 10, "OUT");
                 screen.print(i + 1);
             }
+            // Channel setup labels
+#ifdef DUAL_CODEC
+            screen.print(7, offset + 20, "2/4");
+            screen.print(37, offset + 20, "4");
+            screen.print(67, offset + 20, "channels");
+#endif
+
             if (selectedPid[1] < num_channels) {
                 screen.drawRectangle(
                     4 + selectedPid[1] * 30, offset - 10, 30, 10, WHITE);
             }
-            else {
+            else if (selectedPid[1] < num_channels * 2) {
                 screen.drawRectangle(4 + (selectedPid[1] - num_channels) * 30,
                     offset, 30, 10, WHITE);
             }
+#ifdef DUAL_CODEC
+            else if (selectedPid[1] == num_channels * 2) {
+                screen.drawRectangle(4, offset + 10, 30, 10, WHITE);
+            }
+            else {
+                screen.drawRectangle(34, offset + 10, 30, 10, WHITE);
+            }
+#endif
+        }
+        else {
+            extern bool is_seed_11;
+            screen.setTextSize(1);
+            screen.print(0, offset + 15, is_seed_11 ? "Seed 1.1" : "Seed 1.0");
+            screen.print(", ");
+            screen.print(num_channels);
+            screen.print(" ch.");
+            //screen.print(settings.all_audio_channels ? "(frc)": "(leg)");
         }
     }
 
@@ -915,14 +934,14 @@ public:
         case GATES:
             break;
         case SCOPE:
+#ifdef DUAL_CODEC
+            selectedPid[1] = min(num_channels * 2 + 1, value);
+#else
             selectedPid[1] = min(num_channels * 2 - 1, value);
-            lastChannel = selectedPid[1];
-            if (AUDIO_CHANNELS == num_channels)
-                scope.setChannel(lastChannel);
-            else {
-                scope.setChannel((lastChannel >= num_channels)
-                        ? (AUDIO_CHANNELS - num_channels + lastChannel)
-                        : lastChannel);
+#endif
+            if (selectedPid[1] < num_channels * 2) {
+                lastChannel = selectedPid[1];
+                scope.setChannel(AUDIO_CHANNELS - num_channels + lastChannel);
             }
             break;
         case SYSTEM:
@@ -1043,7 +1062,6 @@ public:
             // Short press end
             switch (controlMode) {
             case SETUP:
-            case SCOPE:
                 activeEncoder = !activeEncoder;
                 break;
             case GATES:
@@ -1128,6 +1146,29 @@ public:
                     sdSelected = true;
                     activeEncoder = 1;
                 }
+            case SCOPE:
+                if (activeEncoder == 1) {
+                    bool reset_patch = false;
+                    if (selectedPid[1] == num_channels * 2) {
+                        if (settings.all_audio_channels)
+                            reset_patch = true;
+                        settings.all_audio_channels = false;
+                        saveSettings = true;
+                    }
+                    else if (selectedPid[1] == num_channels * 2 + 1) {
+                        if (!settings.all_audio_channels)
+                            reset_patch = true;
+                        settings.all_audio_channels = true;
+                        saveSettings = true;
+                    }
+                    if (reset_patch) {
+                        program.loadProgram(settings.program_index);
+                        program.resetProgram(false);
+                        lastChannel = 0;
+                    }
+                }
+                activeEncoder = !activeEncoder;
+                break;
             default:
                 break;
             }

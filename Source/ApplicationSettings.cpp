@@ -36,6 +36,9 @@ void ApplicationSettings::reset(){
   output_scalar = AUDIO_OUTPUT_SCALAR;
   midi_input_channel = MIDI_INPUT_CHANNEL;
   midi_output_channel = MIDI_OUTPUT_CHANNEL;
+#ifdef DUAL_CODEC
+  all_audio_channels = false;
+#endif
 }
 
 bool ApplicationSettings::settingsInFlash(){
