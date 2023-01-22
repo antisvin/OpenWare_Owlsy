@@ -409,7 +409,7 @@ void updateProgramVector(ProgramVector* pv, PatchDefinition* def){
   };  
 #endif
   pv->heapSegments = (MemorySegment*)heapSegments;
-#if (defined USE_WM8731 && !defined(DAISY))
+#if (defined(USE_WM8731) && !defined(DAISY))
   pv->audio_format = AUDIO_FORMAT_24B16_2X;
 #elif defined OWL_BIOSIGNALS || defined OWL_NOCTUA
   pv->audio_format = AUDIO_FORMAT_24B32 | AUDIO_CHANNELS;

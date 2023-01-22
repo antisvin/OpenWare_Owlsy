@@ -40,8 +40,6 @@ void codec_reset(){
 }
 
 void codec_init(){
-  extern bool is_seed_11;
-
   if (is_seed_11) {
     // WM8371
     /* Load default values */

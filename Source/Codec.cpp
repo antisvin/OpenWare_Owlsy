@@ -514,13 +514,10 @@ extern "C" {
       }      
     }
 #else
-    extern bool is_seed_11;
-    if (hsai->Instance == (is_seed_11 ? HSAI_RX1.Instance : HSAI_TX1.Instance)) {
-          audioCallback(
+    audioCallback(
       codec_rxbuf + codec_blocksize * AUDIO_CHANNELS,
       codec_txbuf + codec_blocksize * AUDIO_CHANNELS,
       codec_blocksize);
-    }
 #endif
   }
   void HAL_SAI_ErrorCallback(SAI_HandleTypeDef *hsai){
@@ -557,13 +554,13 @@ void Codec::start(){
   // codec_blocksize = min(CODEC_BUFFER_SIZE/(AUDIO_CHANNELS*2), settings.audio_blocksize);
   codec_blocksize = CODEC_BUFFER_SIZE/(AUDIO_CHANNELS*2);
   HAL_StatusTypeDef ret;
-#if defined(USE_CS4271) || (defined(USE_WM8731) && !defined(DUAL_CODEC))
+#if defined(USE_CS4271)
   ret = HAL_SAI_Receive_DMA(&HSAI_RX1, (uint8_t*)codec_rxbuf, codec_blocksize*AUDIO_CHANNELS*2);
   if(ret == HAL_OK)
     ret = HAL_SAI_Transmit_DMA(&HSAI_TX1, (uint8_t*)codec_txbuf, codec_blocksize*AUDIO_CHANNELS*2);
-#elif defined(USE_WM8731) && defined(DUAL_CODEC)
-  #if defined(DAISY) && defined(USE_WM8731)
+#elif defined(USE_WM8731) && defined(DAISY)
   extern bool is_seed_11;
+  #if defined(DUAL_CODEC)
   if (is_seed_11) {
     ret = HAL_SAI_Receive_DMA(&HSAI_RX1, (uint8_t*)codec_rxbuf1, codec_blocksize * AUDIO_CHANNELS);  
     if(ret == HAL_OK)
@@ -574,15 +571,22 @@ void Codec::start(){
     if(ret == HAL_OK)
       ret = HAL_SAI_Transmit_DMA(&HSAI_RX1, (uint8_t*)codec_txbuf1, codec_blocksize * AUDIO_CHANNELS);
   }
-  #else
-  ret = HAL_SAI_Receive_DMA(&HSAI_RX1, (uint8_t*)codec_rxbuf1, codec_blocksize * AUDIO_CHANNELS);  
-  if(ret == HAL_OK)
-    ret = HAL_SAI_Transmit_DMA(&HSAI_TX1, (uint8_t*)codec_txbuf1, codec_blocksize * AUDIO_CHANNELS);
-  #endif
   if(ret == HAL_OK)
     ret = HAL_SAI_Transmit_DMA(&HSAI_TX2, (uint8_t*)codec_txbuf2, codec_blocksize * AUDIO_CHANNELS);
   if (ret == HAL_OK)
     ret = HAL_SAI_Receive_DMA(&HSAI_RX2, (uint8_t*)codec_rxbuf2, codec_blocksize * AUDIO_CHANNELS);
+  #else
+  if (is_seed_11) {
+    ret = HAL_SAI_Receive_DMA(&HSAI_RX1, (uint8_t*)codec_rxbuf, codec_blocksize * AUDIO_CHANNELS * 2);
+    if(ret == HAL_OK)
+      ret = HAL_SAI_Transmit_DMA(&HSAI_TX1, (uint8_t*)codec_txbuf, codec_blocksize * AUDIO_CHANNELS * 2);
+  }
+  else {
+    ret = HAL_SAI_Receive_DMA(&HSAI_TX1, (uint8_t*)codec_rxbuf, codec_blocksize * AUDIO_CHANNELS * 2);
+    if(ret == HAL_OK)
+      ret = HAL_SAI_Transmit_DMA(&HSAI_RX1, (uint8_t*)codec_txbuf, codec_blocksize * AUDIO_CHANNELS * 2);
+  }  
+  #endif
   //codec_init();
 #else // PCM3168A
   // start slave first (Noctua)
