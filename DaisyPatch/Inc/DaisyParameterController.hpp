@@ -291,6 +291,7 @@ public:
             screen.print(7, offset + 20, "2/4");
             screen.print(37, offset + 20, "4");
             screen.print(67, offset + 20, "channels");
+            screen.drawHorizontalLine(settings.all_audio_channels ? 34 : 4, offset + 21, 30, WHITE);
 #endif
 
             if (selectedPid[1] < num_channels) {
