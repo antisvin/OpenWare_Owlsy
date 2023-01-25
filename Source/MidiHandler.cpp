@@ -330,9 +330,9 @@ void MidiHandler::handleFirmwareSaveCommand(uint8_t* data, uint16_t size){
       uint32_t slot;
       ResourceHeader* res = registry.getResource(name);
       if(res == NULL)
-	slot = registry.getNumberOfResources()+MAX_NUMBER_OF_PATCHES+1;
+        slot = registry.getNumberOfResources()+MAX_NUMBER_OF_PATCHES+1;
       else
-	slot = registry.getSlot(res);
+        slot = registry.getSlot(res);
       data = loader.getData();
       size = loader.getSize();
       memmove(data+sizeof(ResourceHeader), data, size); // make space for resource header
@@ -340,7 +340,8 @@ void MidiHandler::handleFirmwareSaveCommand(uint8_t* data, uint16_t size){
       res = (ResourceHeader*)data;
       res->magic = 0xDADADEED;
       res->size = size;
-      strcpy(res->name, name);
+      strncpy(res->name, name, sizeof(res->name) - 1);
+      res->name[sizeof(res->name) - 1] = '\0';
       size += sizeof(ResourceHeader);
       program.saveToFlash(slot, data, size);
       loader.clear();
