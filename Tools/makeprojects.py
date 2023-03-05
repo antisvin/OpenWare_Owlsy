@@ -8,7 +8,7 @@ import subprocess
 
 PROJECTS = {
     'MidiBootDaisy': [
-        'DaisyPatch', 'Bluemchen'
+        'DaisyPatch', 'Bluemchen', 'PatchInit', 'DaisyPod'
     ],
     #None: ['Expander'] #- expander currently won't build
     #, 'MagusEncoder' - no F0 HAL in libraries

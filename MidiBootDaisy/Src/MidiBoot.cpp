@@ -44,8 +44,9 @@ const char *message = NULL;
 extern "C" void setMessage(const char *msg) { message = msg; }
 
 void sendMessage() {
-  if (getErrorStatus() != NO_ERROR)
+  if (getErrorStatus() != NO_ERROR) {
     message = getErrorMessage() == NULL ? "Error" : getErrorMessage();
+  }
   if (message != NULL) {
     char buffer[64];
     buffer[0] = SYSEX_PROGRAM_MESSAGE;
@@ -116,10 +117,17 @@ int8_t getErrorStatus() { return errorcode; }
 
 void setErrorStatus(int8_t err) {
   errorcode = err;
-  if (err == NO_ERROR)
+  if (err == NO_ERROR) {
     errormessage = NULL;
   //    else
   //      led_red();
+#ifdef ERROR_LED_Pin
+    HAL_GPIO_WritePin(ERROR_LED_GPIO_Port, ERROR_LED_Pin, GPIO_PIN_RESET);
+  }
+  else {
+    HAL_GPIO_WritePin(ERROR_LED_GPIO_Port, ERROR_LED_Pin, GPIO_PIN_SET);
+#endif
+  }
 }
 
 

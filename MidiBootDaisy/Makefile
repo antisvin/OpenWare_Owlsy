@@ -26,6 +26,9 @@ CPP_SRC += $(OPENWARE)/Source/VersionToken.cpp
 ifeq ($(PLATFORM),DaisyPatch)
 	CPPFLAGS += -Iusbd-hs -DDAISY -DDAISY_PATCH -DUSE_USBD_FS
 	vpath %.c usbd-hs
+else ifeq ($(PLATFORM),DaisyPod)
+	CPPFLAGS += -Iusbd-hs -DDAISY -DDAISY_POD -DUSE_USBD_FS
+	vpath %.c usbd-hs
 else ifeq ($(PLATFORM),Bluemchen)
 	CPPFLAGS += -Iusbd-hs -DDAISY -DBLUEMCHEN -DUSE_USBD_FS
 	vpath %.c usbd-hs

@@ -32,6 +32,17 @@
   #define BOOT1_GPIO_Port GPIOB
   #define USER_LED_Pin GPIO_PIN_5
   #define USER_LED_GPIO_Port GPIOA
+#elif defined DAISY_POD
+  #define HARDWARE_ID         DAISY_POD_HARDWARE
+  #define HARDWARE_VERSION    "Daisy Boot"
+  #define APPLICATION_ADDRESS 0x90000000
+  #define USE_BOOT1_PIN
+  #define BOOT1_Pin GPIO_PIN_6
+  #define BOOT1_GPIO_Port GPIOB
+  #define USER_LED_Pin GPIO_PIN_7
+  #define USER_LED_GPIO_Port GPIOA
+  #define ERROR_LED_Pin GPIO_PIN_1
+  #define ERROR_LED_GPIO_Port GPIOB
 #else
   #error Invalid configuration
 #endif
