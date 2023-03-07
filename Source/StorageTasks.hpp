@@ -25,7 +25,7 @@ public:
   void loop() override {
     if (state < total_sectors){
       storage.erase(state);
-      setProgress(LOAD_INDICATOR_PARAMETER, uint32_t(state++) * 4095 / total_sectors);
+      setProgress(uint32_t(state++) * 4095 / total_sectors, "Erasing");
 #ifdef USE_SCREEN
       char buf[40];
       (void)buf;
@@ -161,10 +161,10 @@ public:
         owl.setBackgroundTask(NULL);          
         break;
     }
-    setParameterValue(
-      LOAD_INDICATOR_PARAMETER,
+    setProgress(
       (uint32_t(block) + uint32_t(sector) * 4 + uint32_t(written_sector)) * 4095 /
-        (uint32_t(total_blocks) + uint32_t(storage_sectors) * 4 + uint32_t(buffer_sectors)));
+        (uint32_t(total_blocks) + uint32_t(storage_sectors) * 4 + uint32_t(buffer_sectors)),
+      "Defrag");
   }
 
   void end() override {
