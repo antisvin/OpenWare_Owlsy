@@ -25,14 +25,22 @@ void setParameterValue(uint8_t ch, int16_t value) {}
 void SystemMidiReader::reset() {}
 
 void led_off() {
-  HAL_GPIO_WritePin(USER_LED_GPIO_Port, USER_LED_Pin, GPIO_PIN_RESET);
+#ifdef USER_LED_Pin
+  HAL_GPIO_WritePin(USER_LED_GPIO_Port, USER_LED_Pin, USER_LED_INVERTED ? GPIO_PIN_SET : GPIO_PIN_RESET);
+#endif
 }
 
 void led_on() {
-  HAL_GPIO_WritePin(USER_LED_GPIO_Port, USER_LED_Pin, GPIO_PIN_SET);
+#ifdef USER_LED_Pin
+  HAL_GPIO_WritePin(USER_LED_GPIO_Port, USER_LED_Pin, USER_LED_INVERTED ? GPIO_PIN_RESET : GPIO_PIN_SET);
+#endif
 }
 
-void led_toggle() { HAL_GPIO_TogglePin(USER_LED_GPIO_Port, USER_LED_Pin); }
+void led_toggle() {
+#ifdef USER_LED_Pin
+  HAL_GPIO_TogglePin(USER_LED_GPIO_Port, USER_LED_Pin);
+#endif
+}
 
 const char *getFirmwareVersion() {
   return (const char *)(HARDWARE_VERSION " " FIRMWARE_VERSION);
@@ -122,10 +130,10 @@ void setErrorStatus(int8_t err) {
   //    else
   //      led_red();
 #ifdef ERROR_LED_Pin
-    HAL_GPIO_WritePin(ERROR_LED_GPIO_Port, ERROR_LED_Pin, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(ERROR_LED_GPIO_Port, ERROR_LED_Pin, ERROR_LED_INVERTED ? GPIO_PIN_SET : GPIO_PIN_RESET);
   }
   else {
-    HAL_GPIO_WritePin(ERROR_LED_GPIO_Port, ERROR_LED_Pin, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(ERROR_LED_GPIO_Port, ERROR_LED_Pin, ERROR_LED_INVERTED ? GPIO_PIN_RESET : GPIO_PIN_SET);
 #endif
   }
 }

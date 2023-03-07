@@ -457,8 +457,9 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOF_CLK_ENABLE();
   __HAL_RCC_GPIOC_CLK_ENABLE();
 
+#ifdef USER_LED_Pin
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(USER_LED_GPIO_Port, USER_LED_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(USER_LED_GPIO_Port, USER_LED_Pin, USER_LED_INVERTED ? GPIO_PIN_SET : GPIO_PIN_RESET);
 
   /*Configure GPIO pin : USER_LED_Pin */
   GPIO_InitStruct.Pin = USER_LED_Pin;
@@ -466,6 +467,19 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(USER_LED_GPIO_Port, &GPIO_InitStruct);
+#endif
+
+#ifdef ERROR_LED_Pin
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(ERROR_LED_GPIO_Port, ERROR_LED_Pin, ERROR_LED_INVERTED ? GPIO_PIN_SET : GPIO_PIN_RESET);
+
+  /*Configure GPIO pin : ERROR_LED_Pin */
+  GPIO_InitStruct.Pin = ERROR_LED_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(ERROR_LED_GPIO_Port, &GPIO_InitStruct);
+#endif
 
 #ifdef ENC_CLICK_Pin
   /*Configure GPIO pin : ENC_CLICK_Pin */

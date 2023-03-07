@@ -16,6 +16,9 @@
   #define USE_BOOT1_PIN
   #define BOOT1_Pin GPIO_PIN_12
   #define BOOT1_GPIO_Port GPIOB  
+  #define USER_LED_Pin GPIO_PIN_7
+  #define USER_LED_GPIO_Port GPIOC
+  #define USER_LED_INVERTED 0
 #elif defined BLUEMCHEN
   #define HARDWARE_ID         BLUEMCHEN_HARDWARE
   #define HARDWARE_VERSION    "Daisy Boot"
@@ -23,6 +26,9 @@
   #define USE_BOOT1_PIN
   #define BOOT1_Pin GPIO_PIN_2
   #define BOOT1_GPIO_Port GPIOA
+  #define USER_LED_Pin GPIO_PIN_7
+  #define USER_LED_GPIO_Port GPIOC
+  #define USER_LED_INVERTED 0
 #elif defined PATCH_INIT
   #define HARDWARE_ID         PATCH_INIT_HARDWARE
   #define HARDWARE_VERSION    "Init Boot"
@@ -32,6 +38,7 @@
   #define BOOT1_GPIO_Port GPIOB
   #define USER_LED_Pin GPIO_PIN_5
   #define USER_LED_GPIO_Port GPIOA
+  #define USER_LED_INVERTED 0
 #elif defined DAISY_POD
   #define HARDWARE_ID         DAISY_POD_HARDWARE
   #define HARDWARE_VERSION    "Daisy Boot"
@@ -41,8 +48,10 @@
   #define BOOT1_GPIO_Port GPIOB
   #define USER_LED_Pin GPIO_PIN_7
   #define USER_LED_GPIO_Port GPIOA
+  #define USER_LED_INVERTED 1
   #define ERROR_LED_Pin GPIO_PIN_1
   #define ERROR_LED_GPIO_Port GPIOB
+  #define ERROR_LED_INVERTED 1
 #else
   #error Invalid configuration
 #endif
