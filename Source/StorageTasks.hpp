@@ -25,7 +25,7 @@ public:
   void loop() override {
     if (state < total_sectors){
       storage.erase(state);
-      setParameterValue(LOAD_INDICATOR_PARAMETER, uint32_t(state++) * 4095 / total_sectors);
+      setProgress(LOAD_INDICATOR_PARAMETER, uint32_t(state++) * 4095 / total_sectors);
 #ifdef USE_SCREEN
       char buf[40];
       (void)buf;
