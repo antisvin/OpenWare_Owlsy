@@ -691,12 +691,13 @@ void ProgramManager::updateProgramIndex(uint8_t index){
   patchindex = index;
   midi_tx.sendPc(index);
   midi_tx.sendPatchName(index);
-#ifdef USE_BKPSRAM
   if(index != 0){
+    settings.program_index = index;
+#ifdef USE_BKPSRAM
     extern RTC_HandleTypeDef hrtc;
     HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, index);
-  }
 #endif
+  }
 }
 
 void ProgramManager::loadDynamicProgram(void* address, uint32_t length){
