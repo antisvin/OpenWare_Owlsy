@@ -24,7 +24,8 @@
 TakeoverControls<40, int16_t> takeover;
 volatile uint8_t patchselect;
 static uint8_t parameter_offset;
-uint16_t enc_value;
+static uint16_t enc_value;
+static bool is_patch_selection;
 // #define MAX_B1_PRESS (2000 / MAIN_LOOP_SLEEP_MS)
 
 extern int16_t parameter_values[NOF_PARAMETERS];
@@ -118,16 +119,10 @@ void updateParameters(int16_t* parameter_values, size_t parameter_len,
     if (owl.getOperationMode() == RUN_MODE) {
         for (size_t i = 0; i < NOF_ADC_VALUES; ++i) {
             takeover.update(parameter_offset + i, smooth_adc_values[i], 31);
+            parameter_values[parameter_offset + i] =
+                takeover.get(parameter_offset + i);
         }
     }
-    /*
-    for (size_t i = 0; i < 2; ++i) {
-        int16_t x = takeover.get(i);
-        int16_t cv = smooth_adc_values[i]
-            // getAttenuatedCV(i, smooth_adc_values);
-            parameter_values[i] = __USAT(x + cv, 12);
-    }
-    */
 }
 
 void onChangePin(uint16_t pin) {
@@ -165,12 +160,6 @@ void setup() {
     patchselect = program.getProgramIndex();
 }
 
-// uint16_t progress = 0;
-// void setProgress(uint16_t value, const char* msg) {
-//     progress = value;
-// value == 4095 ? 0 : value * 6; // TODO?
-//}
-
 void setLed(uint8_t led, uint32_t rgb) {
     if (led == 0) {
         led1.set(rgb);
@@ -193,7 +182,7 @@ uint32_t getLed(uint8_t led) {
 }
 
 void toggleLed(uint8_t led) {
-    setLed(led, getLed(led) == 0 ? 4095 : 0);
+    setLed(led, getLed(led) == 0 ? (uint32_t)COL_WHITE : 0);
 }
 
 static uint32_t counter = 0;
@@ -221,14 +210,104 @@ static void updatePreset() {
             owl.setOperationMode(ERROR_MODE);
         }
         else {
-            // counter = 0;
-            setLed(0, getButtonValue(BUTTON_A) ? 0xff00 : 0);
-            setLed(1, getButtonValue(BUTTON_B) ? 0xff00 : 0);
+            uint16_t new_enc_value = encoder.getValue();
+            if (new_enc_value > enc_value) {
+                takeover.reset(parameter_offset, false);
+                takeover.reset(parameter_offset + 1, false);
+                parameter_offset += 2;
+                if (parameter_offset >= NOF_PARAMETERS) {
+                    parameter_offset = 0;
+                }
+                enc_value = new_enc_value;
+                is_patch_selection = false;
+                owl.setOperationMode(CONFIGURE_MODE);
+            }
+            else if (new_enc_value < enc_value) {
+                takeover.reset(parameter_offset, false);
+                takeover.reset(parameter_offset + 1, false);
+                parameter_offset -= 2;
+                if (parameter_offset >= NOF_PARAMETERS) {
+                    parameter_offset = NOF_PARAMETERS - 2;
+                }
+                enc_value = new_enc_value;
+                is_patch_selection = false;
+                owl.setOperationMode(CONFIGURE_MODE);
+            }
+            else {
+                // counter = 0;
+                setLed(0, getButtonValue(BUTTON_A) ? 0xff00 : 0);
+                setLed(1, getButtonValue(BUTTON_B) ? 0xff00 : 0);
+            }
         }
         if (encoder.isRisingEdge()) {
+            is_patch_selection = true;
             owl.setOperationMode(CONFIGURE_MODE);
         }
-
+        break;
+    case CONFIGURE_MODE:
+        if (is_patch_selection) {
+            if (counter < PATCH_RESET_COUNTER / 2 && registry.hasPatch(patchselect)) {
+                uint8_t bank = patchselect / 8;
+                uint8_t slot = patchselect - bank * 8;
+                setLed(0, (uint32_t)colours[bank]);
+                setLed(1, (uint32_t)colours[slot]);
+            }
+            else {
+                setLed(0, 0);
+                setLed(1, 0);
+            }
+            if (encoder.isFallingEdge()) {
+                setLed(0, 0);
+                setLed(1, 0);
+                if (registry.hasPatch(patchselect)) {
+                    program.loadProgram(patchselect);
+                    program.resetProgram(false);
+                }
+                else
+                    owl.setOperationMode(RUN_MODE);
+            }
+            else {
+                uint16_t new_enc_value = encoder.getValue();
+                if (new_enc_value > enc_value) {
+                    patchselect++;
+                    if (patchselect >= registry.getNumberOfPatches())
+                        patchselect = 0;
+                    enc_value = new_enc_value;
+                }
+                else if (new_enc_value < enc_value) {
+                    patchselect--;
+                    if (patchselect >= registry.getNumberOfPatches()) {
+                        patchselect = registry.getNumberOfPatches() - 1;
+                    }
+                    enc_value = new_enc_value;
+                }
+            }
+        }
+        else {
+            // Param offset indication
+            if (counter & 0x20) {
+                Colour col = colours[(parameter_offset % 16) / 2];
+                if (parameter_offset < 16) {
+                    setLed(0, uint32_t(col));
+                    setLed(1, uint32_t(col));
+                }
+                else if (parameter_offset < 32) {
+                    setLed(0, uint32_t(col));
+                    setLed(1, 0);
+                }
+                else {
+                    setLed(0, 0);
+                    setLed(1, uint32_t(col));
+                }
+            }
+            else {
+                setLed(0, 0);
+                setLed(1, 0);
+            }
+            if (counter == PATCH_RESET_COUNTER - 1) {
+                owl.setOperationMode(RUN_MODE);
+            }
+        };
         break;
     /*
     case CONFIGURE_MODE:
@@ -301,70 +380,6 @@ static void updatePreset() {
             owl.setOperationMode(CONFIGURE_MODE);
         }
         break;
-        /*
-    case PARAM_MODE: {
-        uint8_t group = parameter_offset % 3;
-        uint8_t led_colour = parameter_offset / 3;
-        bool show_led2 = group == 0 || group == 2;
-        bool show_led1 = group == 1 || group == 2;
-
-        if (counter & 0x100) {
-            if (show_led1) {
-                // LED1 on
-            }
-            else {
-                // LED1 off
-            }
-            if (show_led2) {
-                // LED2 on
-            }
-            else {
-                // LED2 off
-            }
-        }
-        else {
-            // Both LEDs off
-        }
-        break;
-    }
-*/    
-    case CONFIGURE_MODE:
-        if (counter < PATCH_RESET_COUNTER / 2 && registry.hasPatch(patchselect)) {
-            uint8_t bank = patchselect / 8;
-            uint8_t slot = patchselect - bank * 8;
-            setLed(0, (uint32_t)colours[bank]);
-            setLed(1, (uint32_t)colours[slot]);
-        }
-        else {
-            setLed(0, 0);
-            setLed(1, 0);
-        }
-        if (encoder.isFallingEdge()) {
-            setLed(0, 0);
-            setLed(1, 0);
-            if (registry.hasPatch(patchselect)) {
-                program.loadProgram(patchselect);
-                program.resetProgram(false);
-            }
-            else
-                owl.setOperationMode(RUN_MODE);
-        }
-        else {
-            uint16_t new_enc_value = encoder.getValue();
-            if (new_enc_value > enc_value) {
-                patchselect++;
-                if (patchselect >= registry.getNumberOfPatches())
-                    patchselect = 0;
-                enc_value = new_enc_value;
-            }
-            else if (new_enc_value < enc_value) {
-                patchselect--;
-                if (patchselect >= registry.getNumberOfPatches()) {
-                    patchselect = registry.getNumberOfPatches() - 1;
-                }
-                enc_value = new_enc_value;
-            }
-        }
     }
     if (++counter >= PATCH_RESET_COUNTER)
         counter = 0;
