@@ -98,16 +98,8 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) {
     // with 64.5 cycles sample time, 30 MHz ADC clock, and ClockPrescaler = 32
     extern uint16_t adc_values[NOF_ADC_VALUES];
     for (size_t i = 0; i < NOF_ADC_VALUES; i++) {
-        // IIR exponential filter with lambda 0.75: y[n] = 0.75*y[n-1] +
-        // 0.25*x[n] We include offset to match 0 point too, but it may differ
-        // between devices CV is bipolar
-        // smooth_adc_values[i] = __SSAT(
-        //   (smooth_adc_values[i] * 3 + 4095 + 121 - 2 * adc_values[i]) >> 2, 13);
-        // i++;
-        //  Knobs are unipolar
-        smooth_adc_values[i] = __USAT(
-            (smooth_adc_values[i] * 3 + 4095 + 132 - 2 * adc_values[i]) >> 2, 12);
-        // i++;
+        // IIR exponential filter with lambda 0.75: y[n] = 0.75*y[n-1] + 0.25*x[n]
+        smooth_adc_values[i] = (smooth_adc_values[i]*3 + adc_values[i]) >> 2;
     }
 }
 }
@@ -252,7 +244,15 @@ static void updatePreset() {
         break;
     case CONFIGURE_MODE:
         if (is_patch_selection) {
-            if (counter < PATCH_RESET_COUNTER / 2 && registry.hasPatch(patchselect)) {
+            bool has_patch = false;
+            if (patchselect == 0) {
+                // Dynamically loaded patch is valid only 
+                has_patch = program.getProgramIndex() == 0;
+            }
+            else {
+                has_patch = registry.hasPatch(patchselect);
+            }
+            if (counter < PATCH_RESET_COUNTER / 2 && has_patch) {
                 uint8_t bank = patchselect / 8;
                 uint8_t slot = patchselect - bank * 8;
                 setLed(0, (uint32_t)colours[bank]);
@@ -265,7 +265,7 @@ static void updatePreset() {
             if (encoder.isRisingEdge()) {
                 setLed(0, 0);
                 setLed(1, 0);
-                if (registry.hasPatch(patchselect)) {
+                if (patchselect > 0 && registry.hasPatch(patchselect)) {
                     program.loadProgram(patchselect);
                     program.resetProgram(false);
                 }
@@ -277,7 +277,7 @@ static void updatePreset() {
                 if (new_enc_value > enc_value) {
                     patchselect++;
                     if (patchselect >= registry.getNumberOfPatches())
-                        patchselect = 0;
+                        patchselect = program.getProgramIndex() == 0 ? 0 : 1;
                     enc_value = new_enc_value;
                 }
                 else if (new_enc_value < enc_value) {
@@ -332,7 +332,8 @@ static void updatePreset() {
 void onChangeMode(OperationMode new_mode, OperationMode old_mode) {
     counter = 0;
     enc_value = encoder.getValue();
-    patchselect = settings.program_index;
+    //patchselect = settings.program_index;
+    patchselect = program.getProgramIndex();
     setLed(0, 0);
     setLed(1, 0);
     /*
