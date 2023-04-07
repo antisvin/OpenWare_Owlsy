@@ -368,13 +368,13 @@ void updateProgramVector(ProgramVector* pv, PatchDefinition* def){
 #elif defined OWL_ARCH_H7
   extern char _ITCMHEAP, _ITCMHEAP_SIZE;
   extern char _EXTRAM, _EXTRAM_SIZE;
-  extern uint8_t _PATCHRAM, _PATCHRAM_END, _PATCHRAM_SIZE;
+  extern char _PATCHRAM, _PATCHRAM_END, _PATCHRAM_SIZE;
   uint8_t* end = (uint8_t*)def->getStackBase(); // program end
-  uint32_t remain = &_PATCHRAM_END - end; // space left
-  if(end < &_PATCHRAM || remain > (uint32_t)&_PATCHRAM_SIZE) // sanity check
+  uint32_t remain = (uint8_t*)&_PATCHRAM_END - end; // space left
+  if(end < (uint8_t*)&_PATCHRAM || remain > (uint32_t)&_PATCHRAM_SIZE) // sanity check
     remain = 0; // prevent errors if program stack is not linked to PATCHRAM  
 #ifdef USE_PLUS_RAM
-  extern uint8_t _PLUSRAM, _PLUSRAM_END, _PLUSRAM_SIZE;
+  extern char _PLUSRAM, _PLUSRAM_END, _PLUSRAM_SIZE;
   uint8_t* plusend = (uint8_t*)&_PLUSRAM;
   uint32_t plusremain = (uint32_t)&_PLUSRAM_SIZE;
   if(def->getLinkAddress() == (uint32_t*)&_PLUSRAM){
@@ -382,7 +382,7 @@ void updateProgramVector(ProgramVector* pv, PatchDefinition* def){
     remain = (uint32_t)&_PATCHRAM_SIZE; // use all of PATCHRAM for heap
     plusend = (uint8_t*)def->getStackBase();
     plusremain = def->getStackSize();
-    plusremain = &_PLUSRAM_END - plusend;
+    plusremain = (uint8_t*)&_PLUSRAM_END - plusend;
   }
 #endif  
   static MemorySegment heapSegments[5];

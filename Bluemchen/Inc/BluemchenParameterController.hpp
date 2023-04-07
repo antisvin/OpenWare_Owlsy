@@ -745,6 +745,14 @@ public:
         return SIZE;
     }
 
+    int16_t getValue(uint8_t pid){
+        return parameters[pid];
+    }
+  
+    int16_t* getParameters(){
+        return parameters;
+    }
+
     void drawMessage(ScreenBuffer& screen) {
         ProgramVector* pv = getProgramVector();
         if (pv->message != NULL) {

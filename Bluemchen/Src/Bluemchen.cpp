@@ -11,6 +11,7 @@
 #include "PatchRegistry.h"
 #include "OpenWareMidiControl.h"
 #include "SoftwareEncoder.hpp"
+#include "TakeoverControls.h"
 #include "VersionToken.h"
 
 extern bool updateUi;
@@ -24,36 +25,65 @@ static SoftwareEncoder encoder(
   ENC_B_GPIO_Port, ENC_B_Pin, 
   ENC_CLICK_GPIO_Port, ENC_CLICK_Pin);
 
+TakeoverControls<2, uint16_t> takeover;
+
 extern "C" void updateEncoderCounter(){
   encoder.updateCounter();
+}
+
+int16_t getParameterValue(uint8_t pid) {
+    if (pid < NOF_PARAMETERS) {
+      if (pid < NOF_ADC_VALUES / 2) {
+        return takeover.get(pid);
+      }
+      else {
+        return graphics.params.getValue(pid);
+      }
+    }
+    else
+    {
+        return 0;      
+    }
+}
+
+// called from program, MIDI, or (potentially) digital bus
+void setParameterValue(uint8_t pid, int16_t value) {
+    if (pid < NOF_PARAMETERS) {
+      if (pid < NOF_ADC_VALUES / 2) {
+        takeover.set(pid, value);
+        takeover.reset(pid, false);
+        graphics.params.setValue(pid, takeover.get(pid));
+      }
+      else  { 
+        graphics.params.setValue(pid, value);
+      }
+    }
+}
+
+
+static uint16_t smooth_adc_values[NOF_ADC_VALUES];
+extern "C" {
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) {
+    // this runs at apprx 3.3kHz
+    // with 64.5 cycles sample time, 30 MHz ADC clock, and ClockPrescaler = 32
+    extern uint16_t adc_values[NOF_ADC_VALUES];
+    for (size_t i = 0; i < NOF_ADC_VALUES; i++) {
+        // IIR exponential filter with lambda 0.75: y[n] = 0.75*y[n-1] + 0.25*x[n]
+        smooth_adc_values[i] = (smooth_adc_values[i]*3 + adc_values[i]) >> 2;
+    }
+}
 }
 
 void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t* adc_values, size_t adc_len){
 #ifdef USE_CACHE
   //SCB_InvalidateDCache_by_Addr((uint32_t*)adc_values, sizeof(adc_values));
 #endif
-  // Note that updateValue will apply smoothing, so we don't have to do it here
-  graphics.params.updateValue(0, adc_values[0] + adc_values[2]);
-  graphics.params.updateValue(1, adc_values[1] + adc_values[3]);
-}
-
-/*
-void onChangePin(uint16_t pin){
-  switch(pin){
-  case GATE_IN1_Pin: {
-    bool state = !(GATE_IN1_GPIO_Port->IDR & GATE_IN1_Pin);
-    setButtonValue(BUTTON_A, state);
-    setButtonValue(PUSHBUTTON, state);
-    break;
-  }
-  case GATE_IN2_Pin:
-    setButtonValue(BUTTON_B, !(GATE_IN2_GPIO_Port->IDR & GATE_IN2_Pin));
-    break;
-  default:
-    break;
+  for (int i = 0; i < NOF_ADC_VALUES / 2; i++) {
+    // CV ADC channels are inverted
+    takeover.update(i, smooth_adc_values[i * 2] + 2047 - smooth_adc_values[i * 2 + 1], 31);
+    graphics.params.updateValue(i, takeover.get(i));
   }
 }
-*/
 
 void setup(){
   qspi_init(QSPI_MODE_MEMORY_MAPPED);
@@ -70,7 +100,6 @@ void setup(){
   graphics.begin(&OLED_I2C);
 
   owl.setup();
-//  setButtonValue(PUSHBUTTON, 0);
 }
 
 static int16_t enc_data[2];
@@ -89,9 +118,9 @@ void loop(){
 
     graphics.params.updateEncoders(enc_data, 2);
 
-    for(int i = NOF_ADC_VALUES / 2; i < NOF_PARAMETERS; ++i) {
-      graphics.params.updateValue(i, 0);
-    }
+    //for(int i = NOF_ADC_VALUES / 2; i < NOF_PARAMETERS; ++i) {
+    //  graphics.params.updateValue(i, 0);
+    //}
 
     graphics.draw();
     graphics.display();
