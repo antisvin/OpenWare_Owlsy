@@ -50,7 +50,7 @@ int16_t getParameterValue(uint8_t pid) {
 void setParameterValue(uint8_t pid, int16_t value) {
     if (pid < NOF_PARAMETERS) {
       if (pid < NOF_ADC_VALUES / 2) {
-        takeover.set(pid, value);
+        takeover.set(pid, __USAT(value, 12));
         takeover.reset(pid, false);
         graphics.params.setValue(pid, takeover.get(pid));
       }
@@ -80,7 +80,7 @@ void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t*
 #endif
   for (int i = 0; i < NOF_ADC_VALUES / 2; i++) {
     // CV ADC channels are inverted
-    takeover.update(i, smooth_adc_values[i * 2] + 4095 - smooth_adc_values[i * 2 + 1] * 2, 31);
+    takeover.update(i, __USAT(smooth_adc_values[i * 2] + 4220 - smooth_adc_values[i * 2 + 1] * 2, 12), 31); // We don't quite cover full range with 4095 due to DC offset?
     graphics.params.updateValue(i, takeover.get(i));
   }
 }
