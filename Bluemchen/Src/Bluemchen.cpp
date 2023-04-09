@@ -80,7 +80,7 @@ void updateParameters(int16_t* parameter_values, size_t parameter_len, uint16_t*
 #endif
   for (int i = 0; i < NOF_ADC_VALUES / 2; i++) {
     // CV ADC channels are inverted
-    takeover.update(i, smooth_adc_values[i * 2] + 2047 - smooth_adc_values[i * 2 + 1], 31);
+    takeover.update(i, smooth_adc_values[i * 2] + 4095 - smooth_adc_values[i * 2 + 1] * 2, 31);
     graphics.params.updateValue(i, takeover.get(i));
   }
 }
