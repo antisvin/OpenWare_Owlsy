@@ -21,7 +21,7 @@
 #include "VersionToken.h"
 #include "rainbow.h"
 
-TakeoverControls<40, int16_t> takeover;
+TakeoverControls<40, int16_t> takeover; // TODO: can we manage only 2 active parameters with this?
 volatile uint8_t patchselect;
 static uint8_t parameter_offset;
 static uint16_t enc_value;

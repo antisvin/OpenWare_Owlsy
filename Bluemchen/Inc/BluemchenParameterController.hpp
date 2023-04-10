@@ -745,6 +745,14 @@ public:
         return SIZE;
     }
 
+    int16_t getValue(uint8_t pid){
+        return parameters[pid];
+    }
+  
+    int16_t* getParameters(){
+        return parameters;
+    }
+
     void drawMessage(ScreenBuffer& screen) {
         ProgramVector* pv = getProgramVector();
         if (pv->message != NULL) {
@@ -803,7 +811,7 @@ public:
 
     // called by MIDI cc and/or from patch
     void setValue(uint8_t pid, int16_t value) {
-        if (pid >= NOF_ADC_VALUES)
+        if (pid >= NOF_ADC_VALUES / 2)
             user[pid] = value;
         // reset encoder value if associated through selectedPid to avoid skipping
         for (int i = 0; i < NOF_ENCODERS; ++i)

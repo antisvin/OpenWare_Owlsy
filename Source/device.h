@@ -4,7 +4,7 @@
 #include "hardware.h"
 
 #define FIRMWARE_VERSION_MAJOR       25
-#define FIRMWARE_VERSION_MINOR       0
+#define FIRMWARE_VERSION_MINOR       2
 #define _FW_STR(x)                   #x
 #define _FW_TO_STR(x)                _FW_STR(x)
 #define FIRMWARE_VERSION             "v" _FW_TO_STR(FIRMWARE_VERSION_MAJOR) "." _FW_TO_STR(FIRMWARE_VERSION_MINOR)
@@ -90,7 +90,7 @@
 #define MAX_SYSEX_PAYLOAD_SIZE       (1 * 1024 * 1024) // Maximum resource size
 #endif
 #define BOOTLOADER_MAGIC             0xB007C0DE
-#define BOOTLOADER_VERSION           "v0.3"
+#define BOOTLOADER_VERSION           "v0.4"
 
 #ifndef MAX_SYSEX_PROGRAM_SIZE
 #define MAX_SYSEX_PROGRAM_SIZE       (128*1024) // 128k, one flash sector
