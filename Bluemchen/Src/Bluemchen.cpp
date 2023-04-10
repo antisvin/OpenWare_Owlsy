@@ -31,21 +31,6 @@ extern "C" void updateEncoderCounter(){
   encoder.updateCounter();
 }
 
-int16_t getParameterValue(uint8_t pid) {
-    if (pid < NOF_PARAMETERS) {
-      if (pid < NOF_ADC_VALUES / 2) {
-        return takeover.get(pid);
-      }
-      else {
-        return graphics.params.getValue(pid);
-      }
-    }
-    else
-    {
-        return 0;      
-    }
-}
-
 // called from program, MIDI, or (potentially) digital bus
 void setParameterValue(uint8_t pid, int16_t value) {
     if (pid < NOF_PARAMETERS) {
@@ -118,9 +103,9 @@ void loop(){
 
     graphics.params.updateEncoders(enc_data, 2);
 
-    //for(int i = NOF_ADC_VALUES / 2; i < NOF_PARAMETERS; ++i) {
-    //  graphics.params.updateValue(i, 0);
-    //}
+    for(int i = NOF_ADC_VALUES / 2; i < NOF_PARAMETERS; ++i) {
+      graphics.params.updateValue(i, 0);
+    }
 
     graphics.draw();
     graphics.display();
